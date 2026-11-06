@@ -1,0 +1,58 @@
+import { useState } from 'react'
+import Layout from './components/layout/Layout'
+import PageHeader from './components/ui/PageHeader'
+import Card from './components/ui/Card'
+import Icon from './components/ui/Icon'
+import MisCursos from './pages/portal/MisCursos'
+import MisSalones from './pages/portal/MisSalones'
+import MiPerfil from './pages/portal/MiPerfil'
+import BancoDocente from './pages/portal/BancoDocente'
+import ZonaDocumentos from './pages/portal/ZonaDocumentos'
+
+const cuenta = { id: 'cuenta', label: 'Mi cuenta', icon: 'key' }
+const items = {
+  estudiante: [{ id: 'cursos', label: 'Mis cursos', icon: 'play' }, { id: 'zona', label: 'Student Zone', icon: 'book' }, cuenta],
+  docente: [{ id: 'salones', label: 'Mis salones', icon: 'building' }, { id: 'banco', label: 'Banco de ejercicios', icon: 'pen' }, { id: 'perfil', label: 'Mi perfil', icon: 'user' }, { id: 'zona', label: 'Teacher Zone', icon: 'book' }, cuenta],
+  postulante: [{ id: 'perfil', label: 'Mi registro', icon: 'user' }, cuenta],
+}
+
+function MiCuenta({ email }) {
+  return (
+    <div>
+      <PageHeader title="Mi cuenta" description="Los datos con los que ingresas" />
+      <Card className="max-w-md p-6">
+        <p className="flex items-center gap-2 text-sm text-slate-500">
+          <Icon name="mail" className="h-4 w-4" /> Correo
+        </p>
+        <p className="mt-1 text-base font-semibold text-slate-900">{email}</p>
+        <p className="mt-5 flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
+          <Icon name="lock" className="mt-0.5 h-4 w-4 shrink-0" />
+          Tu contraseña la administra Universa. Si la olvidaste o quieres cambiarla, escribe a administración.
+        </p>
+      </Card>
+    </div>
+  )
+}
+
+// Portal del estudiante, del docente o del profesor recién registrado (`postulante`, a la espera de activación).
+// Cada vista solo consulta funciones de Supabase que devuelven lo que corresponde a la cuenta.
+export default function PortalApp({ vista, email, vistas, onCambiarVista, onSignOut, onRecargar }) {
+  const [pagina, setPagina] = useState(items[vista][0].id)
+  return (
+    <Layout current={pagina} onNavigate={setPagina} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
+      {pagina === 'cuenta' ? (
+        <MiCuenta email={email} />
+      ) : pagina === 'zona' ? (
+        <ZonaDocumentos zona={vista === 'docente' ? 'docentes' : 'estudiantes'} />
+      ) : pagina === 'banco' ? (
+        <BancoDocente />
+      ) : pagina === 'perfil' ? (
+        <MiPerfil estado={vista} onRecargar={onRecargar} />
+      ) : vista === 'estudiante' ? (
+        <MisCursos />
+      ) : (
+        <MisSalones />
+      )}
+    </Layout>
+  )
+}

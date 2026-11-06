@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Secretos y credenciales (solo se versiona .env.example)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# Estado local de herramientas (Supabase CLI enlazado, ajustes locales de Claude)
+supabase/.temp/
+supabase/.branches/
+.claude/settings.local.json
+
+# Skills de agentes (se restauran con skills-lock.json)
+.agents/
+.claude/

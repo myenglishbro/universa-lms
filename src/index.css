@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* Identidad de Universa: morado corporativo (brand) y durazno (peach) sobre un lienzo claro con un leve tinte lila.
+   La estructura sale del DESIGN.md: radios de 4 px (campos) y 8 px (botones y tarjetas), escala de espaciado y tipografía del sistema.
+   Si cambian los tonos oficiales, se ajustan aquí y toda la aplicación los hereda. */
+@theme {
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-ink: #1c1426;
+  --color-canvas: #f5f7fb;
+  --color-mist: #eef3f9;
+
+  --color-brand-50: #f4effc;
+  --color-brand-100: #e6dcf7;
+  --color-brand-200: #cbb5ee;
+  --color-brand-500: #6a2cc8;
+  --color-brand-600: #410099;
+  --color-brand-700: #33007a;
+  --color-brand-800: #2a0066;
+  --color-brand-900: #1b0042;
+
+  --color-peach-50: #fff6ee;
+  --color-peach-100: #ffe9d6;
+  --color-peach-200: #ffd3ae;
+  --color-peach-500: #ffb97e;
+  --color-peach-700: #a85a14;
+
+  /* Clases particulares en la agenda: gris azulado, para distinguirlas sin sumar otro color. */
+  --color-teal-50: #eef3f9;
+  --color-teal-500: #5f6f87;
+  --color-teal-600: #475569;
+  --color-teal-700: #334155;
+
+  --radius-sm: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+body {
+  @apply bg-canvas text-ink antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.link {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  padding-bottom: 2px;
+  transition: background-size 0.25s ease;
+}
+.link:hover,
+.link:focus-visible {
+  background-size: 100% 1px;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
