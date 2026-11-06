@@ -1,3 +1,4 @@
+import { puedeVer } from '../../lib/permisos'
 import Icon from '../ui/Icon'
 
 const navItems = [
@@ -12,18 +13,20 @@ const navItems = [
   { id: 'registros', label: 'Profesores registrados', icon: 'userplus', soloAdmin: true },
   { id: 'zonas', label: 'Teacher & Student Zone', icon: 'book', soloAdmin: true },
   { id: 'feriados', label: 'Feriados', icon: 'calendar' },
+  { id: 'usuarios', label: 'Usuarios del personal', icon: 'key', soloAdmin: true },
   { id: 'frecuencias', label: 'Frecuencias', icon: 'clock', soloAdmin: true },
   { id: 'evaluaciones', label: 'Evaluaciones', icon: 'doc', soloAdmin: true },
 ]
 
-const rolLabel = { admin: 'Administrador', comercial: 'Comercial', docente: 'Docente', estudiante: 'Estudiante', postulante: 'Profesor (registro en revisión)' }
+const rolLabel = { admin: 'Administrador', comercial: 'Comercial', rrhh: 'Recursos Humanos', docente: 'Docente', estudiante: 'Estudiante', postulante: 'Profesor (registro en revisión)' }
 const vistaLabel = { gestion: 'Administración', docente: 'Portal docente', estudiante: 'Portal estudiante' }
 
 export default function Sidebar({ current, onNavigate, open, onClose, usuario, onSignOut, items = navItems, vistas = [], vista, onCambiarVista, colapsado = false, onAlternarColapso }) {
   // Colapsado solo aplica en pantallas grandes (lg): en móvil el menú siempre se abre completo como cajón.
   const ocultar = colapsado ? 'lg:hidden' : ''
   const centrar = colapsado ? 'lg:justify-center lg:px-0' : ''
-  const visibles = items.filter((item) => !item.soloAdmin || usuario.rol === 'admin')
+  // El menú del panel de gestión se filtra por rol (lib/permisos); los menús de los portales no usan esos roles y se muestran completos.
+  const visibles = items.filter((item) => (items === navItems ? puedeVer(usuario.rol, item.id) : !item.soloAdmin || usuario.rol === 'admin'))
   return (
     <>
       {/* Fondo oscuro en móvil */}

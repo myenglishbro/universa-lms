@@ -22,7 +22,8 @@ export async function registrarProfesor(v) {
 
 // ---- El propio profesor ----
 export async function miRegistro() {
-  const { data, error } = await supabase.from('docente_registros').select('*').maybeSingle()
+  const { data: sesion } = await supabase.auth.getSession()
+  const { data, error } = await supabase.from('docente_registros').select('*').eq('user_id', sesion.session?.user.id ?? '').maybeSingle()
   if (error) throw new Error(error.message)
   return data
 }

@@ -19,7 +19,7 @@ export default function Feriados({ puedeEditar, onCambio }) {
 
   const cargar = useCallback(
     () =>
-      listarFeriados()
+      listarFeriados({ forzar: true })
         .then((f) => {
           setFeriados(f)
           setError('')

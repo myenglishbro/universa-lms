@@ -25,14 +25,22 @@ export default function useAuth() {
     if (!userId) return
     let activo = true
     ;(async () => {
-      // Convierte en vínculos las invitaciones pendientes del correo confirmado de esta cuenta (si la migración de portales aún no está, se ignora).
-      await supabase.rpc('reclamar_invitaciones')
+      // Las tres consultas son independientes: salen a la vez. Solo cuenta_roles espera a que las invitaciones pendientes del correo
+      // confirmado se conviertan en vínculos (si la migración de portales aún no está, el rpc falla y se ignora).
       const [p, r, g] = await Promise.all([
-        supabase.from('perfiles').select('rol').eq('user_id', userId).maybeSingle(),
-        supabase.from('cuenta_roles').select('rol').eq('user_id', userId), // la política deja ver TODAS las cuentas a administración: sin este filtro un admin recibiría los roles de los demás
-        supabase.from('docente_registros').select('*').maybeSingle(), // sin la migración de registros: error ignorado → null
+        supabase
+          .from('perfiles')
+          .select('rol, activo')
+          .eq('user_id', userId)
+          .maybeSingle()
+          .then((x) => (x.error ? supabase.from('perfiles').select('rol').eq('user_id', userId).maybeSingle() : x)), // sin la migración de gestión del personal aún no existe «activo»
+        supabase
+          .rpc('reclamar_invitaciones')
+          .then(() => supabase.from('cuenta_roles').select('rol').eq('user_id', userId)), // la política deja ver TODAS las cuentas a administración: sin este filtro un admin recibiría los roles de los demás
+        supabase.from('docente_registros').select('*').eq('user_id', userId).maybeSingle(), // filtrado por cuenta: sin filtro, a un admin le llegarían todos los registros y maybeSingle fallaría; sin la migración de registros: error ignorado → null
       ])
-      if (activo) setPerfil({ userId, rol: p.data?.rol ?? null, portal: (r.data ?? []).map((x) => x.rol), registro: g.data ?? null })
+      if (activo) setPerfil({ userId, rol: p.data?.activo === false ? null : p.data?.rol ?? null, // un perfil desactivado equivale a no tener acceso
+         portal: (r.data ?? []).map((x) => x.rol), registro: g.data ?? null })
     })().catch(() => activo && setPerfil({ userId, rol: null, portal: [], registro: null }))
     return () => {
       activo = false

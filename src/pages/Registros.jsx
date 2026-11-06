@@ -28,7 +28,7 @@ const hace = (iso) => {
 }
 
 // Ficha completa de un registro: datos, disponibilidad, contraseña (solo la cambia administración) y activación como docente.
-function Ficha({ r, servicio, onCambio, onClose }) {
+function Ficha({ r, servicio, onCambio, onClose, puedeEditar = true }) {
   const [clave, setClave] = useState('')
   const [verClave, setVerClave] = useState(false)
   const [aviso, setAviso] = useState('')
@@ -110,6 +110,7 @@ function Ficha({ r, servicio, onCambio, onClose }) {
         )}
       </section>
 
+      {puedeEditar && (
       <section className="mt-6 rounded-2xl border border-brand-100 p-4">
         <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900">
           <Icon name="lock" className="h-4 w-4 text-brand-500" /> Contraseña
@@ -128,10 +129,12 @@ function Ficha({ r, servicio, onCambio, onClose }) {
           </Button>
         </form>
       </section>
+      )}
 
       {aviso && <p className="mt-4 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
       {fallo && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
 
+      {puedeEditar && (
       <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-brand-100 pt-4">
         {esDocente ? (
           <Button variant="secondary" disabled={ocupado} onClick={() => ejecutar(() => servicio.quitarDocente(r.user_id), 'Se quitó el acceso docente. Sigue registrado y puedes activarlo de nuevo.')}>
@@ -143,12 +146,13 @@ function Ficha({ r, servicio, onCambio, onClose }) {
           </Button>
         )}
       </div>
+      )}
     </Modal>
   )
 }
 
 // Profesores que se registraron solos: administración los revisa y los convierte en docentes.
-export default function Registros({ onCambio, servicio = servicioReal }) {
+export default function Registros({ onCambio, servicio = servicioReal, puedeEditar = true }) {
   const cargar = useCallback(() => servicio.listarRegistros(), [servicio])
   const { datos, cargando, error, recargar } = useCarga(cargar, [])
   const [filtro, setFiltro] = useState('pendientes')
@@ -258,7 +262,7 @@ export default function Registros({ onCambio, servicio = servicioReal }) {
                   <Button variant="secondary" className="px-4 py-1.5" onClick={() => setAbiertoId(r.user_id)}>
                     Ver ficha
                   </Button>
-                  {!r.docente_id && (
+                  {puedeEditar && !r.docente_id && (
                     <Button className="px-4 py-1.5" disabled={activando === r.user_id} onClick={() => activar(r)}>
                       {activando === r.user_id ? 'Activando…' : 'Activar'}
                     </Button>
@@ -270,7 +274,7 @@ export default function Registros({ onCambio, servicio = servicioReal }) {
         )}
       </Card>
 
-      {abierto && <Ficha r={abierto} servicio={servicio} onCambio={cambio} onClose={() => setAbiertoId(null)} />}
+      {abierto && <Ficha r={abierto} servicio={servicio} onCambio={cambio} onClose={() => setAbiertoId(null)} puedeEditar={puedeEditar} />}
     </>
   )
 }

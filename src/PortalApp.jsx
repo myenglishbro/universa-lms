@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import Layout from './components/layout/Layout'
 import PageHeader from './components/ui/PageHeader'
 import Card from './components/ui/Card'
 import Icon from './components/ui/Icon'
-import MisCursos from './pages/portal/MisCursos'
-import MisSalones from './pages/portal/MisSalones'
-import MiPerfil from './pages/portal/MiPerfil'
-import BancoDocente from './pages/portal/BancoDocente'
-import ZonaDocumentos from './pages/portal/ZonaDocumentos'
+const MisCursos = lazy(() => import('./pages/portal/MisCursos'))
+const MisSalones = lazy(() => import('./pages/portal/MisSalones'))
+const MiPerfil = lazy(() => import('./pages/portal/MiPerfil'))
+const BancoDocente = lazy(() => import('./pages/portal/BancoDocente'))
+const ZonaDocumentos = lazy(() => import('./pages/portal/ZonaDocumentos'))
 
 const cuenta = { id: 'cuenta', label: 'Mi cuenta', icon: 'key' }
 const items = {
@@ -40,6 +40,7 @@ export default function PortalApp({ vista, email, vistas, onCambiarVista, onSign
   const [pagina, setPagina] = useState(items[vista][0].id)
   return (
     <Layout current={pagina} onNavigate={setPagina} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
+      <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
       {pagina === 'cuenta' ? (
         <MiCuenta email={email} />
       ) : pagina === 'zona' ? (
@@ -53,6 +54,7 @@ export default function PortalApp({ vista, email, vistas, onCambiarVista, onSign
       ) : (
         <MisSalones />
       )}
+      </Suspense>
     </Layout>
   )
 }

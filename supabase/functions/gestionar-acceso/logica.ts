@@ -24,6 +24,8 @@ export interface Respuesta {
 const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const ROLES = ['estudiante', 'docente']
+const ROLES_PERSONAL = ['admin', 'rrhh', 'comercial']
+const BLOQUEO = '876000h' // ~100 años: equivale a «sin acceso» hasta que se reactive
 export const CLAVE_MIN = 8
 
 const error = (status: number, mensaje: string): Respuesta => ({ status, cuerpo: { error: mensaje } })
@@ -53,12 +55,16 @@ const yaExiste = (e: any) => e && (e.code === 'email_exists' || e.status === 422
 
 export async function manejar({ usuario, servidor, siteUrl }: Deps, body: any): Promise<Respuesta> {
   const accion = body?.accion
-  if (accion !== 'crear' && accion !== 'restablecer' && accion !== 'cambiar_clave') return error(400, 'Acción no válida')
+  const ACCIONES = ['crear', 'restablecer', 'cambiar_clave', 'personal_crear', 'personal_rol', 'personal_estado']
+  if (!ACCIONES.includes(accion)) return error(400, 'Acción no válida')
 
   const { data: esAdmin, error: errAdmin } = await usuario.rpc('es_admin')
   if (errAdmin || esAdmin !== true) return error(403, 'Solo administración puede gestionar accesos')
 
   if (accion === 'cambiar_clave') return cambiarClave({ usuario, servidor }, body)
+  if (accion === 'personal_crear') return personalCrear({ usuario, servidor }, body)
+  if (accion === 'personal_rol') return personalRol({ usuario, servidor }, body)
+  if (accion === 'personal_estado') return personalEstado({ usuario, servidor }, body)
 
   const rol = body.rol
   const persona = body.persona
@@ -139,4 +145,51 @@ async function cambiarClave({ servidor }: Deps, body: any): Promise<Respuesta> {
   const { error: errClave } = await servidor.auth!.admin.updateUserById(userId, { password: body.password })
   if (errClave) return error(400, 'No se pudo cambiar la contraseña')
   return ok({ estado: 'cambiada', correo })
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Personal de Universa (admin / rrhh / comercial). Una cuenta = un solo rol. Las reglas finales (no tocar la propia cuenta, no mezclar
+// con docente/estudiante) las exige Postgres con la sesión de quien llama; aquí solo se usa la API administrativa de Auth.
+
+async function personalCrear({ usuario, servidor }: Deps, body: any): Promise<Respuesta> {
+  const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : ''
+  if (!CORREO.test(correo)) return error(400, 'Escribe un correo válido')
+  if (!ROLES_PERSONAL.includes(body.rol)) return error(400, 'Rol no válido')
+  const falla = validarClave(body.password, correo)
+  if (falla) return error(400, falla.replace('inicial ', ''))
+
+  const { data: creado, error: errCrear } = await servidor.auth!.admin.createUser({ email: correo, password: body.password, email_confirm: true })
+  if (yaExiste(errCrear)) return error(409, 'Ese correo ya pertenece a una cuenta. Una cuenta solo puede tener un rol: usa otro correo')
+  if (errCrear || !creado?.user?.id) return error(400, 'No se pudo crear la cuenta: ' + String(errCrear?.message ?? 'respuesta vacía').split(body.password).join('***'))
+  const nuevo: string = creado.user.id
+
+  const { error: errRol } = await usuario.rpc('asignar_rol_personal', { p_user: nuevo, p_rol: body.rol })
+  if (errRol) {
+    await servidor.auth!.admin.deleteUser(nuevo) // revierte: no queda una cuenta sin rol
+    return error(400, errRol.message)
+  }
+  return ok({ estado: 'creada', correo })
+}
+
+async function personalRol({ usuario }: Deps, body: any): Promise<Respuesta> {
+  if (typeof body.user_id !== 'string' || !UUID.test(body.user_id)) return error(400, 'Cuenta no válida')
+  if (!ROLES_PERSONAL.includes(body.rol)) return error(400, 'Rol no válido')
+  const { error: e } = await usuario.rpc('asignar_rol_personal', { p_user: body.user_id, p_rol: body.rol })
+  return e ? error(400, e.message) : ok({ estado: 'rol_cambiado' })
+}
+
+// Desactivar corta el acceso al instante (perfiles.activo) y además bloquea el inicio de sesión en Auth. Activar revierte ambos.
+async function personalEstado({ usuario, servidor }: Deps, body: any): Promise<Respuesta> {
+  if (typeof body.user_id !== 'string' || !UUID.test(body.user_id)) return error(400, 'Cuenta no válida')
+  if (typeof body.activo !== 'boolean') return error(400, 'Estado no válido')
+  const { data: esPersonal } = await servidor.rpc('usuario_es_personal', { p_user: body.user_id })
+  if (!esPersonal) return error(404, 'Esa cuenta no es de personal')
+  const { error: e } = await usuario.rpc('cambiar_estado_personal', { p_user: body.user_id, p_activo: body.activo })
+  if (e) return error(400, e.message)
+  const { error: errAuth } = await servidor.auth!.admin.updateUserById(body.user_id, { ban_duration: body.activo ? 'none' : BLOQUEO })
+  if (errAuth) {
+    await usuario.rpc('cambiar_estado_personal', { p_user: body.user_id, p_activo: !body.activo }) // deja todo como estaba
+    return error(400, 'No se pudo actualizar el acceso')
+  }
+  return ok({ estado: body.activo ? 'activado' : 'desactivado' })
 }

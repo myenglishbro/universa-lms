@@ -41,8 +41,18 @@ export async function listarConflictos(salonId) {
   }))
 }
 
-export async function listarFeriados() {
-  return datos(await supabase.from('feriados').select('fecha, nombre').order('fecha'))
+// Los feriados cambian rara vez y los piden el calendario de cada salón y la agenda: se guardan en memoria unos minutos
+// (y se descartan al crear/borrar uno). `forzar` salta la memoria.
+const VIGENCIA_FERIADOS = 5 * 60 * 1000
+let feriadosEnMemoria = null // { hasta, promesa }
+export async function listarFeriados({ forzar = false } = {}) {
+  if (!forzar && feriadosEnMemoria && feriadosEnMemoria.hasta > Date.now()) return feriadosEnMemoria.promesa
+  const promesa = (async () => datos(await supabase.from('feriados').select('fecha, nombre').order('fecha')))()
+  feriadosEnMemoria = { hasta: Date.now() + VIGENCIA_FERIADOS, promesa }
+  promesa.catch(() => {
+    if (feriadosEnMemoria?.promesa === promesa) feriadosEnMemoria = null // un fallo no se queda guardado
+  })
+  return promesa
 }
 
 // Escrituras: todas son funciones transaccionales de la base (solo admin) -------------------
@@ -91,7 +101,12 @@ export const reprogramarSesion = async (id, fecha, horaInicio, horaFin, nota) =>
 export const corregirSesion = async (id, nuevoEstado, motivo) =>
   datos(await supabase.rpc('corregir_sesion', { p_sesion_id: id, p_nuevo_estado: nuevoEstado, p_motivo: motivo }))
 
-export const guardarFeriado = async (fecha, nombre) =>
-  datos(await supabase.rpc('guardar_feriado', { p_fecha: fecha, p_nombre: nombre }))
+export const guardarFeriado = async (fecha, nombre) => {
+  feriadosEnMemoria = null
+  return datos(await supabase.rpc('guardar_feriado', { p_fecha: fecha, p_nombre: nombre }))
+}
 
-export const eliminarFeriado = async (fecha) => datos(await supabase.rpc('eliminar_feriado', { p_fecha: fecha }))
+export const eliminarFeriado = async (fecha) => {
+  feriadosEnMemoria = null
+  return datos(await supabase.rpc('eliminar_feriado', { p_fecha: fecha }))
+}

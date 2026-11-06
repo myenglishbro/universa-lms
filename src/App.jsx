@@ -1,47 +1,61 @@
-import { useEffect, useState } from 'react'
-import PortalApp from './PortalApp'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import Layout from './components/layout/Layout'
 import useAuth from './hooks/useAuth'
 import useEstudiantes from './hooks/useEstudiantes'
 import usePaquetes from './hooks/usePaquetes'
 import useSalones from './hooks/useSalones'
+import { pantallaInicial, puedeVer } from './lib/permisos'
 import { supabase } from './lib/supabase'
-import Agenda from './pages/Agenda'
-import Dashboard from './pages/Dashboard'
-import Docentes from './pages/Docentes'
-import Estudiantes from './pages/Estudiantes'
-import Ejercicios from './pages/Ejercicios'
-import ArchivoCiclos from './pages/ArchivoCiclos'
-import Evaluaciones from './pages/Evaluaciones'
-import Feriados from './pages/Feriados'
-import Registros from './pages/Registros'
-import ZonasAdmin from './pages/ZonasAdmin'
-import Frecuencias from './pages/Frecuencias'
-import Landing from './pages/Landing'
-import Login from './pages/Login'
 import Mensaje from './pages/Mensaje'
-import Paquetes from './pages/Paquetes'
-import Salones from './pages/Salones'
+
+// Cada pantalla se descarga solo cuando se abre: el primer arranque no carga el código de todas (ni el de la landing, si ya hay sesión).
+const PortalApp = lazy(() => import('./PortalApp'))
+const Agenda = lazy(() => import('./pages/Agenda'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Docentes = lazy(() => import('./pages/Docentes'))
+const Estudiantes = lazy(() => import('./pages/Estudiantes'))
+const Ejercicios = lazy(() => import('./pages/Ejercicios'))
+const ArchivoCiclos = lazy(() => import('./pages/ArchivoCiclos'))
+const Evaluaciones = lazy(() => import('./pages/Evaluaciones'))
+const Feriados = lazy(() => import('./pages/Feriados'))
+const Registros = lazy(() => import('./pages/Registros'))
+const ZonasAdmin = lazy(() => import('./pages/ZonasAdmin'))
+const Frecuencias = lazy(() => import('./pages/Frecuencias'))
+const Landing = lazy(() => import('./pages/Landing'))
+const Login = lazy(() => import('./pages/Login'))
+const Paquetes = lazy(() => import('./pages/Paquetes'))
+const Salones = lazy(() => import('./pages/Salones'))
+const UsuariosPersonal = lazy(() => import('./pages/UsuariosPersonal'))
+
+// Pantallas que usan la lista de estudiantes/matrículas y la de paquetes: esos datos se piden al abrir la primera de ellas,
+// no al entrar al panel (el dashboard solo necesita los salones).
+const USAN_ESTUDIANTES = ['salones', 'estudiantes', 'paquetes', 'agenda']
+const USAN_PAQUETES = ['estudiantes', 'paquetes', 'agenda', 'docentes']
 
 // Navegación por estado: suficiente por ahora. Si hacen falta URLs reales, se evaluará react-router.
 function Panel({ auth, vistas, onCambiarVista }) {
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage] = useState(() => pantallaInicial(auth.rol))
   // Elemento a mostrar en detalle al llegar desde otra pantalla (dashboard, agenda, fichas…).
   const [abierto, setAbierto] = useState({ salon: null, paquete: null, estudiante: null, docente: null })
-  const data = useSalones()
-  const paquetesBase = usePaquetes()
-  const estudiantes = useEstudiantes()
-  // Un alumno creado desde «Paquetes» también debe verse al matricular: ambas listas se refrescan juntas.
-  const paquetes = { ...paquetesBase, recargar: () => Promise.all([paquetesBase.recargar(), estudiantes.recargar()]) }
-  const usuario = { email: auth.session.user.email, rol: auth.rol }
   const admin = auth.rol === 'admin'
+  const data = useSalones()
+  // Los hooks piden sus datos la primera vez que `activo` es true y los conservan: volver a una pantalla no los descarga de nuevo.
+  const estudiantes = useEstudiantes(undefined, USAN_ESTUDIANTES.includes(page))
+  const paquetesBase = usePaquetes(admin && USAN_PAQUETES.includes(page)) // los paquetes (dinero) son solo de administración
+  // Un alumno creado desde «Paquetes» también debe verse al matricular: ambas listas se refrescan juntas. Los alumnos de los
+  // paquetes son los mismos estudiantes (una sola consulta).
+  const paquetes = { ...paquetesBase, alumnos: estudiantes.estudiantes, recargar: () => Promise.all([paquetesBase.recargar(), estudiantes.recargar()]) }
+  const usuario = { email: auth.session.user.email, rol: auth.rol }
+  const ve = (pantalla) => page === pantalla && puedeVer(auth.rol, pantalla) // defensa extra: una pantalla no permitida nunca se pinta
 
   const navegar = (id) => {
+    if (!puedeVer(auth.rol, id)) return
     setAbierto({ salon: null, paquete: null, estudiante: null, docente: null })
     setPage(id)
     if (id === 'salones' || id === 'estudiantes') estudiantes.recargar() // trae altas hechas en otra pantalla o por otra persona
   }
   const ir = (pagina, clave) => (id) => {
+    if (!puedeVer(auth.rol, pagina)) return // p. ej. comercial no tiene la ficha del salón: el enlace no hace nada
     setAbierto({ salon: null, paquete: null, estudiante: null, docente: null, [clave]: id })
     setPage(pagina)
   }
@@ -56,8 +70,9 @@ function Panel({ auth, vistas, onCambiarVista }) {
 
   return (
     <Layout current={page} onNavigate={navegar} usuario={usuario} onSignOut={auth.signOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista}>
-      {page === 'dashboard' && <Dashboard data={data} onVerSalon={verSalon} />}
-      {page === 'agenda' && (
+      <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
+      {ve('dashboard') && <Dashboard data={data} onVerSalon={verSalon} />}
+      {ve('agenda') && (
         <Agenda
           key={abierto.docente ?? 'agenda'}
           docenteInicialId={abierto.docente ?? ''}
@@ -70,7 +85,7 @@ function Panel({ auth, vistas, onCambiarVista }) {
           onVerAlumno={verEstudiante}
         />
       )}
-      {page === 'salones' && (
+      {ve('salones') && (
         <Salones
           data={data}
           estudiantes={estudiantes}
@@ -80,7 +95,7 @@ function Panel({ auth, vistas, onCambiarVista }) {
           onVerDocente={verDocente}
         />
       )}
-      {page === 'paquetes' && (
+      {ve('paquetes') && (
         <Paquetes
           key={abierto.paquete ?? 'lista'}
           paqueteInicialId={abierto.paquete}
@@ -91,7 +106,7 @@ function Panel({ auth, vistas, onCambiarVista }) {
           onVerAlumno={verEstudiante}
         />
       )}
-      {page === 'estudiantes' && (
+      {ve('estudiantes') && (
         <Estudiantes
           key={abierto.estudiante ?? 'lista'}
           estudianteInicialId={abierto.estudiante}
@@ -104,7 +119,7 @@ function Panel({ auth, vistas, onCambiarVista }) {
           onCambio={recargarPersonas}
         />
       )}
-      {page === 'docentes' && (
+      {ve('docentes') && (
         <Docentes
           key={abierto.docente ?? 'lista'}
           docenteInicialId={abierto.docente}
@@ -118,13 +133,15 @@ function Panel({ auth, vistas, onCambiarVista }) {
           onCambio={data.recargar}
         />
       )}
-      {page === 'frecuencias' && admin && <Frecuencias catalogo={data.catalogo} salones={data.salones} onCambio={data.recargarCatalogo} />}
-      {page === 'evaluaciones' && admin && <Evaluaciones niveles={data.niveles} onVerSalon={verSalon} />}
-      {page === 'ejercicios' && admin && <Ejercicios />}
-      {page === 'archivo' && admin && <ArchivoCiclos archivados={data.archivados} />}
-      {page === 'registros' && admin && <Registros onCambio={data.recargar} />}
-      {page === 'zonas' && admin && <ZonasAdmin />}
-      {page === 'feriados' &&<Feriados puedeEditar={admin} onCambio={data.recargar} />}
+      {ve('frecuencias') && admin && <Frecuencias catalogo={data.catalogo} salones={data.salones} onCambio={data.recargarCatalogo} />}
+      {ve('evaluaciones') && admin && <Evaluaciones niveles={data.niveles} onVerSalon={verSalon} />}
+      {ve('ejercicios') && admin && <Ejercicios />}
+      {ve('archivo') && admin && <ArchivoCiclos archivados={data.archivados} />}
+      {ve('registros') && <Registros onCambio={data.recargar} puedeEditar={admin} />}
+      {ve('zonas') && admin && <ZonasAdmin />}
+      {ve('usuarios') && admin && <UsuariosPersonal miCorreo={usuario.email} />}
+      {ve('feriados') && <Feriados puedeEditar={admin} onCambio={data.recargar} />}
+      </Suspense>
     </Layout>
   )
 }
@@ -180,6 +197,14 @@ function useVerLogin() {
 }
 
 export default function App() {
+  return (
+    <Suspense fallback={<Mensaje titulo="Cargando…" />}>
+      <AppInterna />
+    </Suspense>
+  )
+}
+
+function AppInterna() {
   const auth = useAuth()
   const login = useVerLogin()
 
