@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import BotonCompendio from '../components/salones/BotonCompendio'
 import InformeDialogo from '../components/evaluaciones/InformeDialogo'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -89,11 +90,12 @@ export default function ArchivoCiclos({ archivados }) {
                     const abre = abierto === salon.id || Boolean(texto && estudiantes.length)
                     return (
                       <li key={salon.id} className="rounded-xl border border-slate-200">
+                        <div className="flex flex-wrap items-center gap-2 pr-3">
                         <button
                           type="button"
                           aria-expanded={abre}
                           onClick={() => setAbierto(abierto === salon.id ? null : salon.id)}
-                          className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left"
+                          className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 px-4 py-3 text-left"
                         >
                           <span>
                             <span className="block text-sm font-medium text-slate-900">{salon.nombre}</span>
@@ -106,6 +108,8 @@ export default function ArchivoCiclos({ archivados }) {
                             <Icon name={abre ? 'up' : 'down'} className="h-4 w-4" />
                           </span>
                         </button>
+                        <BotonCompendio salon={salon} archivo={alumnos.filter((x) => x.salon_id === salon.id)} variant="ghost" className="px-3 py-1 text-xs" etiqueta="Excel" />
+                        </div>
                         {abre && (
                           <ul className="divide-y divide-slate-100 border-t border-slate-100">
                             {estudiantes.length === 0 ? (

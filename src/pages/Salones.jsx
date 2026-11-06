@@ -7,11 +7,36 @@ import PageHeader from '../components/ui/PageHeader'
 import CerrarCicloModal from '../components/archivo/CerrarCicloModal'
 import SalonDetalle from '../components/salones/SalonDetalle'
 import SalonForm from '../components/salones/SalonForm'
-import SalonesCards from '../components/salones/SalonesCards'
+import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
+import { descargarCompendio } from '../services/compendio'
 import Ayuda from '../components/ui/Ayuda'
 import Tile from '../components/ui/Tile'
 import { SIN_NIVEL, coincideNivel, estados, proximoAFinalizar } from '../lib/salones'
+
+// Fila de filtros tipo botón con el número de salones que dejaría cada opción.
+function Chips({ etiqueta, valor, onCambiar, opciones }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="w-14 shrink-0 pt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{etiqueta}</span>
+      <div role="group" aria-label={`Filtrar por ${etiqueta.toLowerCase()}`} className="flex flex-wrap gap-1.5">
+        {opciones.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={valor === o.value}
+            onClick={() => onCambiar(o.value)}
+            className={`rounded-full border px-3 py-1 text-sm transition ${
+              valor === o.value ? 'border-brand-600 bg-brand-600 text-white' : o.n === 0 ? 'border-slate-200 bg-white text-slate-300' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+            }`}
+          >
+            {o.label} <span className="opacity-70">{o.n}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function Salones({ data, estudiantes, puedeEditar, salonInicialId = null, onVerEstudiante, onVerDocente }) {
   const { salones, niveles, docentes, catalogo, cargando, error, recargar, guardarSalon, cambiarEstado, crearDocente, archivados, archivarSalones } = data
@@ -24,12 +49,11 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [form, setForm] = useState(null) // null = cerrado, { salon } = abierto (salon null = crear)
 
   const texto = busqueda.trim().toLowerCase()
-  const visibles = salones.filter(
-    (s) =>
-      coincideNivel(s, nivel) &&
-      (!estado || s.estado === estado) &&
-      (!texto || `${s.nombre} ${s.codigo} ${s.docente}`.toLowerCase().includes(texto)),
-  )
+  const coincideTexto = (s) => !texto || `${s.nombre} ${s.codigo} ${s.docente}`.toLowerCase().includes(texto)
+  // Los contadores de cada filtro respetan al otro: así se ve cuántos salones habría al elegirlo.
+  const sinEstado = salones.filter((s) => coincideNivel(s, nivel) && coincideTexto(s))
+  const sinNivel = salones.filter((s) => (!estado || s.estado === estado) && coincideTexto(s))
+  const visibles = sinEstado.filter((s) => !estado || s.estado === estado)
 
   const activos = salones.filter((s) => s.estado === 'en_curso').length
   const porFinalizar = salones.filter(proximoAFinalizar).length
@@ -112,23 +136,6 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                   className={`${inputClass} pl-9`}
                 />
               </div>
-              <select value={nivel} onChange={(e) => setNivel(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar por nivel académico">
-                <option value="">Todos los niveles</option>
-                {niveles.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.nombre}
-                  </option>
-                ))}
-                <option value={SIN_NIVEL}>Sin nivel asignado</option>
-              </select>
-              <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar por estado">
-                <option value="">Todos los estados</option>
-                {estados.map((e) => (
-                  <option key={e.value} value={e.value}>
-                    {e.label}
-                  </option>
-                ))}
-              </select>
               <div role="group" aria-label="Forma de ver los salones" className="ml-auto inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
                 {[
                   ['tarjetas', 'Tarjetas'],
@@ -146,6 +153,30 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                 ))}
               </div>
             </div>
+
+            {!cargando && !error && salones.length > 0 && (
+              <div className="space-y-2 border-b border-brand-100 px-4 py-3">
+                <Chips
+                  etiqueta="Nivel"
+                  valor={nivel}
+                  onCambiar={setNivel}
+                  opciones={[
+                    { value: '', label: 'Todos', n: sinNivel.length },
+                    ...niveles.map((n) => ({ value: n.id, label: n.nombre, n: sinNivel.filter((s) => s.nivelId === n.id).length })),
+                    { value: SIN_NIVEL, label: 'Sin nivel', n: sinNivel.filter((s) => !s.nivelId).length },
+                  ]}
+                />
+                <Chips
+                  etiqueta="Estado"
+                  valor={estado}
+                  onCambiar={setEstado}
+                  opciones={[
+                    { value: '', label: 'Todos', n: sinEstado.length },
+                    ...estados.map((e) => ({ value: e.value, label: e.label, n: sinEstado.filter((s) => s.estado === e.value).length })),
+                  ]}
+                />
+              </div>
+            )}
 
             {cargando ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando salones…</p>
@@ -166,7 +197,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
               (vista === 'tabla' ? (
                 <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ) : (
-                <SalonesCards salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
+                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ))
             )}
           </Card>
@@ -177,7 +208,9 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
         <CerrarCicloModal
           finalizados={finalizados}
           ciclosExistentes={ciclosExistentes}
-          onConfirm={async (ids, ciclo) => {
+          onConfirm={async (ids, ciclo, { descargar }) => {
+            // Primero se guardan los Excel: tras archivar, las matrículas se cierran y los informes salen de la copia fija.
+            if (descargar) for (const id of ids) await descargarCompendio(salones.find((s) => s.id === id))
             await archivarSalones(ids, ciclo)
             setCerrandoCiclo(false)
           }}

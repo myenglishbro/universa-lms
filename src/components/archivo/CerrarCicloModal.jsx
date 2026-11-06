@@ -8,6 +8,7 @@ import { formatFecha } from '../../lib/salones'
 export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConfirm, onClose }) {
   const [ciclo, setCiclo] = useState('')
   const [elegidos, setElegidos] = useState(() => new Set(finalizados.map((s) => s.id)))
+  const [descargar, setDescargar] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
@@ -26,7 +27,7 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
     if (elegidos.size === 0) return setError('Elige al menos un salón')
     setGuardando(true)
     try {
-      await onConfirm([...elegidos], ciclo.trim())
+      await onConfirm([...elegidos], ciclo.trim(), { descargar })
     } catch (err) {
       setError(err.message)
       setGuardando(false)
@@ -75,6 +76,14 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
           </ul>
         </fieldset>
 
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-peach-700">
+          <input type="checkbox" className="mt-0.5" checked={descargar} onChange={(e) => setDescargar(e.target.checked)} />
+          <span>
+            <strong>Descargar el Excel (assessment file) de cada salón antes de archivar</strong>
+            <span className="block text-xs">Recomendado: guarda las notas, la asistencia y los comentarios del ciclo en un archivo con la marca de Universa. Tu navegador puede pedir permiso para descargar varios archivos.</span>
+          </span>
+        </label>
+
         <p className="text-xs text-slate-500">
           Las matrículas activas de estos salones quedan cerradas con el motivo «Ciclo cerrado». Solo se archivan salones en estado <em>Finalizado</em>.
         </p>
@@ -88,7 +97,7 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
             Cancelar
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Archivando…' : 'Archivar ciclo'}
+            {guardando ? (descargar ? 'Preparando Excel y archivando…' : 'Archivando…') : 'Archivar ciclo'}
           </Button>
         </div>
       </form>

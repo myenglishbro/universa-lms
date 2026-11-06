@@ -10,6 +10,7 @@ import EjerciciosSalon from '../ejercicios/EjerciciosSalon'
 import EvaluacionesPanel from '../evaluaciones/EvaluacionesPanel'
 import ModulosAdmin from '../evaluaciones/ModulosAdmin'
 import SeguimientoSalon from '../seguimiento/SeguimientoSalon'
+import BotonCompendio from './BotonCompendio'
 import EstadoBadge from './EstadoBadge'
 import MatriculasSalon from './MatriculasSalon'
 import MatriculasSalonAuto from './MatriculasSalonAuto'
@@ -101,6 +102,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
                 <Button variant="secondary" onClick={onEditar}>
                   <Icon name="pencil" className="h-4 w-4" /> Editar salón
                 </Button>
+                <BotonCompendio salon={salon} />
               </div>
             )}
           </div>

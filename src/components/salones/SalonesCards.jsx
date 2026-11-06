@@ -1,6 +1,7 @@
 import Button from '../ui/Button'
 import { Anillo } from '../ui/Anillo'
 import Icon from '../ui/Icon'
+import BotonCompendio from './BotonCompendio'
 import EstadoBadge from './EstadoBadge'
 import { portadaDe } from '../../lib/recursos'
 import { porcentajeAvance } from '../../lib/asistencia'
@@ -85,11 +86,14 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
               <Button variant="ghost" className="px-3 py-1" onClick={() => onVer(s.id)}>
                 Ver salón
               </Button>
-              {puedeEditar && (
-                <Button variant="ghost" className="px-3 py-1" onClick={() => onEditar(s.id)}>
-                  Editar
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                {puedeEditar && <BotonCompendio salon={s} variant="ghost" className="px-3 py-1" etiqueta="Excel" />}
+                {puedeEditar && (
+                  <Button variant="ghost" className="px-3 py-1" onClick={() => onEditar(s.id)}>
+                    Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </li>
         )
