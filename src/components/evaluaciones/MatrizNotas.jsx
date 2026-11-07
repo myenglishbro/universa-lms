@@ -8,6 +8,7 @@ import { descargarInforme } from '../../lib/informeNotas'
 import InformeDialogo from './InformeDialogo'
 import * as servicioReal from '../../services/evaluaciones'
 import CeldaNota from './CeldaNota'
+import FormativeModal from './FormativeModal'
 import ParticipacionModal from './ParticipacionModal'
 
 // Anchos de las columnas fijas (px). Se usan para que queden pegadas a la izquierda al desplazar.
@@ -22,11 +23,15 @@ const aporteTxt = (c) => (c?.aporte == null ? '' : fmtNota(c.aporte))
 function BotonCelda({ celda, evaluacion, alumno, onAbrir }) {
   const est = ESTADOS_CELDA[celda?.estado ?? 'sin_nota']
   const sub =
-    celda?.tipo === 'participacion' && celda.total > 0 && celda.registradas > 0 && celda.puntaje != null
-      ? `${celda.cumplidas}/${celda.total} clases`
-      : celda?.tipo !== 'participacion' && celda?.unidades_total > 1 && celda.puntaje != null
-        ? `${celda.unidades_registradas}/${celda.unidades_total} unid.`
-        : ''
+    celda?.tipo === 'formative'
+      ? celda.provisional
+        ? `avance · ${celda.unidades_registradas}/${celda.unidades_total} unid.${celda.participacion?.aplica ? ` · ${celda.participacion.cumplidas}/${celda.participacion.registradas} clases` : ''}`
+        : `${celda.unidades_total} unid.${celda.participacion?.aplica ? ' + clases' : ''}`
+      : celda?.tipo === 'participacion' && celda.total > 0 && celda.registradas > 0 && celda.puntaje != null
+        ? `${celda.cumplidas}/${celda.total} clases`
+        : celda?.tipo !== 'participacion' && celda?.unidades_total > 1 && celda.puntaje != null
+          ? `${celda.unidades_registradas}/${celda.unidades_total} unid.`
+          : ''
   return (
     <button
       type="button"
@@ -171,6 +176,7 @@ function Tabla({ datos, onAbrir, onInforme }) {
                   <td {...fija('comp', 'bg-white', 'text-slate-800')}>
                     {f.ev.nombre}
                     {f.ev.tipo === 'participacion' && <span className="block text-[10px] text-slate-400">participación por clase</span>}
+                    {f.ev.tipo === 'formative' && <span className="block text-[10px] text-slate-400">3 unidades{Number(f.ev.peso_participacion) > 0 ? ` + ${fmtNota(f.ev.peso_participacion)} % participación` : ''}</span>}
                   </td>
                   <td {...fija('peso', 'bg-white', 'text-right text-slate-600')}>{fmtNota(f.ev.peso)}</td>
                   {alumnos.map((a) => {
@@ -382,7 +388,9 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       setFallo(`No se pudo generar el informe: ${e.message}`)
     }
   }
-  const Editor = editor?.evaluacion.tipo === 'participacion' ? ParticipacionModal : CeldaNota
+  const Editor = editor?.evaluacion.tipo === 'participacion' ? ParticipacionModal : editor?.evaluacion.tipo === 'formative' ? FormativeModal : CeldaNota
+  // La celda se lee de los datos vigentes (no del clic) para que el resumen del Formative se actualice al guardar.
+  const celdaEditor = editor ? datos.alumnos.find((x) => x.alumno_id === editor.alumno.alumno_id)?.celdas[editor.evaluacion.id] : undefined
 
   return (
     <div className="space-y-3">
@@ -416,6 +424,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           evaluacionId={editor.evaluacion.id}
           alumnoId={editor.alumno.alumno_id}
           titulo={`${editor.alumno.nombre} · ${editor.evaluacion.modulo} · ${editor.evaluacion.nombre}`}
+          celda={celdaEditor}
           servicio={servicio}
           onClose={() => setEditor(null)}
           onCambio={recargar}

@@ -2,19 +2,26 @@ import { useCallback } from 'react'
 import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import useCarga from '../../hooks/useCarga'
-import { fmtNota, textoFaltan } from '../../lib/evaluaciones'
+import { etiquetaUnidad, fmtNota, textoFaltan } from '../../lib/evaluaciones'
 import { descargarInforme } from '../../lib/informeNotas'
 import Button from '../ui/Button'
+import ComoMeEvaluan from './ComoMeEvaluan'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
 // Una nota publicada. En participación se explica con las clases; en lo demás, con el comentario del docente.
-function Nota({ n }) {
+function Nota({ n, tipo }) {
+  const unidad = etiquetaUnidad(n.unidad, tipo)
   return (
     <div className="mt-0.5 text-xs text-slate-600">
-      {n.unidad ? `${n.unidad}: ` : ''}
+      {unidad ? `${unidad}: ` : ''}
       <strong className="text-slate-900">{fmtNota(n.puntaje)}</strong>
       {n.participacion && <span className="ml-1">({n.participacion.cumplidas} de {n.participacion.total} clases con participación)</span>}
+      {Array.isArray(n.criterios) && n.criterios.length > 0 && (
+        <span className="ml-1 text-slate-500">
+          ({n.criterios.map((c) => `${c.criterio} ${fmtNota(c.puntaje)}/${fmtNota(c.max)}`).join(' · ')})
+        </span>
+      )}
       {n.corregida && <span className="ml-1 text-slate-400">(corregida)</span>}
       {n.fecha && <span className="ml-1 text-slate-400">· {formatFecha(String(n.fecha).slice(0, 10))}</span>}
       {n.comentario && <p className="mt-0.5 rounded bg-slate-50 px-2 py-1 text-slate-700">{n.comentario}</p>}
@@ -65,9 +72,12 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-slate-900">Mis calificaciones</h2>
         {datos && datos.modulos.length > 0 && (
-          <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => descargarInforme(datos)}>
-            Descargar informe (PDF)
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ComoMeEvaluan modulos={datos.modulos} />
+            <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => descargarInforme(datos)}>
+              Descargar informe (PDF)
+            </Button>
+          </div>
         )}
       </div>
       {error ? (
@@ -133,7 +143,10 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
                         <p className="text-sm font-medium text-slate-900">
                           {e.nombre} <span className="text-xs font-normal text-slate-500">peso {fmtNota(e.peso)}</span>
                         </p>
-                        {e.notas.length === 0 ? <p className="text-xs text-slate-400">Sin nota publicada.</p> : e.notas.map((n) => <Nota key={n.unidad} n={n} />)}
+                        {e.tipo === 'formative' && Number(e.peso_participacion) > 0 && (
+                          <p className="text-[11px] text-slate-400">Promedio de 3 unidades + {fmtNota(e.peso_participacion)} % de participación por clase.</p>
+                        )}
+                        {e.notas.length === 0 ? <p className="text-xs text-slate-400">Sin nota publicada.</p> : e.notas.map((n) => <Nota key={n.unidad} n={n} tipo={e.tipo} />)}
                       </li>
                     ))}
                   </ul>

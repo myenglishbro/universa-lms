@@ -1,5 +1,6 @@
 // Compendio Excel de un salón (ASSESSMENT FILE): ficha, rendimiento del salón (con gráficos), una hoja por estudiante (grades chart + notas por módulo), asistencia, detalle de notas y rúbricas.
 // Se arma en el navegador con ExcelJS (se carga solo al descargar). Las sumas y los porcentajes quedan como fórmulas vivas.
+import { etiquetaUnidad } from './evaluaciones'
 import { nivelDesempeno } from './informeNotas'
 import { formatFecha, formatHorario } from './salones'
 import { graficoBarras, PALETA } from './compendioGraficos'
@@ -584,7 +585,7 @@ function hojaDetalle(wb, logoId, d) {
           celda(ws.getCell(f, 3), m.nombre)
           celda(ws.getCell(f, 4), e.nombre)
           celda(ws.getCell(f, 5), e.tipo ?? '')
-          celda(ws.getCell(f, 6), n.unidad || '—', { alinear: 'center' })
+          celda(ws.getCell(f, 6), etiquetaUnidad(n.unidad, e.tipo) || '—', { alinear: 'center' })
           celda(ws.getCell(f, 7), num(n.puntaje), { alinear: 'center', formato: '0.0', negrita: true })
           celda(ws.getCell(f, 8), n.fecha ? formatFecha(String(n.fecha).slice(0, 10)) : '', { alinear: 'center' })
           celda(ws.getCell(f, 9), n.comentario ?? '')

@@ -44,7 +44,7 @@ function PlantillaForm({ niveles, onClose, onSave }) {
 function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
   const [escala, setEscala] = useState(String(version.escala_puntos))
   const [notas, setNotas] = useState(version.notas ?? '')
-  const [comps, setComps] = useState(version.componentes.map((c) => ({ nombre: c.nombre, tipo: c.tipo, peso: String(c.peso), rubrica_id: c.rubrica_id ?? '', peso_final: c.peso_final != null ? String(c.peso_final) : '', nombre_final: c.nombre_final ?? '' })))
+  const [comps, setComps] = useState(version.componentes.map((c) => ({ nombre: c.nombre, tipo: c.tipo, peso: String(c.peso), rubrica_id: c.rubrica_id ?? '', peso_final: c.peso_final != null ? String(c.peso_final) : '', nombre_final: c.nombre_final ?? '', peso_participacion: c.peso_participacion != null ? String(c.peso_participacion) : '20' })))
   const [conFinal, setConFinal] = useState(version.componentes.some((c) => c.peso_final != null))
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -65,7 +65,7 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
             await onSave({
               escala_puntos: Number(escala),
               notas,
-              componentes: comps.map((c) => ({ nombre: c.nombre, tipo: c.tipo, peso: Number(c.peso), rubrica_id: c.rubrica_id || null, peso_final: conFinal ? Number(c.peso_final) : null, nombre_final: conFinal ? c.nombre_final || null : null })),
+              componentes: comps.map((c) => ({ nombre: c.nombre, tipo: c.tipo, peso: Number(c.peso), rubrica_id: c.rubrica_id || null, peso_final: conFinal ? Number(c.peso_final) : null, nombre_final: conFinal ? c.nombre_final || null : null, peso_participacion: c.tipo === 'formative' ? Number(c.peso_participacion === '' ? 20 : c.peso_participacion) : null })),
             })
           } catch (err) {
             setError(err.message)
@@ -106,6 +106,13 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
               <Button type="button" variant="ghost" className="px-2 py-1 text-xs sm:order-7" onClick={() => setComps((l) => l.filter((_, j) => j !== i))}>
                 Quitar
               </Button>
+              {c.tipo === 'formative' && (
+                <label className="col-span-full flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-900 sm:order-8">
+                  Participación por clase dentro del Formative:
+                  <input aria-label={`Porcentaje de participación del componente ${i + 1}`} type="number" min="0" max="100" step="1" className={`${inputClass} w-20 text-right`} value={c.peso_participacion} onChange={(e) => set(i, { peso_participacion: e.target.value })} />
+                  % · el {100 - (Number(c.peso_participacion) || 0)} % restante es el promedio de las 3 unidades (5 criterios cada una). Usa la rúbrica «Formative Assessment».
+                </label>
+              )}
             </li>
           ))}
         </ul>
@@ -113,7 +120,7 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
           <input type="checkbox" checked={conFinal} onChange={(e) => setConFinal(e.target.checked)} />
           El módulo final (último módulo del nivel) usa pesos y nombres distintos
         </label>
-        <Button type="button" variant="secondary" onClick={() => setComps((l) => [...l, { nombre: '', tipo: 'otro', peso: '', rubrica_id: '', peso_final: '', nombre_final: '' }])}>
+        <Button type="button" variant="secondary" onClick={() => setComps((l) => [...l, { nombre: '', tipo: 'otro', peso: '', rubrica_id: '', peso_final: '', nombre_final: '', peso_participacion: '20' }])}>
           Agregar componente
         </Button>
         <p className={`text-sm ${ok ? 'text-brand-700' : 'text-peach-700'}`} role="status">
@@ -171,7 +178,9 @@ function VersionVista({ plantilla, version, rubricas, onClose }) {
                       {c.nombre_final && c.nombre_final !== c.nombre && <span className="ml-1 text-xs text-slate-400">({c.nombre_final})</span>}
                     </td>
                   )}
-                  <td className="px-3 py-2 text-slate-600">{c.rubrica_id ? rubrica(c.rubrica_id) : c.tipo === 'participacion' ? 'Participación por clase' : '—'}</td>
+                  <td className="px-3 py-2 text-slate-600">{c.rubrica_id ? rubrica(c.rubrica_id) : c.tipo === 'participacion' ? 'Participación por clase' : '—'}
+                    {c.tipo === 'formative' && <span className="block text-xs text-slate-400">3 unidades + {fmtNota(c.peso_participacion ?? 0)} % participación</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

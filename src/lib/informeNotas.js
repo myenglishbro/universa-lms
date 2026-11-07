@@ -27,7 +27,9 @@ export function nivelDesempeno(nota) {
 }
 
 // Nota de un componente en un módulo: promedio de sus notas publicadas (null si no hay).
-const notaComponente = (e) => {
+// El Formative combina unidades y participación con un porcentaje: su nota viene calculada del módulo y solo existe cuando está completo.
+const notaComponente = (e, m) => {
+  if (e?.tipo === 'formative') return m?.componentes?.find((c) => c.nombre === e.nombre)?.nota ?? null
   const n = e?.notas ?? []
   return n.length ? n.reduce((s, k) => s + Number(k.puntaje), 0) / n.length : null
 }
@@ -60,7 +62,7 @@ function matriz(cols) {
   const cab = cols.map((m, i) => `<th class="n">M${i + 1} (${pc}%)</th>`).join('')
   const filas = nombres
     .map((n) => {
-      const vals = cols.map((m) => notaComponente((m.evaluaciones ?? []).find((e) => e.nombre === n)))
+      const vals = cols.map((m) => notaComponente((m.evaluaciones ?? []).find((e) => e.nombre === n), m))
       const ok = vals.filter((v) => v != null)
       const prom = ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null
       const celdas = vals.map((v) => `<td class="n">${v == null ? vacio : `<strong>${fmtNota(v)}</strong>`}</td>`).join('')
@@ -113,6 +115,14 @@ td{padding:3.5px 10px;border-bottom:1px solid #ece8f7;vertical-align:top}
 .firmas{display:grid;grid-template-columns:1fr 1fr;gap:.6in;margin:.22in .5in 0}
 .firmas div{border-top:1px solid #1b1340;padding-top:4px;font-size:11px;text-align:center;font-weight:700}.firmas span{display:block;font-weight:400;color:#7a72a3;font-size:10px}
 .pie{margin:.12in .5in 0;color:#7a72a3;font-size:9.5px}
+.nota-f{margin:.1in 0 0;color:#6b5fa0;font-size:10px}
+.form td.n,.form th.n{width:78px}
+.form .tot td{background:#f5f2fc;font-weight:700}
+.form .part td{background:#fff8f1}
+.hoja .resumen-f{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:.1in}
+.hoja .resumen-f div{border:1px solid #e1daf3;border-radius:10px;padding:6px 10px}
+.hoja .resumen-f small{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6b5fa0}
+.hoja .resumen-f b{font-size:18px;color:#410099}
 @media print{body{background:#fff}.hoja{margin:0}}
 `
 
@@ -206,13 +216,94 @@ const conAuto = (d, manual) => {
   return r
 }
 
+// Puntos de un criterio: «16/20».
+const pts = (c) => (c ? `${fmtNota(c.puntaje)}<span class="mut">/${fmtNota(c.max)}</span>` : vacio)
+const promedioDe = (vs) => {
+  const ok = vs.filter((v) => v != null && !Number.isNaN(v))
+  return ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null
+}
+
+// Segunda hoja del ciclo: el Formative Assessment unidad por unidad, con sus 5 habilidades, la participación y la nota resultante.
+// Solo existe si algún módulo del ciclo usa el Formative de unidades y tiene alguna nota publicada.
+function hojaFormative(d, h) {
+  const mods = h.mods
+    .map((m) => ({ m, e: (m.evaluaciones ?? []).find((x) => x.tipo === 'formative') }))
+    .filter(({ e }) => e && (e.notas ?? []).length > 0)
+  if (!mods.length) return ''
+
+  const unidadesDe = (e) => {
+    const base = ['Unit 1', 'Unit 2', 'Unit 3']
+    for (const n of e.notas) if (n.unidad && !base.includes(n.unidad)) base.push(n.unidad)
+    return base
+  }
+  const habilidades = []
+  for (const { e } of mods) for (const n of e.notas) for (const c of n.criterios ?? []) if (!habilidades.includes(c.criterio)) habilidades.push(c.criterio)
+  const porHabilidad = Object.fromEntries(habilidades.map((k) => [k, []]))
+
+  const bloques = mods
+    .map(({ m, e }) => {
+      const unidades = unidadesDe(e)
+      const nota = (u) => e.notas.find((n) => n.unidad === u)
+      const part = e.notas.find((n) => n.unidad === '')
+      const pp = Number(e.peso_participacion) || 0
+      const cab = unidades.map((u) => `<th class="n">${esc(u)}</th>`).join('')
+      const filas = habilidades
+        .map((k) => {
+          const vals = unidades.map((u) => (nota(u)?.criterios ?? []).find((c) => c.criterio === k))
+          for (const v of vals) if (v) porHabilidad[k].push((Number(v.puntaje) / Number(v.max)) * 100)
+          const prom = promedioDe(vals.map((v) => (v ? Number(v.puntaje) : null)))
+          return `<tr><td>${esc(k)}</td>${vals.map((v) => `<td class="n">${pts(v)}</td>`).join('')}<td class="n">${prom == null ? vacio : `<strong>${fmtNota(prom)}</strong>`}</td></tr>`
+        })
+        .join('')
+      const totales = unidades.map((u) => {
+        const cs = nota(u)?.criterios ?? []
+        return cs.length ? { suma: cs.reduce((s, c) => s + Number(c.puntaje), 0), max: cs.reduce((s, c) => s + Number(c.max), 0) } : null
+      })
+      const promU = promedioDe(unidades.map((u) => (nota(u) ? Number(nota(u).puntaje) : null)))
+      const filaTotal = `<tr class="tot"><td>Unit total</td>${totales.map((t) => `<td class="n">${t ? `${fmtNota(t.suma)}<span class="mut">/${fmtNota(t.max)}</span>` : vacio}</td>`).join('')}<td class="n">${promU == null ? vacio : `${fmtNota(promU)}<span class="mut"> /100</span>`}</td></tr>`
+      const cp = part?.participacion
+      const filaPart =
+        pp > 0
+          ? `<tr class="part"><td colspan="${unidades.length + 1}">Class participation (${fmtNota(pp)}%): ${cp ? `${cp.cumplidas} of ${cp.total} classes` : '<span class="mut">pending</span>'}</td><td class="n">${part ? `<strong>${fmtNota(part.puntaje)}</strong>` : vacio}</td></tr>`
+          : ''
+      const final = notaComponente(e, m)
+      const filaFinal = `<tr class="tot"><td colspan="${unidades.length + 1}">Formative score (/100)${final == null ? ' — in progress' : ''}</td><td class="n">${final == null ? vacio : fmtNota(final)}</td></tr>`
+      return `<h2>${esc(m.nombre)} · Formative Assessment</h2><table class="form"><thead><tr><th>Skill (points)</th>${cab}<th class="n">Average</th></tr></thead><tbody>${filas}${filaTotal}${filaPart}${filaFinal}</tbody></table>`
+    })
+    .join('')
+
+  const perfil = habilidades
+    .map((k) => {
+      const p = promedioDe(porHabilidad[k])
+      return `<tr><td>${esc(k)}</td><td class="n">${p == null ? vacio : `<strong>${fmtNota(p)}</strong>`}</td><td><div class="barra"><i style="width:${p == null ? 0 : Math.max(0, Math.min(100, p))}%"></i></div></td></tr>`
+    })
+    .join('')
+  const pps = mods.map(({ e }) => Number(e.peso_participacion) || 0)
+  const formula = pps.some((p) => p > 0)
+    ? `Formative score = ${100 - Math.max(...pps)}% average of the three units + ${Math.max(...pps)}% class participation.`
+    : 'Formative score = average of the three units.'
+  const titulo = h.ciclo != null ? `CYCLE ${String(h.ciclo).padStart(2, '0')}` : 'GRADES'
+
+  return `<div class="hoja">
+<div class="band"><img src="${origen()}/landing/logo.png" alt="Universa"><b>Formative Assessment · ${titulo}</b></div>
+<div class="sub1">${esc(d.salon)}${d.codigo ? ` · ${esc(d.codigo)}` : ''}</div>
+<div class="in">
+<h1>${esc(d.estudiante)}</h1>
+${bloques}
+<h2>Skills profile (average, % of maximum)</h2>
+<table><tbody>${perfil}</tbody></table>
+<p class="nota-f">${formula} Each unit is the sum of its five skills (20 points each). Only published grades are shown; a part that has not been graded is never counted as zero.</p>
+</div>
+</div>`
+}
+
 // HTML autocontenido del informe: una hoja Letter por ciclo (Report Card), solo lo publicado.
 // `extra` (opcional, lo completa quien emite): idEstudiante, nivelCefr, horario, periodo, programadas, presentes, tardanzas,
 // ausencias, justificadas, asistencia (%), skills{uso,listening,writing,speaking,reading}, ranking, desempeno, estado, comentario, siguiente.
 export function htmlInforme(d, manual = {}) {
   const extra = conAuto(d, manual)
   const h = ciclosDelInforme(d).find((x) => String(x.ciclo) === String(extra.ciclo)) ?? ciclosDelInforme(d)[0]
-  const hojas = hojaCiclo(d, h, extra)
+  const hojas = hojaCiclo(d, h, extra) + hojaFormative(d, h)
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(nombreInforme(d))}</title><style>${CSS}</style></head><body>${hojas}</body></html>`
 }
 

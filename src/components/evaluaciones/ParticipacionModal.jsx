@@ -76,7 +76,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {evaluacion.modulo} · participación por clase · peso {fmtNota(evaluacion.peso)} puntos. Marca solo las clases en las que el estudiante cumplió con su participación; la asistencia no se usa aquí.
+        {evaluacion.modulo} · participación por clase{evaluacion.tipo === 'formative' ? ' (parte del Formative)' : ` · peso ${fmtNota(evaluacion.peso)} puntos`}. Marca solo las clases en las que el estudiante cumplió con su participación; la asistencia no se usa aquí.
       </p>
 
       {total === 0 ? (
@@ -127,8 +127,14 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
         </p>
         {completa ? (
           <p>
-            {cumplidas}/{total} × 20 = <strong>{fmtNota(Math.round((cumplidas / total) * 2000) / 100)}/20</strong> · equivalente <strong>{fmtNota(nota)}/100</strong> · aporte al módulo{' '}
-            <strong>{fmtNota(aporte)} de {fmtNota(evaluacion.peso)} puntos</strong>
+            {cumplidas}/{total} × 20 = <strong>{fmtNota(Math.round((cumplidas / total) * 2000) / 100)}/20</strong> · equivalente <strong>{fmtNota(nota)}/100</strong>
+            {evaluacion.tipo === 'formative' ? (
+              <> · se combina con el promedio de las unidades en la nota del Formative</>
+            ) : (
+              <>
+                {' '}· aporte al módulo <strong>{fmtNota(aporte)} de {fmtNota(evaluacion.peso)} puntos</strong>
+              </>
+            )}
           </p>
         ) : (
           <p className="text-brand-800">
@@ -187,8 +193,8 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   )
 }
 
-// Formative Assessment = participación por clase: una casilla por cada clase del módulo, que se completa de a poco.
-export default function ParticipacionModal({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
+// Contenido (sin ventana): una casilla por cada clase del módulo, que se completa de a poco.
+export function ContenidoParticipacion({ evaluacionId, alumnoId, servicio = servicioReal, onClose, onCambio }) {
   const cargar = useCallback(() => servicio.participacionDetalle(evaluacionId), [servicio, evaluacionId])
   const detalle = useCarga(cargar, null)
   const [version, setVersion] = useState(0)
@@ -198,17 +204,17 @@ export default function ParticipacionModal({ evaluacionId, alumnoId, titulo, ser
     setVersion((v) => v + 1)
     await onCambio?.()
   }
+  if (detalle.error) return <p className="text-sm text-red-600">No se pudo abrir la participación: {detalle.error}</p>
+  if (detalle.cargando || !detalle.datos) return <p className="py-4 text-sm text-slate-400">Cargando…</p>
+  if (!detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId)) return <p className="text-sm text-slate-500">Este estudiante ya no figura en el salón.</p>
+  return <Formulario key={version} detalle={detalle.datos} alumnoId={alumnoId} servicio={servicio} onCambio={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
+}
+
+// Participación por clase sola (componente «participacion» de versiones anteriores del Grade Chart).
+export default function ParticipacionModal({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
   return (
     <Modal title={titulo} onClose={onClose} wide>
-      {detalle.error ? (
-        <p className="text-sm text-red-600">No se pudo abrir la participación: {detalle.error}</p>
-      ) : detalle.cargando || !detalle.datos ? (
-        <p className="py-4 text-sm text-slate-400">Cargando…</p>
-      ) : !detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId) ? (
-        <p className="text-sm text-slate-500">Este estudiante ya no figura en el salón.</p>
-      ) : (
-        <Formulario key={version} detalle={detalle.datos} alumnoId={alumnoId} servicio={servicio} onCambio={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
-      )}
+      <ContenidoParticipacion evaluacionId={evaluacionId} alumnoId={alumnoId} servicio={servicio} onClose={onClose} onCambio={onCambio} />
     </Modal>
   )
 }

@@ -2,8 +2,8 @@ export const TIPOS_COMPONENTE = [
   { value: 'test', label: 'Test' },
   { value: 'writing', label: 'Writing' },
   { value: 'project', label: 'Project' },
-  { value: 'formative', label: 'Formative (con rúbrica, anterior)' },
-  { value: 'participacion', label: 'Participación por clase' },
+  { value: 'formative', label: 'Formative (3 unidades × 5 criterios + participación)' },
+  { value: 'participacion', label: 'Participación por clase (solo, anterior)' },
   { value: 'spark', label: 'SPARK' },
   { value: 'speaking', label: 'Speaking' },
   { value: 'otro', label: 'Otro' },
@@ -28,10 +28,10 @@ export const fmtNota = (n) => (n == null || n === '' ? '—' : String(Math.round
 // Suma de pesos de una lista de componentes (con tolerancia de decimales).
 export const sumaPesos = (componentes) => Math.round(componentes.reduce((s, c) => s + (Number(c.peso) || 0), 0) * 100) / 100
 
-// Texto de lo que falta en un resultado parcial: «Writing, Formative Assessment (2 de 3 unidades)».
+// Texto de lo que falta en un resultado parcial: «Writing, Formative Assessment (2 de 4 partes)».
 export function textoFaltan(faltan = []) {
   return faltan
-    .map((f) => (f.estado === 'incompleto' ? `${f.nombre} (${f.unidades_publicadas} de ${f.unidades_total} unidades)` : f.nombre))
+    .map((f) => (f.estado === 'incompleto' ? `${f.nombre} (${f.unidades_publicadas} de ${f.unidades_total} partes)` : f.nombre))
     .join(', ')
 }
 
@@ -80,9 +80,27 @@ export const ESTADOS_CELDA = {
   sin_clases: { texto: 'Sin clases asignadas', clase: 'bg-slate-50 text-slate-400' },
 }
 
+// Nota de una unidad del Formative a partir de sus criterios: suma de los 5 criterios y su máximo (p. ej. 85 de 100).
+export function totalCriterios(criterios, valores) {
+  let suma = 0
+  let max = 0
+  let completo = criterios.length > 0
+  for (const c of criterios) {
+    const v = valores?.[c.id]
+    max += Number(c.max_puntaje)
+    if (v === '' || v == null || Number.isNaN(Number(v))) completo = false
+    else suma += Number(v)
+  }
+  return { suma: Math.round(suma * 100) / 100, max, completo }
+}
+
+// Etiqueta de la fila de unidad vacía: en el Formative es la participación por clase.
+export const etiquetaUnidad = (unidad, tipo) => unidad || (tipo === 'formative' ? 'Participación' : '')
+
 // Texto corto de lo que contiene una celda: «80», «5/10 clases», «—».
 export function textoCelda(c) {
   if (!c) return '—'
+  if (c.tipo === 'formative') return c.puntaje != null ? fmtNota(c.puntaje) : '—'
   if (c.tipo === 'participacion') {
     if (c.puntaje != null) return fmtNota(c.puntaje)
     return c.total > 0 && c.registradas > 0 ? `${c.registradas}/${c.total}` : '—'

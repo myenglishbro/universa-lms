@@ -8,7 +8,7 @@ export const listarPlantillas = async () =>
   datos(
     await supabase
       .from('eval_plantillas')
-      .select('id, nombre, descripcion, nivel_id, eval_versiones(id, version, estado, escala_puntos, notas, variante, eval_componentes(id, nombre, tipo, peso, peso_final, nombre_final, orden, rubrica_id))')
+      .select('id, nombre, descripcion, nivel_id, eval_versiones(id, version, estado, escala_puntos, notas, variante, eval_componentes(id, nombre, tipo, peso, peso_final, nombre_final, peso_participacion, orden, rubrica_id))')
       .order('nombre'),
   ).map((p) => ({
     ...p,

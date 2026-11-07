@@ -4,7 +4,7 @@ import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { claveNota, fmtNota, notaRubrica } from '../../lib/evaluaciones'
+import { claveNota, fmtNota, notaRubrica, totalCriterios } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
@@ -52,6 +52,8 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
     return x.puntaje === '' || x.puntaje == null || Number.isNaN(Number(x.puntaje)) ? null : Number(x.puntaje)
   }
   const notaActual = notaDe(unidad)
+  const esFormative = evaluacion.tipo === 'formative'
+  const total = totalCriterios(criterios, ed.valores)
   const notasUnidades = lista.map(notaDe).filter((n) => n != null)
   const promedio = notasUnidades.length ? Math.round((notasUnidades.reduce((s, n) => s + n, 0) / notasUnidades.length) * 100) / 100 : null
   const completa = notasUnidades.length === lista.length
@@ -185,14 +187,21 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status">
         {criterios.length > 0 && (
           <p>
-            Total de la rúbrica: <strong>{notaActual == null ? 'sin completar' : `${fmtNota(notaActual)}/100`}</strong>
+            {esFormative ? `Total de ${unidad || 'la unidad'}` : 'Total de la rúbrica'}:{' '}
+            <strong>{notaActual == null ? `sin completar (${fmtNota(total.suma)} de ${fmtNota(total.max)} hasta ahora)` : `${fmtNota(total.suma)} de ${fmtNota(total.max)}${total.max === 100 ? '' : ` (${fmtNota(notaActual)}/100)`}`}</strong>
           </p>
         )}
-        <p>
-          Aporte al módulo: <strong>{notaActual == null ? '—' : `${fmtNota(aporte(evaluacion.peso, notaActual))} de ${fmtNota(evaluacion.peso)} puntos`}</strong>
-          {unidades.length > 0 && <span className="text-xs"> (con esta unidad sola)</span>}
-        </p>
-        {unidades.length > 1 && (
+        {esFormative ? (
+          <p>
+            Promedio de las unidades con nota: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} de {lista.length} unidades. La nota del Formative combina este promedio con la participación por clase.
+          </p>
+        ) : (
+          <p>
+            Aporte al módulo: <strong>{notaActual == null ? '—' : `${fmtNota(aporte(evaluacion.peso, notaActual))} de ${fmtNota(evaluacion.peso)} puntos`}</strong>
+            {unidades.length > 0 && <span className="text-xs"> (con esta unidad sola)</span>}
+          </p>
+        )}
+        {!esFormative && unidades.length > 1 && (
           <p>
             Resultado acumulado del componente: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} de {lista.length} unidades con nota
             {completa && promedio != null && <> · aporte {fmtNota(aporte(evaluacion.peso, promedio))} de {fmtNota(evaluacion.peso)}</>}
@@ -286,8 +295,8 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   )
 }
 
-// Editor de una celda de la matriz (un estudiante en una evaluación): nota directa o rúbrica, por unidad si corresponde.
-export default function CeldaNota({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
+// Contenido del editor (sin ventana): lo usan la ficha de una celda y la ficha del Formative (pestaña «Unidades»).
+export function ContenidoCelda({ evaluacionId, alumnoId, servicio = servicioReal, onClose, onCambio }) {
   const cargar = useCallback(() => servicio.detalleEvaluacion(evaluacionId), [servicio, evaluacionId])
   const detalle = useCarga(cargar, null)
   const [version, setVersion] = useState(0)
@@ -297,17 +306,17 @@ export default function CeldaNota({ evaluacionId, alumnoId, titulo, servicio = s
     setVersion((v) => v + 1)
     await onCambio?.()
   }
+  if (detalle.error) return <p className="text-sm text-red-600">No se pudo abrir la evaluación: {detalle.error}</p>
+  if (detalle.cargando || !detalle.datos) return <p className="py-4 text-sm text-slate-400">Cargando…</p>
+  if (!detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId)) return <p className="text-sm text-slate-500">Este estudiante ya no figura en el salón.</p>
+  return <Formulario key={version} detalle={detalle.datos} alumnoId={alumnoId} servicio={servicio} onCambio={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
+}
+
+// Editor de una celda de la matriz (un estudiante en una evaluación): nota directa o rúbrica, por unidad si corresponde.
+export default function CeldaNota({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
   return (
     <Modal title={titulo} onClose={onClose} wide>
-      {detalle.error ? (
-        <p className="text-sm text-red-600">No se pudo abrir la evaluación: {detalle.error}</p>
-      ) : detalle.cargando || !detalle.datos ? (
-        <p className="py-4 text-sm text-slate-400">Cargando…</p>
-      ) : !detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId) ? (
-        <p className="text-sm text-slate-500">Este estudiante ya no figura en el salón.</p>
-      ) : (
-        <Formulario key={version} detalle={detalle.datos} alumnoId={alumnoId} servicio={servicio} onCambio={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
-      )}
+      <ContenidoCelda evaluacionId={evaluacionId} alumnoId={alumnoId} servicio={servicio} onClose={onClose} onCambio={onCambio} />
     </Modal>
   )
 }

@@ -110,7 +110,7 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
               <th className="px-3 py-2">Estudiante</th>
               {criterios.length > 0 ? criterios.map((c) => <th key={c.id} className="px-2 py-2 text-right">{c.nombre} <span className="font-normal text-slate-400">/{c.max_puntaje}</span></th>) : <th className="px-2 py-2 text-right">Nota (0–100)</th>}
               <th className="px-3 py-2 text-right">Total /100</th>
-              <th className="px-3 py-2 text-right">Aporte</th>
+              <th className="px-3 py-2 text-right">{evaluacion.tipo === 'formative' ? 'Unidad' : 'Aporte'}</th>
               <th className="px-3 py-2">Estado</th>
             </tr>
           </thead>
@@ -159,7 +159,7 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
                     </td>
                   )}
                   <td className="px-3 py-2 text-right font-semibold text-slate-900">{fmtNota(n)}</td>
-                  <td className="px-3 py-2 text-right text-slate-600">{n == null ? '—' : fmtNota((Number(evaluacion.peso) * n) / 100)}</td>
+                  <td className="px-3 py-2 text-right text-slate-600">{n == null ? '—' : evaluacion.tipo === 'formative' ? (u || '—') : fmtNota((Number(evaluacion.peso) * n) / 100)}</td>
                   <td className="px-3 py-2">
                     {bloqueada ? <Badge color="brand">Publicada</Badge> : filaDe(a) && !cambiada(a) ? <Badge color="peach">Borrador</Badge> : cambiada(a) ? <Badge color="peach">Sin guardar</Badge> : <Badge color="slate">Sin nota</Badge>}
                   </td>
@@ -320,8 +320,12 @@ function Captura({ datos, servicio, onCambio }) {
   const ev = modulo?.evaluaciones.find((e) => e.id === evalId) ?? modulo?.evaluaciones[0]
   const [unidad, setUnidad] = useState('')
   if (!modulo) return <p className="text-sm text-slate-500">No hay componentes para registrar.</p>
-  const unidades = ev.unidades ?? []
+  // En el Formative la participación por clase es una «parte» más, junto a las 3 unidades.
+  const PARTE_PARTICIPACION = '__participacion'
+  const conParticipacion = ev.tipo === 'formative' && Number(ev.peso_participacion) > 0
+  const unidades = [...(ev.unidades ?? []), ...(conParticipacion ? [PARTE_PARTICIPACION] : [])]
   const u = unidades.includes(unidad) ? unidad : (unidades[0] ?? '')
+  const esParticipacion = ev.tipo === 'participacion' || u === PARTE_PARTICIPACION
   const sel = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm'
   return (
     <Card className="space-y-3 p-4">
@@ -344,16 +348,16 @@ function Captura({ datos, servicio, onCambio }) {
         </label>
         {unidades.length > 0 && ev.tipo !== 'participacion' && (
           <label className="text-xs text-slate-600">
-            Unidad
+            {conParticipacion ? 'Parte' : 'Unidad'}
             <select aria-label="Unidad a registrar" className={`${sel} mt-1 block`} value={u} onChange={(e) => setUnidad(e.target.value)}>
               {unidades.map((x) => (
-                <option key={x} value={x}>{x}</option>
+                <option key={x} value={x}>{x === PARTE_PARTICIPACION ? 'Participación por clase' : x}</option>
               ))}
             </select>
           </label>
         )}
       </div>
-      {ev.tipo === 'participacion' ? (
+      {esParticipacion ? (
         <CapturaParticipacion key={ev.id} evaluacionId={ev.id} servicio={servicio} onCambio={onCambio} />
       ) : (
         <CapturaNotas key={`${ev.id}|${u}`} evaluacionId={ev.id} unidad={u} servicio={servicio} onCambio={onCambio} />
