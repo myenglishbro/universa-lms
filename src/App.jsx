@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import useAuth from './hooks/useAuth'
 import useEstudiantes from './hooks/useEstudiantes'
 import usePaquetes from './hooks/usePaquetes'
 import useSalones from './hooks/useSalones'
-import { pantallaInicial, puedeVer } from './lib/permisos'
+import { PANTALLAS_PANEL, pantallaInicial, puedeVer } from './lib/permisos'
 import { supabase } from './lib/supabase'
 import Mensaje from './pages/Mensaje'
 
@@ -21,7 +22,6 @@ const Feriados = lazy(() => import('./pages/Feriados'))
 const Registros = lazy(() => import('./pages/Registros'))
 const ZonasAdmin = lazy(() => import('./pages/ZonasAdmin'))
 const Frecuencias = lazy(() => import('./pages/Frecuencias'))
-const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/Login'))
 const Paquetes = lazy(() => import('./pages/Paquetes'))
 const Salones = lazy(() => import('./pages/Salones'))
@@ -32,11 +32,17 @@ const UsuariosPersonal = lazy(() => import('./pages/UsuariosPersonal'))
 const USAN_ESTUDIANTES = ['salones', 'estudiantes', 'paquetes', 'agenda']
 const USAN_PAQUETES = ['estudiantes', 'paquetes', 'agenda', 'docentes']
 
-// Navegación por estado: suficiente por ahora. Si hacen falta URLs reales, se evaluará react-router.
-function Panel({ auth, vistas, onCambiarVista }) {
-  const [page, setPage] = useState(() => pantallaInicial(auth.rol))
-  // Elemento a mostrar en detalle al llegar desde otra pantalla (dashboard, agenda, fichas…).
-  const [abierto, setAbierto] = useState({ salon: null, paquete: null, estudiante: null, docente: null })
+const SIN_ABIERTO = { salon: null, paquete: null, estudiante: null, docente: null }
+
+// La pantalla sale de la URL (/panel/estudiantes). El elemento que se abre en detalle al llegar desde otra pantalla (dashboard, agenda,
+// fichas…) viaja en el estado de la navegación: no ensucia la URL y sobrevive a recargar y a «atrás».
+function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const slug = useParams()['*']?.split('/')[0]
+  const permitida = PANTALLAS_PANEL.includes(slug) && puedeVer(auth.rol, slug)
+  const page = permitida ? slug : pantallaInicial(auth.rol)
+  const abierto = { ...SIN_ABIERTO, ...location.state?.abierto }
   const admin = auth.rol === 'admin'
   const data = useSalones()
   // Los hooks piden sus datos la primera vez que `activo` es true y los conservan: volver a una pantalla no los descarga de nuevo.
@@ -48,16 +54,19 @@ function Panel({ auth, vistas, onCambiarVista }) {
   const usuario = { email: auth.session.user.email, rol: auth.rol }
   const ve = (pantalla) => page === pantalla && puedeVer(auth.rol, pantalla) // defensa extra: una pantalla no permitida nunca se pinta
 
+  const irA = (pantalla, abierto) => {
+    const destino = `/panel/${pantalla}`
+    // Volver a pulsar la misma pantalla no apila entradas en el historial.
+    navigate(destino, { state: abierto ? { abierto } : null, replace: location.pathname === destino })
+  }
   const navegar = (id) => {
     if (!puedeVer(auth.rol, id)) return
-    setAbierto({ salon: null, paquete: null, estudiante: null, docente: null })
-    setPage(id)
+    irA(id)
     if (id === 'salones' || id === 'estudiantes') estudiantes.recargar() // trae altas hechas en otra pantalla o por otra persona
   }
   const ir = (pagina, clave) => (id) => {
     if (!puedeVer(auth.rol, pagina)) return // p. ej. comercial no tiene la ficha del salón: el enlace no hace nada
-    setAbierto({ salon: null, paquete: null, estudiante: null, docente: null, [clave]: id })
-    setPage(pagina)
+    irA(pagina, { [clave]: id })
   }
   const verSalon = ir('salones', 'salon')
   const verPaquete = ir('paquetes', 'paquete')
@@ -68,8 +77,10 @@ function Panel({ auth, vistas, onCambiarVista }) {
   // Los estudiantes se leen en dos hooks (lista de paquetes y matrículas): se refrescan juntos.
   const recargarPersonas = () => Promise.all([estudiantes.recargar(), paquetes.recargar(), data.recargar()])
 
+  if (!permitida) return <Navigate to={`/panel/${page}`} replace />
+
   return (
-    <Layout current={page} onNavigate={navegar} usuario={usuario} onSignOut={auth.signOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista}>
+    <Layout base="/panel" current={page} onNavigate={navegar} usuario={usuario} onSignOut={onSignOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista}>
       <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
       {ve('dashboard') && <Dashboard data={data} onVerSalon={verSalon} />}
       {ve('agenda') && (
@@ -154,46 +165,56 @@ const leerVista = () => {
     return null
   }
 }
-
-// Una cuenta puede tener varias vistas (administración/comercial, docente, estudiante) y cambiar entre ellas sin cerrar sesión.
-function Vistas({ auth }) {
-  const vistas = [...(auth.rol ? ['gestion'] : []), ...(auth.portal.includes('docente') ? ['docente'] : []), ...(auth.portal.includes('estudiante') ? ['estudiante'] : [])]
-  const [elegida, setElegida] = useState(leerVista)
-  const vista = vistas.includes(elegida) ? elegida : vistas[0]
-  const cambiar = (v) => {
-    setElegida(v)
-    try {
-      localStorage.setItem(VISTA_KEY, v)
-    } catch {
-      /* sin almacenamiento: la vista solo dura esta sesión */
-    }
+const guardarVista = (v) => {
+  try {
+    localStorage.setItem(VISTA_KEY, v)
+  } catch {
+    /* sin almacenamiento: la vista solo dura esta sesión */
   }
-  if (vista === 'gestion') return <Panel auth={auth} vistas={vistas} onCambiarVista={cambiar} />
-  return <PortalApp key={vista} vista={vista} email={auth.session.user.email} vistas={vistas} onCambiarVista={cambiar} onSignOut={auth.signOut} onRecargar={auth.recargar} />
+}
+const RUTA_VISTA = { gestion: '/panel', docente: '/docente', estudiante: '/estudiante' }
+const PROTEGIDAS = ['/panel/*', '/docente/*', '/estudiante/*', '/postulante/*']
+
+// Enlaces antiguos con hash (#ingresar, #registro-profesor) → su URL real. Cualquier otro hash (p. ej. los de Supabase) no se toca.
+const RUTA_DE_HASH = { '#ingresar': '/ingresar', '#registro-profesor': '/registro-profesor' }
+function useHashAntiguo() {
+  const navigate = useNavigate()
+  const { hash } = useLocation()
+  useEffect(() => {
+    const destino = RUTA_DE_HASH[hash]
+    if (destino) navigate(destino, { replace: true })
+  }, [hash, navigate])
 }
 
-const HASH_LOGIN = '#ingresar'
-const HASH_REGISTRO = '#registro-profesor' // enlace que se les envía a los profesores para registrarse
-const esHashAcceso = () => window.location.hash === HASH_LOGIN || window.location.hash === HASH_REGISTRO
+// Tras entrar: vuelve a la página que se pidió (si se llegó desde un enlace protegido) o a la inicial de la vista preferida.
+function Inicio({ vistas }) {
+  const { state } = useLocation()
+  const preferida = leerVista()
+  const vista = vistas.includes(preferida) ? preferida : vistas[0]
+  const from = state?.from
+  return <Navigate to={from ? from.pathname + from.search : RUTA_VISTA[vista]} replace />
+}
 
-// Quien no ha iniciado sesión ve la landing; «Ingresar» lleva al login (#ingresar) y #registro-profesor abre el registro de profesores.
-// Solo esos hashes exactos, para no chocar con los de Supabase.
-function useVerLogin() {
-  const [ver, setVer] = useState(esHashAcceso)
-  useEffect(() => {
-    const alCambiar = () => setVer(esHashAcceso())
-    window.addEventListener('hashchange', alCambiar)
-    return () => window.removeEventListener('hashchange', alCambiar)
-  }, [])
-  const ingresar = () => {
-    window.location.hash = HASH_LOGIN
-    setVer(true)
+// Una cuenta puede tener varias vistas (administración/comercial, docente, estudiante) y cambiar entre ellas sin cerrar sesión.
+// La vista activa es el primer tramo de la URL (/panel, /docente, /estudiante).
+function Vistas({ auth, onSignOut }) {
+  const navigate = useNavigate()
+  const vistas = [...(auth.rol ? ['gestion'] : []), ...(auth.portal.includes('docente') ? ['docente'] : []), ...(auth.portal.includes('estudiante') ? ['estudiante'] : [])]
+  const cambiar = (v) => {
+    guardarVista(v)
+    navigate(RUTA_VISTA[v])
   }
-  const volver = () => {
-    window.history.replaceState(null, '', window.location.pathname + window.location.search)
-    setVer(false)
-  }
-  return { ver, ingresar, volver }
+  const portal = (vista) => (
+    <PortalApp key={vista} vista={vista} email={auth.session.user.email} vistas={vistas} onCambiarVista={cambiar} onSignOut={onSignOut} onRecargar={auth.recargar} />
+  )
+  return (
+    <Routes>
+      <Route path="/panel/*" element={vistas.includes('gestion') ? <Panel auth={auth} vistas={vistas} onCambiarVista={cambiar} onSignOut={onSignOut} /> : <Inicio vistas={vistas} />} />
+      <Route path="/docente/*" element={vistas.includes('docente') ? portal('docente') : <Inicio vistas={vistas} />} />
+      <Route path="/estudiante/*" element={vistas.includes('estudiante') ? portal('estudiante') : <Inicio vistas={vistas} />} />
+      <Route path="*" element={<Inicio vistas={vistas} />} />
+    </Routes>
+  )
 }
 
 export default function App() {
@@ -206,8 +227,7 @@ export default function App() {
 
 function AppInterna() {
   const auth = useAuth()
-  const login = useVerLogin()
-
+  useHashAntiguo()
   if (!supabase)
     return (
       <Mensaje
@@ -217,14 +237,24 @@ function AppInterna() {
     )
   if (auth.cargando) return <Mensaje titulo="Cargando…" />
   if (!auth.session)
-    return login.ver ? (
-      <Login onSignIn={auth.signIn} onVolver={login.volver} modoInicial={window.location.hash === HASH_REGISTRO ? 'registro' : 'ingresar'} />
-    ) : (
-      <Landing onIngresar={login.ingresar} />
+    return (
+      <Routes>
+        <Route path="/ingresar" element={<Login onSignIn={auth.signIn} />} />
+        <Route path="/registro-profesor" element={<Login onSignIn={auth.signIn} />} />
+        {PROTEGIDAS.map((path) => (
+          <Route key={path} path={path} element={<SinSesion />} />
+        ))}
+        <Route path="*" element={<Navigate to="/ingresar" replace />} />
+      </Routes>
     )
   // Profesor recién registrado: solo ve su perfil y su disponibilidad hasta que administración lo active como docente.
   if (!auth.rol && auth.portal.length === 0 && auth.registro)
-    return <PortalApp vista="postulante" email={auth.session.user.email} vistas={[]} onCambiarVista={() => {}} onSignOut={auth.signOut} onRecargar={auth.recargar} />
+    return (
+      <Routes>
+        <Route path="/postulante/*" element={<PortalApp vista="postulante" email={auth.session.user.email} vistas={[]} onCambiarVista={() => {}} onSignOut={auth.signOut} onRecargar={auth.recargar} />} />
+        <Route path="*" element={<Navigate to="/postulante" replace />} />
+      </Routes>
+    )
   if (!auth.rol && auth.portal.length === 0)
     return (
       <Mensaje
@@ -234,5 +264,11 @@ function AppInterna() {
       />
     )
 
-  return <Vistas auth={auth} />
+  return <Vistas auth={auth} onSignOut={auth.signOut} />
+}
+
+// Quien llega a una página protegida sin sesión va al login y, al entrar, vuelve a esa página.
+function SinSesion() {
+  const location = useLocation()
+  return <Navigate to="/ingresar" replace state={{ from: location }} />
 }

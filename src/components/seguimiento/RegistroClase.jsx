@@ -51,20 +51,13 @@ function Formulario({ detalle, lecciones, onGuardar, onClose }) {
     }
   }
 
-  if (sesion.futura)
-    return (
-      <div>
-        <p className="text-sm text-slate-600">Esta clase es del {formatFecha(sesion.fecha)}: solo se puede registrar cuando ya ocurrió.</p>
-        <div className="mt-4 flex justify-end">
-          <Button variant="secondary" onClick={onClose}>
-            Cerrar
-          </Button>
-        </div>
-      </div>
-    )
-
   return (
     <form onSubmit={enviar} className="space-y-5">
+      {sesion.futura && (
+        <p className="rounded-lg bg-peach-50 px-3 py-2 text-sm text-peach-700">
+          Esta clase es del {formatFecha(sesion.fecha)}: la estás registrando por adelantado. Seguirá como programada hasta que llegue su fecha.
+        </p>
+      )}
       <section>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Asistencia</h3>

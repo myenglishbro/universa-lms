@@ -15,7 +15,6 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
   }, [servicio, salonId])
   const { datos, cargando, error, recargar } = useCarga(cargar, null)
   const [nuevo, setNuevo] = useState({ nombre: '', ciclo: '', aporte: '1' })
-  const [eleccion, setEleccion] = useState({}) // moduloId → versionId
   const [rangos, setRangos] = useState({}) // moduloId → {desde, hasta}
   const [metodo, setMetodo] = useState(null)
   const [confirmada, setConfirmada] = useState(null)
@@ -46,7 +45,8 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
   if (error) return <p className="text-sm text-red-600">No se pudo cargar la configuración: {error}</p>
   if (cargando || !datos) return <p className="py-4 text-sm text-slate-400">Cargando…</p>
   const { estructura, plantillas } = datos
-  const vigentes = plantillas.flatMap((p) => p.versiones.filter((v) => v.estado === 'vigente').map((v) => ({ value: v.id, label: `${p.nombre} · v${v.version} (escala ${v.escala_puntos})` })))
+  // Un solo sistema para todos los módulos: la versión vigente de «Grade Chart Universa».
+  const vigente = plantillas.flatMap((p) => (p.nombre === 'Grade Chart Universa' ? p.versiones.filter((v) => v.estado === 'vigente') : [])).map((v) => ({ value: v.id }))[0]
   const ciclos = cicloDesde !== '' && cicloDesde != null ? Array.from({ length: Number(cicloHasta) - Number(cicloDesde) + 1 }, (_, i) => Number(cicloDesde) + i) : []
   const cons = estructura.consolidacion
   const metodoActual = metodo ?? cons.metodo
@@ -55,13 +55,13 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
   return (
     <Card className="p-5">
       <h2 className="text-base font-semibold text-slate-900">Módulos de evaluación</h2>
-      <p className="mt-1 text-xs text-slate-500">Define cuántos módulos tiene este salón, qué plantilla usa cada uno y qué clases del calendario abarca (para la participación de Formative). No hay una cantidad obligatoria.</p>
+      <p className="mt-1 text-xs text-slate-500">Define cuántos módulos tiene este salón y qué clases del calendario abarca cada uno (para la participación de Formative). Todos los módulos usan el mismo sistema de evaluación de Universa. No hay una cantidad obligatoria.</p>
       {estructura.modulos.length === 0 && (ciclos.length === 1 || ciclos.length === 2) && (
         <div className="mt-3 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm text-brand-900">
           <p>
-            {ciclos.length === 1 ? 'Este grupo es de 1 ciclo.' : 'Este grupo abarca 2 ciclos.'} Puedes crear la estructura de Universa: <strong>2 módulos por ciclo ({ciclos.length * 2} en total)</strong>, cada módulo sobre 100. Se asigna sola la plantilla «Grade Chart Universa»: el último módulo del último ciclo usa los pesos del módulo final y los demás los de los módulos 1 a 3. Las clases del ciclo se reparten en dos mitades.
+            {ciclos.length === 1 ? 'Este grupo es de 1 ciclo.' : 'Este grupo abarca 2 ciclos.'} Puedes crear la estructura de Universa: <strong>2 módulos por ciclo ({ciclos.length * 2} en total)</strong>, cada módulo sobre 100 y con el mismo sistema de evaluación. Las clases del ciclo se reparten en dos mitades.
           </p>
-          <Button className="mt-2" disabled={ocupado} onClick={() => ejecutar(() => servicio.crearEstructuraEstandar(salonId), `Estructura creada: ${ciclos.length * 2} módulos con sus plantillas y clases.`)}>
+          <Button className="mt-2" disabled={ocupado} onClick={() => ejecutar(() => servicio.crearEstructuraEstandar(salonId), `Estructura creada: ${ciclos.length * 2} módulos con su sistema de evaluación y sus clases.`)}>
             {ciclos.length === 1 ? 'Crear los 2 módulos del ciclo' : 'Crear los 4 módulos'}
           </Button>
         </div>
@@ -75,18 +75,14 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
             <li key={m.id} className="py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium text-slate-900">
-                  {m.nombre} {m.ciclo != null && <Badge color="slate">Ciclo {m.ciclo}</Badge>} {m.es_final && <Badge color="brand">Módulo final</Badge>}
+                  {m.nombre} {m.ciclo != null && <Badge color="slate">Ciclo {m.ciclo}</Badge>}
                 </p>
                 <Button variant="ghost" className="px-2 py-1 text-xs" disabled={ocupado} onClick={() => ejecutar(() => servicio.eliminarModulo(m.id), 'Módulo eliminado.')}>
                   Eliminar
                 </Button>
               </div>
               <p className="text-xs text-slate-500">
-                {m.version_id ? `Plantilla: ${m.plantilla} · v${m.version} (escala ${m.escala})${m.es_final ? ' · usa los pesos del módulo final' : ''}` : 'Sin plantilla asignada'}
-                {' '}
-                <button type="button" disabled={ocupado} aria-label={`${m.es_final ? 'Quitar marca de módulo final de' : 'Marcar como módulo final'} ${m.nombre}`} className="text-brand-700 underline disabled:opacity-50" onClick={() => ejecutar(() => servicio.definirModuloFinal(m.id, !m.es_final), m.es_final ? 'Módulo normal: usa los pesos de los módulos 1 a 3.' : 'Módulo final: usa los pesos del módulo final.')}>
-                  {m.es_final ? 'Quitar marca de módulo final' : 'Marcar como módulo final'}
-                </button>
+                {m.version_id ? `Sistema de evaluación Universa (sobre ${m.escala})` : 'Sin sistema de evaluación aplicado'}
               </p>
               <p className="text-xs text-slate-500">{m.sesion_desde != null ? `Clases ${m.sesion_desde} a ${m.sesion_hasta} del calendario (${m.clases} clases)` : 'Clases del módulo sin definir (necesarias para la participación de Formative)'}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -96,19 +92,14 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
                   Guardar clases
                 </Button>
               </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <select aria-label={`Plantilla para ${m.nombre}`} className={`${inputClass} min-w-56 flex-1 sm:max-w-md`} value={eleccion[m.id] ?? ''} onChange={(e) => setEleccion((p) => ({ ...p, [m.id]: e.target.value }))}>
-                  <option value="">{vigentes.length ? 'Elegir plantilla vigente…' : 'No hay plantillas vigentes (actívalas en Evaluaciones)'}</option>
-                  {vigentes.map((v) => (
-                    <option key={v.value} value={v.value}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
-                <Button variant="secondary" disabled={ocupado || !eleccion[m.id]} onClick={() => ejecutar(() => servicio.asignarPlantilla(m.id, eleccion[m.id]), 'Plantilla asignada.')}>
-                  Asignar plantilla
-                </Button>
-              </div>
+              {!m.version_id && (
+                <div className="mt-2">
+                  <Button variant="secondary" disabled={ocupado || !vigente} onClick={() => ejecutar(() => servicio.asignarPlantilla(m.id, vigente.value), 'Sistema de evaluación aplicado.')}>
+                    Aplicar el sistema de evaluación
+                  </Button>
+                  {!vigente && <span className="ml-2 text-xs text-slate-400">No hay una versión vigente (actívala en Evaluaciones).</span>}
+                </div>
+              )}
             </li>
           ))}
         </ul>

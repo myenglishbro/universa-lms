@@ -3,8 +3,10 @@ import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import EjercicioJugador from './EjercicioJugador'
+import MiFormative from './MiFormative'
 import useCarga from '../../hooks/useCarga'
 import { TONOS, fmtPuntaje, tipoDe } from '../../lib/ejercicios'
+import { etiquetaFormative } from '../../lib/formativeBanco'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/ejercicios'
 
@@ -12,7 +14,8 @@ function Estado({ a }) {
   const e = a.entrega
   if (!e) return <Badge color="peach">Por hacer</Badge>
   if (e.estado === 'pendiente') return <Badge color="slate">Enviado · en revisión</Badge>
-  return <Badge color="brand">Nota {fmtPuntaje(e.puntaje)}</Badge>
+  // En una actividad oficial este es el resultado del ejercicio; la nota de la unidad se calcula sola con los 5 elementos.
+  return <Badge color="brand">{a.formative ? 'Resultado' : 'Nota'} {fmtPuntaje(e.puntaje)}</Badge>
 }
 
 // Pestaña «Ejercicios» del estudiante: lo asignado, para resolver y ver su resultado.
@@ -45,6 +48,8 @@ export default function EjerciciosEstudiante({ salonId, servicio = servicioReal 
               {t.label}
               {actual.fecha_limite && ` · entrega hasta el ${formatFecha(actual.fecha_limite)}`}
             </p>
+            <p className={`text-sm font-medium ${actual.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(actual.formative)}</p>
+            {actual.formative && <p className="text-xs text-slate-500">Cuenta para tu Formative: se suma sola a tu avance. Cuando completes los 5 elementos de la unidad, la nota aparece en «Mis calificaciones».</p>}
           </div>
         </div>
         <EjercicioJugador
@@ -75,6 +80,7 @@ export default function EjerciciosEstudiante({ salonId, servicio = servicioReal 
   const porHacer = lista.filter((a) => !a.entrega).length
   return (
     <>
+      <MiFormative salonId={salonId} servicio={servicio} />
       <p className="mb-4 text-sm text-slate-600">
         {porHacer > 0 ? (
           <>
@@ -99,6 +105,7 @@ export default function EjerciciosEstudiante({ salonId, servicio = servicioReal 
                     {t.label}
                     {a.fecha_limite && ` · hasta ${formatFecha(a.fecha_limite)}`}
                   </span>
+                  <span className={`block text-xs font-medium ${a.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(a.formative)}</span>
                 </span>
                 <Estado a={a} />
               </Card>

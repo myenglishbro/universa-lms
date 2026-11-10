@@ -11,7 +11,7 @@ const leerColapso = () => {
   }
 }
 
-export default function Layout({ current, onNavigate, usuario, onSignOut, items, vistas, vista, onCambiarVista, children }) {
+export default function Layout({ base, current, onNavigate, usuario, onSignOut, items, vistas, vista, onCambiarVista, children }) {
   const [open, setOpen] = useState(false)
   const [colapsado, setColapsado] = useState(leerColapso)
   const alternar = () =>
@@ -32,6 +32,7 @@ export default function Layout({ current, onNavigate, usuario, onSignOut, items,
   return (
     <div className="min-h-screen bg-mist">
       <Sidebar
+        base={base}
         current={current}
         onNavigate={navigate}
         open={open}

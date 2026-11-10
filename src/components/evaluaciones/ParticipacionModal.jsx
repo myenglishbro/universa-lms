@@ -9,10 +9,12 @@ import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
 // Estado de una clase para este estudiante. Una casilla sin completar es «pendiente», nunca «no cumplió».
-function estadoClase(sesion, marca) {
-  if (!sesion.hecha) return { id: 'futura', texto: 'Aún no se realizó', color: 'slate' }
+const MOTIVO_EXCLUIDA = { matricula: 'No aplica · antes de su ingreso', justificado: 'No aplica · justificada' }
+function estadoClase(sesion, marca, excluida) {
+  if (excluida) return { id: 'excluida', texto: MOTIVO_EXCLUIDA[excluida] ?? 'No aplica', color: 'slate' }
   if (marca === true) return { id: 'cumplio', texto: 'Cumplió', color: 'brand' }
   if (marca === false) return { id: 'no', texto: 'No cumplió', color: 'rose' }
+  if (!sesion.hecha) return { id: 'futura', texto: 'Por adelantado', color: 'slate' }
   return { id: 'pendiente', texto: 'Pendiente de registrar', color: 'peach' }
 }
 
@@ -28,11 +30,13 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   const enCurso = useRef(false)
 
   const editable = !publicada || corrigiendo
-  const hechas = sesiones.filter((s) => s.hecha)
-  const total = sesiones.length
-  const registradas = sesiones.filter((s) => marcas[s.id] === true || marcas[s.id] === false).length
-  const cumplidas = sesiones.filter((s) => marcas[s.id] === true).length
-  const completa = total > 0 && registradas === total && hechas.length === total
+  // Las clases justificadas o anteriores a su ingreso no suman ni restan: el total es el de sus clases aplicables.
+  const excluidas = alumno.excluidas ?? {}
+  const aplicables = sesiones.filter((s) => !excluidas[s.id])
+  const total = aplicables.length
+  const registradas = aplicables.filter((s) => marcas[s.id] === true || marcas[s.id] === false).length
+  const cumplidas = aplicables.filter((s) => marcas[s.id] === true).length
+  const completa = total > 0 && registradas === total
   const nota = total > 0 ? Math.round((cumplidas / total) * 10000) / 100 : null
   const aporte = nota == null ? null : Math.round(Number(evaluacion.peso) * nota) / 100
   const cambios = sesiones.filter((s) => (marcas[s.id] ?? null) !== (alumno.marcas[s.id] ?? null))
@@ -76,16 +80,17 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {evaluacion.modulo} · participación por clase{evaluacion.tipo === 'formative' ? ' (parte del Formative)' : ` · peso ${fmtNota(evaluacion.peso)} puntos`}. Marca solo las clases en las que el estudiante cumplió con su participación; la asistencia no se usa aquí.
+        {evaluacion.modulo} · participación por clase{evaluacion.tipo === 'formative' ? ' (parte del Formative)' : ` · peso ${fmtNota(evaluacion.peso)} puntos`}. Marca solo las clases en las que el estudiante cumplió con su participación. Puedes marcar clases por adelantado. Las clases justificadas o anteriores a su ingreso no cuentan: ni suman ni restan.
       </p>
 
-      {total === 0 ? (
+      {sesiones.length === 0 ? (
         <p className="rounded-lg bg-amber-50 px-3 py-3 text-sm text-amber-800">Este módulo todavía no tiene clases asignadas. Administración debe indicar qué clases del calendario abarca (en el detalle del salón).</p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
           {sesiones.map((s) => {
             const marca = marcas[s.id]
-            const est = estadoClase(s, marca)
+            const excl = excluidas[s.id]
+            const est = estadoClase(s, marca, excl)
             return (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                 <span className="text-sm text-slate-800">
@@ -97,7 +102,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
                     <input
                       type="checkbox"
                       aria-label={`Cumplió la clase ${s.numero}`}
-                      disabled={!editable || !s.hecha}
+                      disabled={!editable || !!excl}
                       checked={marca === true}
                       onChange={(e) => poner(s.id, e.target.checked ? true : null)}
                     />
@@ -107,7 +112,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
                     type="button"
                     aria-label={`No participó en la clase ${s.numero}`}
                     aria-pressed={marca === false}
-                    disabled={!editable || !s.hecha}
+                    disabled={!editable || !!excl}
                     onClick={() => poner(s.id, marca === false ? null : false)}
                     className={`rounded-md border px-2 py-0.5 text-xs disabled:opacity-40 ${marca === false ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}
                   >
@@ -123,7 +128,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status">
         <p>
           Clases registradas: <strong>{registradas} de {total}</strong> · cumplidas: <strong>{cumplidas}</strong>
-          {hechas.length < total && <> · aún no realizadas: {total - hechas.length}</>}
+          {sesiones.length > total && <> · no aplican: {sesiones.length - total} (justificadas o antes de su ingreso)</>}
         </p>
         {completa ? (
           <p>
@@ -138,7 +143,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
           </p>
         ) : (
           <p className="text-brand-800">
-            Todavía no hay nota: faltan clases por realizar o por registrar. Lo que está pendiente no cuenta como «no cumplió». Si el resultado final fuera {cumplidas}/{total}, serían {fmtNota(nota)}/100.
+            Todavía no hay nota: faltan clases por registrar. Lo que está pendiente no cuenta como «no cumplió». Si el resultado final fuera {cumplidas}/{total}, serían {fmtNota(nota)}/100.
           </p>
         )}
       </div>
@@ -171,7 +176,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
         )}
         {!publicada && (
           <>
-            <Button variant="secondary" disabled={ocupado || total === 0} onClick={() => ejecutar(async () => { await guardar() }, 'Participación guardada. El estudiante aún no la ve.')}>
+            <Button variant="secondary" disabled={ocupado || sesiones.length === 0} onClick={() => ejecutar(async () => { await guardar() }, 'Participación guardada. El estudiante aún no la ve.')}>
               Guardar
             </Button>
             <Button

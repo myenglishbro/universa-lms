@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { puedeVer } from '../../lib/permisos'
 import Icon from '../ui/Icon'
 
@@ -21,7 +22,10 @@ const navItems = [
 const rolLabel = { admin: 'Administrador', comercial: 'Comercial', rrhh: 'Recursos Humanos', docente: 'Docente', estudiante: 'Estudiante', postulante: 'Profesor (registro en revisión)' }
 const vistaLabel = { gestion: 'Administración', docente: 'Portal docente', estudiante: 'Portal estudiante' }
 
-export default function Sidebar({ current, onNavigate, open, onClose, usuario, onSignOut, items = navItems, vistas = [], vista, onCambiarVista, colapsado = false, onAlternarColapso }) {
+// Clic normal = navegación interna; con Ctrl/⌘/clic central el enlace se abre en otra pestaña como cualquier URL.
+const clicNormal = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
+
+export default function Sidebar({ base, current, onNavigate, open, onClose, usuario, onSignOut, items = navItems, vistas = [], vista, onCambiarVista, colapsado = false, onAlternarColapso }) {
   // Colapsado solo aplica en pantallas grandes (lg): en móvil el menú siempre se abre completo como cajón.
   const ocultar = colapsado ? 'lg:hidden' : ''
   const centrar = colapsado ? 'lg:justify-center lg:px-0' : ''
@@ -45,9 +49,14 @@ export default function Sidebar({ current, onNavigate, open, onClose, usuario, o
         {/* Las opciones se desplazan si no caben en la altura de la pantalla; cambiar vista y la cuenta quedan siempre a la vista. */}
         <nav aria-label="Menú principal" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-color:rgba(255,255,255,.25)_transparent] [scrollbar-width:thin]">
           {visibles.map((item) => (
-            <button
+            <Link
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              to={`${base}/${item.id}`}
+              onClick={(e) => {
+                if (!clicNormal(e)) return
+                e.preventDefault()
+                onNavigate(item.id)
+              }}
               title={colapsado ? item.label : undefined}
               aria-label={item.label}
               aria-current={current === item.id ? 'page' : undefined}
@@ -57,7 +66,7 @@ export default function Sidebar({ current, onNavigate, open, onClose, usuario, o
             >
               <Icon name={item.icon} className="h-5 w-5 shrink-0" />
               <span className={`truncate ${ocultar}`}>{item.label}</span>
-            </button>
+            </Link>
           ))}
         </nav>
 

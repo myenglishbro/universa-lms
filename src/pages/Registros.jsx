@@ -198,7 +198,7 @@ export default function Registros({ onCambio, servicio = servicioReal, puedeEdit
           Revisa sus datos y su <strong>disponibilidad</strong> y toca <strong>«Activar como docente»</strong>: se crea el docente y ya puede entrar a su portal. Desde su ficha también puedes <strong>cambiarle la contraseña</strong>.
         </p>
         <p className="text-slate-600">
-          Para invitarlos, envíales el enlace de la plataforma terminado en <code className="rounded bg-white px-1.5 py-0.5 text-xs">#registro-profesor</code>.
+          Para invitarlos, envíales este enlace: <code className="rounded bg-white px-1.5 py-0.5 text-xs">{window.location.origin}/registro-profesor</code>.
         </p>
       </Ayuda>
 

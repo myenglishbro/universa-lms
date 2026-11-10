@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import PageHeader from './components/ui/PageHeader'
 import Card from './components/ui/Card'
@@ -36,10 +37,14 @@ function MiCuenta({ email }) {
 
 // Portal del estudiante, del docente o del profesor recién registrado (`postulante`, a la espera de activación).
 // Cada vista solo consulta funciones de Supabase que devuelven lo que corresponde a la cuenta.
+// La página sale de la URL (/docente/perfil, /estudiante/cursos…): recargar, volver atrás y compartir el enlace funcionan.
 export default function PortalApp({ vista, email, vistas, onCambiarVista, onSignOut, onRecargar }) {
-  const [pagina, setPagina] = useState(items[vista][0].id)
+  const navigate = useNavigate()
+  const base = `/${vista}`
+  const pagina = useParams()['*']?.split('/')[0]
+  if (!items[vista].some((i) => i.id === pagina)) return <Navigate to={`${base}/${items[vista][0].id}`} replace />
   return (
-    <Layout current={pagina} onNavigate={setPagina} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
+    <Layout base={base} current={pagina} onNavigate={(id) => navigate(`${base}/${id}`)} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
       <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
       {pagina === 'cuenta' ? (
         <MiCuenta email={email} />

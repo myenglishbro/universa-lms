@@ -76,7 +76,7 @@ function Formative({ pp }) {
       <h3 className="font-semibold">Cómo se calcula el Formative Assessment</h3>
       <ol className="list-decimal space-y-1 pl-5">
         <li>
-          En cada una de las <strong>3 unidades</strong> tu docente evalúa 5 habilidades: <strong>Use of English, Listening, Writing, Speaking y Reading</strong>. Cada una vale 20 puntos, así que cada unidad vale hasta 100.
+          En cada una de las <strong>3 unidades</strong> tu docente evalúa <strong>5 elementos con el mismo valor</strong> (los de la rúbrica del Formative de tu curso), así que cada unidad vale hasta 100.
         </li>
         <li>Se promedian las 3 unidades.</li>
         {part > 0 && (

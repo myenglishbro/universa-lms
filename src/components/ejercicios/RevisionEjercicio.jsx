@@ -7,7 +7,66 @@ import Icon from '../ui/Icon'
 import { AudioGuardado } from './EjercicioJugador'
 import useCarga from '../../hooks/useCarga'
 import { esManual, fmtPuntaje, palabras, tipoDe } from '../../lib/ejercicios'
+import { etiquetaFormative, nota2, notaRubricaPct, valoresDesdeDetalle } from '../../lib/formativeBanco'
 import { formatFecha } from '../../lib/salones'
+
+// Actividad oficial del Formative: se califica con la rúbrica elegida al asignarla (cada criterio de 0 a su máximo, sin mínimos).
+function CorregirRubrica({ entrega, rubrica, tipo, servicio, onHecho }) {
+  const [valores, setValores] = useState(() => valoresDesdeDetalle(rubrica.criterios, entrega.detalle))
+  const [feedback, setFeedback] = useState(entrega.feedback ?? '')
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+  const nota = notaRubricaPct(rubrica.criterios, valores)
+
+  const guardar = async () => {
+    setError('')
+    if (nota == null) return setError('Califica todos los criterios con un valor entre 0 y su máximo')
+    setGuardando(true)
+    try {
+      await servicio.calificarEntregaRubrica(
+        entrega.id,
+        rubrica.criterios.map((c) => ({ criterio_id: c.id, puntaje: Number(valores[c.id]) })),
+        feedback,
+      )
+      await onHecho()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-xl bg-brand-50/60 p-4">
+      <p className="text-sm font-medium text-slate-800">Rúbrica: {rubrica.nombre}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {rubrica.criterios.map((c) => (
+          <Field
+            key={c.id}
+            label={`${c.nombre} (0–${Number(c.max_puntaje)})`}
+            type="number"
+            min="0"
+            max={c.max_puntaje}
+            step="any"
+            value={valores[c.id] ?? ''}
+            onChange={(e) => setValores((v) => ({ ...v, [c.id]: e.target.value }))}
+            hint={c.descripcion || undefined}
+          />
+        ))}
+      </div>
+      <Field as="textarea" rows={3} label="Feedback para el estudiante" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={tipo === 'writing' ? 'Qué hizo bien, qué corregir…' : 'Pronunciación, fluidez, vocabulario…'} />
+      <p className="text-sm text-slate-600">
+        Resultado de la actividad: <strong>{nota == null ? '—' : `${nota2(nota)} / 100`}</strong>
+      </p>
+      {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+      <div className="flex justify-end">
+        <Button onClick={guardar} disabled={guardando}>
+          {guardando ? 'Guardando…' : entrega.estado === 'revisada' ? 'Actualizar revisión' : 'Guardar revisión'}
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 function Corregir({ entrega, tipo, servicio, onHecho }) {
   const [nota, setNota] = useState(entrega.puntaje ?? '')
@@ -72,6 +131,8 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
               {a.fecha_limite && ` · hasta ${formatFecha(a.fecha_limite)}`}
               {manual ? ' · revisión manual' : ' · se califica solo'}
             </p>
+            <p className={`text-sm font-medium ${a.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(a.formative)}</p>
+            {a.formative && <p className="text-xs text-slate-500">Esta actividad alimenta esa habilidad de la unidad. Cuenta cuando confirmes y publiques la nota de la unidad en «Calificaciones Formative».</p>}
           </div>
           {manual && a.contenido.consigna && <p className="mb-4 rounded-xl border border-brand-100 bg-white p-4 text-sm text-slate-800">{a.contenido.consigna}</p>}
           <Card>
@@ -114,7 +175,11 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
                         ) : (
                           <p className="text-sm text-slate-500">Sin audio.</p>
                         )}
-                        <Corregir entrega={e} tipo={a.tipo} servicio={servicio} onHecho={recargar} />
+                        {a.formative?.rubrica ? (
+                          <CorregirRubrica entrega={e} rubrica={a.formative.rubrica} tipo={a.tipo} servicio={servicio} onHecho={recargar} />
+                        ) : (
+                          <Corregir entrega={e} tipo={a.tipo} servicio={servicio} onHecho={recargar} />
+                        )}
                       </div>
                     )}
                   </li>
