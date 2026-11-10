@@ -11,7 +11,7 @@ const leerColapso = () => {
   }
 }
 
-export default function Layout({ base, current, onNavigate, usuario, onSignOut, items, vistas, vista, onCambiarVista, children }) {
+export default function Layout({ base, current, onNavigate, usuario, onSignOut, items, badges, vistas, vista, onCambiarVista, children }) {
   const [open, setOpen] = useState(false)
   const [colapsado, setColapsado] = useState(leerColapso)
   const alternar = () =>
@@ -42,6 +42,7 @@ export default function Layout({ base, current, onNavigate, usuario, onSignOut, 
         usuario={usuario}
         onSignOut={onSignOut}
         items={items}
+        badges={badges}
         vistas={vistas}
         vista={vista}
         onCambiarVista={(v) => {

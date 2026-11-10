@@ -4,6 +4,7 @@ import Icon from '../ui/Icon'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: 'home' },
+  { id: 'tickets', label: 'Task Board', icon: 'list' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
   { id: 'salones', label: 'Salones grupales', icon: 'building' },
   { id: 'paquetes', label: 'Paquetes de horas', icon: 'box' },
@@ -25,7 +26,7 @@ const vistaLabel = { gestion: 'Administración', docente: 'Portal docente', estu
 // Clic normal = navegación interna; con Ctrl/⌘/clic central el enlace se abre en otra pestaña como cualquier URL.
 const clicNormal = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
 
-export default function Sidebar({ base, current, onNavigate, open, onClose, usuario, onSignOut, items = navItems, vistas = [], vista, onCambiarVista, colapsado = false, onAlternarColapso }) {
+export default function Sidebar({ base, current, onNavigate, open, onClose, usuario, onSignOut, items = navItems, badges = {}, vistas = [], vista, onCambiarVista, colapsado = false, onAlternarColapso }) {
   // Colapsado solo aplica en pantallas grandes (lg): en móvil el menú siempre se abre completo como cajón.
   const ocultar = colapsado ? 'lg:hidden' : ''
   const centrar = colapsado ? 'lg:justify-center lg:px-0' : ''
@@ -66,6 +67,11 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
             >
               <Icon name={item.icon} className="h-5 w-5 shrink-0" />
               <span className={`truncate ${ocultar}`}>{item.label}</span>
+              {badges[item.id] > 0 && (
+                <span aria-label={`${badges[item.id]} sin leer`} className={`ml-auto min-w-5 rounded-full bg-peach-500 px-1.5 text-center text-xs font-semibold text-brand-900 ${ocultar}`}>
+                  {badges[item.id]}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

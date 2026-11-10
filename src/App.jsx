@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import useAuth from './hooks/useAuth'
+import useNotificacionesTickets from './hooks/useNotificacionesTickets'
 import useEstudiantes from './hooks/useEstudiantes'
 import usePaquetes from './hooks/usePaquetes'
 import useSalones from './hooks/useSalones'
@@ -26,6 +27,7 @@ const Login = lazy(() => import('./pages/Login'))
 const Paquetes = lazy(() => import('./pages/Paquetes'))
 const Salones = lazy(() => import('./pages/Salones'))
 const UsuariosPersonal = lazy(() => import('./pages/UsuariosPersonal'))
+const TaskBoard = lazy(() => import('./pages/TaskBoard'))
 
 // Pantallas que usan la lista de estudiantes/matrículas y la de paquetes: esos datos se piden al abrir la primera de ellas,
 // no al entrar al panel (el dashboard solo necesita los salones).
@@ -45,6 +47,7 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
   const abierto = { ...SIN_ABIERTO, ...location.state?.abierto }
   const admin = auth.rol === 'admin'
   const data = useSalones()
+  const notifTickets = useNotificacionesTickets(puedeVer(auth.rol, 'tickets')) // contador del menú (el Task Board es de todo el personal)
   // Los hooks piden sus datos la primera vez que `activo` es true y los conservan: volver a una pantalla no los descarga de nuevo.
   const estudiantes = useEstudiantes(undefined, USAN_ESTUDIANTES.includes(page))
   const paquetesBase = usePaquetes(admin && USAN_PAQUETES.includes(page)) // los paquetes (dinero) son solo de administración
@@ -80,9 +83,10 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
   if (!permitida) return <Navigate to={`/panel/${page}`} replace />
 
   return (
-    <Layout base="/panel" current={page} onNavigate={navegar} usuario={usuario} onSignOut={onSignOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista}>
+    <Layout base="/panel" current={page} onNavigate={navegar} usuario={usuario} onSignOut={onSignOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista} badges={{ tickets: notifTickets.pendientes }}>
       <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
       {ve('dashboard') && <Dashboard data={data} onVerSalon={verSalon} />}
+      {ve('tickets') && <TaskBoard miId={auth.session.user.id} notif={notifTickets} />}
       {ve('agenda') && (
         <Agenda
           key={abierto.docente ?? 'agenda'}

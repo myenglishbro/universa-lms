@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node --test src/lib/formativeBanco.test.js",
+    "test": "node --test src/lib/formativeBanco.test.js src/lib/tickets.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/vite": "^4.3.4",
     "exceljs": "^4.4.0",
