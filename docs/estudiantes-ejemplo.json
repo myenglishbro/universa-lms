@@ -1,0 +1,30 @@
+{
+  "estudiantes": [
+    {
+      "nombres": "JUAN SEBASTIAN",
+      "apellidos": "MONTENEGRO ARIAS",
+      "tipo_documento": "dni",
+      "numero_documento": "72266090",
+      "fecha_nacimiento": "1997-10-15",
+      "pais_nacionalidad": "Perú",
+      "genero": "M",
+      "correo": "sebastian@correo.com",
+      "celular": "+51 949531737",
+      "maskpark_usuario": "JUANSEBASTIANMONTENEGROARIAS",
+      "maskpark_clave": "72266090Jsma_",
+      "notas": "",
+      "salon": "SAL-0001"
+    },
+    {
+      "nombres": "MARY",
+      "apellidos": "SMITH",
+      "tipo_documento": "pasaporte",
+      "numero_documento": "AB123456",
+      "fecha_nacimiento": "15/03/2001",
+      "pais_nacionalidad": "Estados Unidos",
+      "genero": "Femenino",
+      "correo": "mary@correo.com",
+      "celular": "+1 555 0100"
+    }
+  ]
+}

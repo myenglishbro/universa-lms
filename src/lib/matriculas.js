@@ -13,7 +13,7 @@ export function cuposSalon(salon, matriculas) {
 const sinTildes = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 export const coincideTexto = (e, texto) => {
   const t = sinTildes(texto.trim())
-  return !t || sinTildes(`${e.nombre} ${e.correo ?? ''} ${e.telefono ?? ''}`).includes(t)
+  return !t || sinTildes(`${e.nombre} ${e.correo ?? ''} ${e.telefono ?? ''} ${e.numero_documento ?? ''}`).includes(t)
 }
 
 // Estudiantes que se pueden matricular en un salón: activos y sin matrícula activa en él.

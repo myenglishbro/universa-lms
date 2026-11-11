@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import EstudianteForm from '../components/estudiantes/EstudianteForm'
+import ImportarEstudiantesModal from '../components/estudiantes/ImportarEstudiantesModal'
 import CambiarSalonModal from '../components/estudiantes/CambiarSalonModal'
 import MotivoModal from '../components/paquetes/MotivoModal'
 import CuentaAcceso from '../components/portal/CuentaAcceso'
@@ -10,6 +11,7 @@ import Card from '../components/ui/Card'
 import { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import PageHeader from '../components/ui/PageHeader'
+import { calcularEdad, etiquetaGenero, etiquetaTipoDocumento } from '../lib/estudiantes'
 import { SIN_MATRICULA, coincideTexto, matriculasDeAlumno } from '../lib/matriculas'
 import { estadoPaquete, minutosTexto } from '../lib/paquetes'
 import { formatFecha } from '../lib/salones'
@@ -23,6 +25,7 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
   const [detalleId, setDetalleId] = useState(estudianteInicialId)
   const [form, setForm] = useState(null) // { estudiante } (null = nuevo)
   const [modal, setModal] = useState(null)
+  const [importando, setImportando] = useState(false)
 
   const salonDe = (id) => salones.find((s) => s.id === id)
   const activasDe = (id) => matriculasDeAlumno(matriculas, id).filter((m) => m.estado === 'activa')
@@ -33,6 +36,23 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
       (filtro === 'todos' || (filtro === 'activos' && e.activo) || (filtro === 'inactivos' && !e.activo) || (filtro === SIN_MATRICULA && e.activo && activasDe(e.id).length === 0)),
   )
   const detalle = estudiantes.find((e) => e.id === detalleId)
+
+  // Acceso de MaskPark: solo lo puede leer un administrador; la contraseña no se muestra hasta pedirlo.
+  const [plataforma, setPlataforma] = useState(null)
+  const [verClave, setVerClave] = useState(false)
+  useEffect(() => {
+    setPlataforma(null)
+    setVerClave(false)
+    if (!detalleId || !puedeEditar) return undefined
+    let vigente = true
+    servicio
+      .plataformaEstudiante(detalleId)
+      .then((p) => vigente && setPlataforma(p))
+      .catch(() => {})
+    return () => {
+      vigente = false
+    }
+  }, [detalleId, puedeEditar, servicio])
 
   const guardar = async (v) => {
     const id = await servicio.guardarEstudiante(form.estudiante?.id ?? null, v)
@@ -72,7 +92,21 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
           <Card className="p-6">
             <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
               <div>
-                <dt className="text-xs uppercase text-slate-500">Teléfono</dt>
+                <dt className="text-xs uppercase text-slate-500">Documento</dt>
+                <dd className="text-sm text-slate-900">{detalle.tipo_documento ? `${etiquetaTipoDocumento(detalle.tipo_documento)} · ${detalle.numero_documento}` : '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase text-slate-500">Fecha de nacimiento</dt>
+                <dd className="text-sm text-slate-900">
+                  {detalle.fecha_nacimiento ? `${formatFecha(detalle.fecha_nacimiento)} · ${calcularEdad(detalle.fecha_nacimiento)} años` : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase text-slate-500">Nacionalidad · Género</dt>
+                <dd className="text-sm text-slate-900">{[detalle.pais_nacionalidad, etiquetaGenero(detalle.genero)].filter(Boolean).join(' · ') || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase text-slate-500">Celular</dt>
                 <dd className="text-sm text-slate-900">{detalle.telefono || '—'}</dd>
               </div>
               <div>
@@ -83,6 +117,22 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
                 <dt className="text-xs uppercase text-slate-500">Notas</dt>
                 <dd className="whitespace-pre-line text-sm text-slate-900">{detalle.notas || '—'}</dd>
               </div>
+              {puedeEditar && plataforma && (
+                <div className="sm:col-span-3">
+                  <dt className="text-xs uppercase text-slate-500">Plataforma MaskPark</dt>
+                  <dd className="text-sm text-slate-900">
+                    Usuario: <span className="font-medium">{plataforma.usuario}</span>
+                    {plataforma.clave && (
+                      <>
+                        {' · '}Contraseña: <span className="font-mono">{verClave ? plataforma.clave : '••••••••'}</span>{' '}
+                        <button type="button" onClick={() => setVerClave((x) => !x)} className="text-xs text-brand-700 hover:underline">
+                          {verClave ? 'Ocultar' : 'Mostrar'}
+                        </button>
+                      </>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
           </Card>
 
@@ -168,9 +218,14 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
             description={cargando ? 'Cargando…' : `${estudiantes.filter((e) => e.activo).length} activos · ${estudiantes.length} registrados`}
             action={
               puedeEditar && (
-                <Button onClick={() => setForm({ estudiante: null })} disabled={cargando || Boolean(error)}>
-                  <Icon name="plus" className="h-4 w-4" /> Nuevo estudiante
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => setImportando(true)} disabled={cargando || Boolean(error)}>
+                    <Icon name="up" className="h-4 w-4" /> Importar JSON
+                  </Button>
+                  <Button onClick={() => setForm({ estudiante: null })} disabled={cargando || Boolean(error)}>
+                    <Icon name="plus" className="h-4 w-4" /> Nuevo estudiante
+                  </Button>
+                </div>
               )
             }
           />
@@ -178,7 +233,7 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
             <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
               <div className="relative min-w-56 flex-1 sm:max-w-xs">
                 <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, correo o teléfono" className={`${inputClass} pl-9`} />
+                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, documento, correo o celular" className={`${inputClass} pl-9`} />
               </div>
               <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar estudiantes">
                 <option value="activos">Activos</option>
@@ -231,6 +286,7 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
         </>
       )}
 
+      {importando && <ImportarEstudiantesModal estudiantes={estudiantes} salones={salones} servicio={servicio} onTerminar={onCambio} onClose={() => setImportando(false)} />}
       {form && <EstudianteForm key={form.estudiante?.id ?? 'nuevo'} estudiante={form.estudiante} onSave={guardar} onClose={() => setForm(null)} />}
       {modal?.tipo === 'retirar' && (
         <MotivoModal
