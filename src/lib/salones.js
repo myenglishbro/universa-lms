@@ -1,6 +1,6 @@
 // Constantes y helpers de Salones grupales. Los valores coinciden con los de la base de datos.
 export const estados = [
-  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'pendiente', label: 'Planificado' },
   { value: 'en_curso', label: 'En curso' },
   { value: 'finalizado', label: 'Finalizado' },
 ]

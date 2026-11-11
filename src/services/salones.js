@@ -96,7 +96,6 @@ export async function guardarSalon(id, s) {
         nivel_id: s.nivelId,
         docente_id: s.docenteId,
         fecha_inicio: s.fechaInicio,
-        fecha_fin_estimada: s.fechaFin,
         capacidad: s.capacidad,
         total_sesiones: s.totalSesiones,
         estado: s.estado,
@@ -109,6 +108,11 @@ export async function guardarSalon(id, s) {
       p_horarios: s.horarios.map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
     }),
   )
+}
+
+// Pasa a «En curso» los salones planificados cuya fecha de inicio ya llegó. No cierra nada: «Finalizado» es siempre manual.
+export async function sincronizarEstados() {
+  return datos(await supabase.rpc('sincronizar_estados_salones'))
 }
 
 export async function cambiarEstado(id, estado) {
@@ -140,4 +144,40 @@ export async function listarArchivoAlumnos() {
       .select('id, salon_id, alumno_id, alumno_nombre, ciclo, matricula_estado, fecha_inicio, fecha_fin, motivo_retiro, informe')
       .order('alumno_nombre'),
   )
+}
+
+// Choques de un horario semanal (con su rango de fechas) contra lo que ya ocupa a los docentes: otros salones y clases
+// particulares programadas. Devuelve Map docenteId -> ["Inglés B1 (Lun 18:00–20:00)", ...]. Un cruce de horas exige además
+// que los rangos de fechas se solapen; los horarios contiguos (18–20 y 20–22) no chocan.
+// Si el salón aún no tiene calendario, fechaFin va vacía y totalSesiones permite proyectar el fin en la base de datos.
+export async function choquesHorarioSalon(horarios, fechaInicio, fechaFin, excluirSalonId, totalSesiones) {
+  const filas = datos(
+    await supabase.rpc('choques_horario_salon', {
+      p_horarios: horarios.map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
+      p_inicio: fechaInicio || null,
+      p_fin: fechaFin || null,
+      p_total: totalSesiones || null,
+      p_docente: null,
+      p_excluir: excluirSalonId || null,
+    }),
+  )
+  const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+  const porDocente = new Map()
+  for (const f of filas) {
+    const cuando = f.fecha ? `${f.fecha.split('-').reverse().join('/')} ` : ''
+    const texto = `${f.titulo} (${cuando}${dias[f.dia - 1]} ${hora(f.hora_inicio)}–${hora(f.hora_fin)})`
+    porDocente.set(f.docente_id, [...new Set([...(porDocente.get(f.docente_id) ?? []), texto])])
+  }
+  return porDocente
+}
+
+// Docentes ocupados en una fecha y franja concretas (clases particulares y salones). Devuelve Map docenteId -> ["Inglés B1 (18:00–20:00)", ...].
+export async function docentesOcupadosFranja(fecha, horaInicio, horaFin) {
+  const filas = datos(await supabase.rpc('docentes_ocupados_franja', { p_fecha: fecha, p_inicio: horaInicio, p_fin: horaFin }))
+  const porDocente = new Map()
+  for (const f of filas) {
+    const texto = `${f.titulo} (${hora(f.hora_inicio)}–${hora(f.hora_fin)})`
+    porDocente.set(f.docente_id, [...new Set([...(porDocente.get(f.docente_id) ?? []), texto])])
+  }
+  return porDocente
 }

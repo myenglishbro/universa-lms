@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BuscarDocenteLibre from '../components/docentes/BuscarDocenteLibre'
 import DocenteForm from '../components/docentes/DocenteForm'
 import CuentaAcceso from '../components/portal/CuentaAcceso'
 import GrillaDisponibilidad from '../components/disponibilidad/GrillaDisponibilidad'
@@ -26,6 +27,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
   const [filtro, setFiltro] = useState('activos')
   const [detalleId, setDetalleId] = useState(docenteInicialId)
   const [form, setForm] = useState(null) // { docente } (null = nuevo)
+  const [buscandoLibre, setBuscandoLibre] = useState(false)
   const [proximas, setProximas] = useState(null) // null = cargando
   const [perfiles, setPerfiles] = useState(new Map()) // docenteId -> { foto_url, celular }
   const [disp, setDisp] = useState(new Map()) // docenteId -> Set de franjas
@@ -192,9 +194,14 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
             description={cargando ? 'Cargando…' : `${docentes.filter((d) => d.activo).length} activos · ${docentes.length} registrados`}
             action={
               puedeEditar && (
-                <Button onClick={() => setForm({ docente: null })} disabled={cargando || Boolean(error)}>
-                  <Icon name="plus" className="h-4 w-4" /> Nuevo docente
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => setBuscandoLibre(true)} disabled={cargando || Boolean(error)}>
+                    <Icon name="search" className="h-4 w-4" /> Buscar docente libre
+                  </Button>
+                  <Button onClick={() => setForm({ docente: null })} disabled={cargando || Boolean(error)}>
+                    <Icon name="plus" className="h-4 w-4" /> Nuevo docente
+                  </Button>
+                </div>
               )
             }
           />
@@ -254,6 +261,17 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
         </>
       )}
 
+      {buscandoLibre && (
+        <BuscarDocenteLibre
+          docentes={docentes}
+          salones={salones}
+          onVerDocente={(id) => {
+            setBuscandoLibre(false)
+            setDetalleId(id)
+          }}
+          onClose={() => setBuscandoLibre(false)}
+        />
+      )}
       {form && <DocenteForm key={form.docente?.id ?? 'nuevo'} docente={form.docente} onSave={guardar} onClose={() => setForm(null)} />}
     </>
   )

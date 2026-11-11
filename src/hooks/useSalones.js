@@ -16,7 +16,11 @@ export default function useSalones() {
 
   const cargar = useCallback(
     () =>
-      Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes()])
+      // Primero se sincronizan los estados (Planificado → En curso); si falla, la lista se carga igual.
+      api
+        .sincronizarEstados()
+        .catch(() => 0)
+        .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes()]))
         .then(([s, progreso, p, d]) => {
           const todos = s.map((salon) => ({ ...salon, progreso: progreso[salon.id] ?? null }))
           setSalones(todos.filter((x) => !x.archivadoAt))

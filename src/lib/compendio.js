@@ -96,7 +96,7 @@ function hojaFicha(wb, logoId, d) {
     ['Docente', salon.docente || '—'],
     ['Inicio de clases', formatFecha(salon.fechaInicio)],
     ['Fin de clases', formatFecha(salon.fechaFin)],
-    ['Estado', salon.cicloArchivo ? `Archivado · ciclo ${salon.cicloArchivo}` : salon.estado === 'finalizado' ? 'Finalizado' : salon.estado === 'en_curso' ? 'En curso' : 'Pendiente'],
+    ['Estado', salon.cicloArchivo ? `Archivado · ciclo ${salon.cicloArchivo}` : salon.estado === 'finalizado' ? 'Finalizado' : salon.estado === 'en_curso' ? 'En curso' : 'Planificado'],
     ['Estudiantes', `${alumnos.length}${salon.capacidad ? ` de ${salon.capacidad}` : ''}`],
     ['Archivo generado', formatFecha(new Date().toISOString().slice(0, 10))],
   ]

@@ -5,6 +5,7 @@ import { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import PageHeader from '../components/ui/PageHeader'
 import CerrarCicloModal from '../components/archivo/CerrarCicloModal'
+import AsignacionDocentes, { porAsignar } from '../components/salones/AsignacionDocentes'
 import SalonDetalle from '../components/salones/SalonDetalle'
 import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
@@ -46,6 +47,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [vista, setVista] = useState('tarjetas')
   const [detalleId, setDetalleId] = useState(salonInicialId)
   const [cerrandoCiclo, setCerrandoCiclo] = useState(false)
+  const [asignando, setAsignando] = useState(false)
   const [form, setForm] = useState(null) // null = cerrado, { salon } = abierto (salon null = crear)
 
   const texto = busqueda.trim().toLowerCase()
@@ -59,6 +61,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const porFinalizar = salones.filter(proximoAFinalizar).length
   const pendientes = salones.filter((s) => s.estado === 'pendiente').length
   const incompletos = salones.filter((s) => s.estado !== 'finalizado' && (!s.docente || !s.nivel)).length
+  const nPorAsignar = porAsignar(salones).length
   const sinRegistrar = salones.filter((s) => s.progreso?.porRegistrar > 0).length
 
   const guardar = async (valores) => {
@@ -94,6 +97,11 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             action={
               puedeEditar && (
                 <div className="flex flex-wrap gap-2">
+                  {nPorAsignar > 0 && (
+                    <Button variant="secondary" onClick={() => setAsignando(true)}>
+                      <Icon name="teacher" className="h-4 w-4" /> Por asignar ({nPorAsignar})
+                    </Button>
+                  )}
                   {finalizados.length > 0 && (
                     <Button variant="secondary" onClick={() => setCerrandoCiclo(true)}>
                       <Icon name="box" className="h-4 w-4" /> Cerrar ciclo
@@ -215,6 +223,15 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             setCerrandoCiclo(false)
           }}
           onClose={() => setCerrandoCiclo(false)}
+        />
+      )}
+
+      {asignando && (
+        <AsignacionDocentes
+          salones={salones}
+          docentes={docentes}
+          onAsignar={(salon, docenteId) => guardarSalon(salon.id, { ...salon, docenteId })}
+          onClose={() => setAsignando(false)}
         />
       )}
 

@@ -8,6 +8,7 @@ import HorariosEditor from './HorariosEditor'
 import ResumenSalon from './ResumenSalon'
 import { validarHorariosSalon } from '../../services/catalogo'
 import { disponibilidadDocentes } from '../../services/registros'
+import { choquesHorarioSalon } from '../../services/salones'
 import { aConjunto, cubreHorarios } from '../../lib/disponibilidad'
 import { estados, salonVacio } from '../../lib/salones'
 import { resumenSalon } from '../../lib/resumenSalon'
@@ -72,6 +73,7 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
     }
   }, [consultaAvisos, values.planId, values.frecuenciaId, values.horarios])
   const avisos = consultaAvisos ? avisosPlan : []
+  const resumen = resumenSalon({ values, catalogo, nivelNombre: nivel?.nombre ?? '', avisos, usaPlan, usaFrecuencia, tieneCalendario })
 
   // Disponibilidad que marcó cada docente: sirve para sugerir quién puede dar el horario elegido (si no se puede leer, el selector funciona igual).
   const [dispDocentes, setDispDocentes] = useState(null) // Map docenteId -> Set de franjas
@@ -90,24 +92,44 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
     }
   }, [])
 
-  const resumen = resumenSalon({ values, catalogo, nivelNombre: nivel?.nombre ?? '', avisos, usaPlan, usaFrecuencia, tieneCalendario })
+  // Docentes ya ocupados en ese horario y rango de fechas (otros salones o clases particulares), calculado en la base de datos.
+  const [choques, setChoques] = useState(new Map()) // Map docenteId -> ["Salón X (Lun 18:00–20:00)", ...]
+  const horariosValidos = values.horarios.filter((h) => h.horaInicio && h.horaFin && h.horaFin > h.horaInicio)
+  const consultaChoques = horariosValidos.length > 0 && Boolean(values.fechaInicio)
+  useEffect(() => {
+    if (!consultaChoques) return undefined
+    let vigente = true
+    const t = setTimeout(() => {
+      choquesHorarioSalon(horariosValidos, values.fechaInicio, tieneCalendario ? values.fechaFin : '', salon?.id, resumen.sesiones)
+        .then((m) => vigente && setChoques(m))
+        .catch(() => vigente && setChoques(new Map()))
+    }, 300)
+    return () => {
+      vigente = false
+      clearTimeout(t)
+    }
+    // horariosValidos se recalcula en cada render; basta depender de los valores que lo definen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consultaChoques, values.horarios, values.fechaInicio, values.fechaFin, salon?.id, resumen.sesiones, tieneCalendario])
+  const choquesDocente = (id) => (consultaChoques && values.estado !== 'finalizado' ? choques.get(id) ?? [] : [])
 
   // Docentes activos; si el salón ya tiene uno inactivo asignado, se conserva en la lista.
   // Con horarios completos y disponibilidades cargadas, primero van los docentes libres en TODO ese horario.
   const horariosParaDocente = values.horarios.filter((h) => h.horaInicio && h.horaFin && h.horaFin > h.horaInicio)
   const sugerir = dispDocentes !== null && horariosParaDocente.length > 0 && horariosParaDocente.length === values.horarios.length
   const estadoDocente = (d) => {
+    if (choquesDocente(d.id).length) return 'choque'
     if (!sugerir) return null
     const franjas = dispDocentes.get(d.id)
     if (!franjas) return 'sin_datos'
     return cubreHorarios(franjas, horariosParaDocente) ? 'libre' : 'ocupado'
   }
-  const etiquetaDocente = { libre: '✓ disponible en este horario', ocupado: 'no disponible en este horario', sin_datos: 'sin disponibilidad registrada' }
-  const orden = { libre: 0, sin_datos: 1, ocupado: 2 }
+  const etiquetaDocente = { choque: '⛔ ocupado en otro salón', libre: '✓ disponible en este horario', ocupado: 'no disponible en este horario', sin_datos: 'sin disponibilidad registrada' }
+  const orden = { libre: 0, sin_datos: 1, ocupado: 2, choque: 3 }
   const lista = docentes.filter((d) => d.activo || d.id === values.docenteId).map((d) => ({ d, e: estadoDocente(d) }))
-  if (sugerir) lista.sort((a, b) => orden[a.e] - orden[b.e] || a.d.nombre.localeCompare(b.d.nombre))
+  if (sugerir || lista.some((x) => x.e === 'choque')) lista.sort((a, b) => (orden[a.e] ?? 1) - (orden[b.e] ?? 1) || a.d.nombre.localeCompare(b.d.nombre))
   const nLibres = lista.filter((x) => x.e === 'libre').length
-  const opcionesDocente = [{ value: '', label: 'Sin asignar' }, ...lista.map(({ d, e }) => ({ value: d.id, label: e ? `${d.nombre} · ${etiquetaDocente[e]}` : d.nombre }))]
+  const opcionesDocente = [{ value: '', label: 'Sin asignar' }, ...lista.map(({ d, e }) => ({ value: d.id, label: e === 'choque' ? `${d.nombre} · ⛔ ocupado: ${choquesDocente(d.id)[0]}${choquesDocente(d.id).length > 1 ? ` y ${choquesDocente(d.id).length - 1} más` : ''}` : e ? `${d.nombre} · ${etiquetaDocente[e]}` : d.nombre }))]
   const ayudaDocente = sugerir
     ? nLibres > 0
       ? `${nLibres} ${nLibres === 1 ? 'docente está disponible' : 'docentes están disponibles'} en este horario.`
@@ -117,8 +139,9 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
 
   const validar = () => {
     const e = {}
-    if (values.fechaInicio && values.fechaFin && values.fechaFin < values.fechaInicio) e.fechaFin = 'No puede ser anterior al inicio'
     if (values.horarios.some((h) => h.horaFin <= h.horaInicio)) e.horarios = 'La hora de fin debe ser posterior a la de inicio'
+    if (values.docenteId && choquesDocente(values.docenteId).length)
+      e.docente = `El docente ya está ocupado en ese horario: ${choquesDocente(values.docenteId).join(', ')}`
     if (!values.nivelId) e.nivel = 'Selecciona el nivel académico'
     if (usaPlan && !values.planId) e.plan = 'Completa el plan académico o desactívalo.'
     if (usaFrecuencia && !values.frecuenciaId) e.frecuencia = 'Elige una frecuencia o desactívala.'
@@ -176,7 +199,7 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                     required
                   />
                   <div>
-                    <Field label="Docente" name="docenteId" value={values.docenteId} onChange={cambiar} options={opcionesDocente} hint={dispDocentes !== null ? ayudaDocente : undefined} />
+                    <Field label="Docente" name="docenteId" value={values.docenteId} onChange={cambiar} options={opcionesDocente} error={errors.docente} hint={dispDocentes !== null ? ayudaDocente : undefined} />
                     <Button type="button" variant="ghost" className="mt-1 px-2 py-1" onClick={() => setNuevoDocente(true)}>
                       + Nuevo docente
                     </Button>
@@ -237,10 +260,9 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                       name="fechaFin"
                       type="date"
                       value={values.fechaFin}
-                      onChange={cambiar}
-                      error={errors.fechaFin}
-                      disabled={tieneCalendario}
-                      hint={tieneCalendario ? 'La calcula el calendario' : 'Manual hasta generar el calendario.'}
+                      disabled
+                      readOnly
+                      hint="Se calcula sola con el inicio, el horario y el total de sesiones; se ajusta con reprogramaciones y cancelaciones."
                     />
                     {/* Con plan y sin calendario el total lo fija el plan; en los demás casos es editable. */}
                     {(!values.planId || tieneCalendario) && (
