@@ -70,12 +70,12 @@ export default function EstudianteForm({ estudiante, onSave, onClose, servicio =
 
   const validar = () => {
     const e = {}
-    if (!v.nombres.trim()) e.nombres = 'Obligatorio'
-    if (!estudiante && !v.apellidos.trim()) e.apellidos = 'Obligatorio'
+    if (!v.nombres.trim()) e.nombres = 'Required'
+    if (!estudiante && !v.apellidos.trim()) e.apellidos = 'Required'
     const doc = errorDocumento(v.tipoDocumento, v.numeroDocumento)
     if (doc) e.numeroDocumento = doc
-    if (v.fechaNacimiento && (v.fechaNacimiento > hoyLima() || v.fechaNacimiento < '1900-01-01')) e.fechaNacimiento = 'Fecha no válida'
-    if (v.maskparkClave && !v.maskparkUsuario.trim()) e.maskparkUsuario = 'Indica el usuario para guardar la contraseña'
+    if (v.fechaNacimiento && (v.fechaNacimiento > hoyLima() || v.fechaNacimiento < '1900-01-01')) e.fechaNacimiento = 'Invalid date'
+    if (v.maskparkClave && !v.maskparkUsuario.trim()) e.maskparkUsuario = 'Enter the username to save the password'
     return e
   }
 
@@ -100,16 +100,16 @@ export default function EstudianteForm({ estudiante, onSave, onClose, servicio =
   }
 
   return (
-    <Modal wide="xl" title={estudiante ? 'Editar estudiante' : 'Nuevo estudiante'} onClose={onClose}>
+    <Modal wide="xl" title={estudiante ? 'Edit student' : 'New student'} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-6" noValidate>
-        <Seccion titulo="Datos personales">
+        <Seccion titulo="Personal details">
           <div className={grid}>
-            <Field label="Nombres" name="nombres" value={v.nombres} onChange={cambiar} error={errores.nombres} required />
-            <Field label="Apellidos" name="apellidos" value={v.apellidos} onChange={cambiar} error={errores.apellidos} required={!estudiante} />
-            <Field label="Género" name="genero" value={v.genero} onChange={cambiar} options={generos} />
-            <Field label="Tipo de documento" name="tipoDocumento" value={v.tipoDocumento} onChange={cambiar} options={tiposDocumento} />
+            <Field label="First names" name="nombres" value={v.nombres} onChange={cambiar} error={errores.nombres} required />
+            <Field label="Last names" name="apellidos" value={v.apellidos} onChange={cambiar} error={errores.apellidos} required={!estudiante} />
+            <Field label="Gender" name="genero" value={v.genero} onChange={cambiar} options={generos} />
+            <Field label="Document type" name="tipoDocumento" value={v.tipoDocumento} onChange={cambiar} options={tiposDocumento} />
             <Field
-              label="N.º de documento"
+              label="Document no."
               name="numeroDocumento"
               value={v.numeroDocumento}
               onChange={cambiar}
@@ -118,62 +118,62 @@ export default function EstudianteForm({ estudiante, onSave, onClose, servicio =
               maxLength={20}
               disabled={!v.tipoDocumento}
             />
-            <Field label="Fecha de nacimiento" name="fechaNacimiento" type="date" min="1900-01-01" max={hoyLima()} value={v.fechaNacimiento} onChange={cambiar} error={errores.fechaNacimiento} />
+            <Field label="Date of birth" name="fechaNacimiento" type="date" min="1900-01-01" max={hoyLima()} value={v.fechaNacimiento} onChange={cambiar} error={errores.fechaNacimiento} />
             <div>
-              <Field label="País de nacionalidad" name="paisNacionalidad" value={v.paisNacionalidad} onChange={cambiar} list="paises-estudiante" autoComplete="off" />
+              <Field label="Country of nationality" name="paisNacionalidad" value={v.paisNacionalidad} onChange={cambiar} list="paises-estudiante" autoComplete="off" />
               <datalist id="paises-estudiante">
                 {paises.map((p) => (
                   <option key={p} value={p} />
                 ))}
               </datalist>
             </div>
-            <Field label="Edad" value={edad === null ? '—' : `${edad} años`} disabled readOnly hint="Se calcula con la fecha de nacimiento." />
+            <Field label="Age" value={edad === null ? '—' : `${edad} years`} disabled readOnly hint="Calculated from the date of birth." />
           </div>
         </Seccion>
 
-        <Seccion titulo="Contacto">
+        <Seccion titulo="Contact">
           <div className={grid}>
-            <Field label="Correo (opcional)" name="correo" type="email" value={v.correo} onChange={cambiar} />
-            <Field label="Celular (opcional)" name="telefono" type="tel" value={v.telefono} onChange={cambiar} placeholder="+51 999 999 999" />
+            <Field label="Email (optional)" name="correo" type="email" value={v.correo} onChange={cambiar} />
+            <Field label="Mobile (optional)" name="telefono" type="tel" value={v.telefono} onChange={cambiar} placeholder="+51 999 999 999" />
           </div>
         </Seccion>
 
-        <Seccion titulo="Plataforma MaskPark" subtitulo="Acceso del estudiante a la plataforma. Solo lo ve el administrador.">
-          {plataforma === 'error' && <p className="mb-2 text-xs text-peach-700">No se pudo leer el acceso guardado: lo que escribas aquí no se guardará hasta recargar.</p>}
+        <Seccion titulo="Plataforma MaskPark" subtitulo="The student's access to the platform. Only the administrator can see it.">
+          {plataforma === 'error' && <p className="mb-2 text-xs text-peach-700">Could not read the saved access: what you type here will not be saved until you reload.</p>}
           <div className={grid}>
-            <Field label="Usuario" name="maskparkUsuario" value={v.maskparkUsuario} onChange={cambiar} error={errores.maskparkUsuario} autoComplete="off" disabled={plataforma !== 'ok'} />
+            <Field label="Username" name="maskparkUsuario" value={v.maskparkUsuario} onChange={cambiar} error={errores.maskparkUsuario} autoComplete="off" disabled={plataforma !== 'ok'} />
             <div>
               <Field
-                label="Contraseña"
+                label="Password"
                 name="maskparkClave"
                 type={verClave ? 'text' : 'password'}
                 value={v.maskparkClave}
                 onChange={cambiar}
                 autoComplete="new-password"
                 disabled={plataforma !== 'ok'}
-                placeholder={tieneClave ? 'Dejar vacío para conservar la actual' : ''}
+                placeholder={tieneClave ? 'Leave empty to keep the current one' : ''}
               />
               <button type="button" onClick={() => setVerClave((x) => !x)} className="mt-1 text-xs text-brand-700 hover:underline">
-                {verClave ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                {verClave ? 'Hide password' : 'Show password'}
               </button>
             </div>
           </div>
         </Seccion>
 
-        <Field label="Notas (opcional)" name="notas" as="textarea" rows="2" value={v.notas} onChange={cambiar} />
+        <Field label="Notes (optional)" name="notas" as="textarea" rows="2" value={v.notas} onChange={cambiar} />
         {estudiante && (
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={v.activo} onChange={(e) => setV({ ...v, activo: e.target.checked })} className="h-4 w-4 accent-brand-600" />
-            Estudiante activo
+            Active student
           </label>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando || plataforma === 'cargando'}>
-            {guardando ? 'Guardando…' : estudiante ? 'Guardar cambios' : 'Registrar estudiante'}
+            {guardando ? 'Saving…' : estudiante ? 'Save changes' : 'Register student'}
           </Button>
         </div>
       </form>

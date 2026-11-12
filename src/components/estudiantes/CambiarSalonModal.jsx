@@ -15,7 +15,7 @@ export default function CambiarSalonModal({ matricula, salones, matriculas, onCo
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!salonId) return setError('Elige el salón de destino')
+    if (!salonId) return setError('Choose the destination classroom')
     setGuardando(true)
     setError('')
     try {
@@ -27,38 +27,38 @@ export default function CambiarSalonModal({ matricula, salones, matriculas, onCo
   }
 
   return (
-    <Modal title="Cambiar de salón" onClose={onClose}>
+    <Modal title="Move to another classroom" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <p className="text-sm text-slate-600">
-          Sale de <strong>{actual?.nombre ?? 'el salón actual'}</strong>. Su matrícula anterior se conserva en el historial.
+          Leaves <strong>{actual?.nombre ?? 'the current classroom'}</strong>. Their previous enrollment is kept in the history.
         </p>
         {destinos.elegibles.length === 0 ? (
           <p className="rounded-lg bg-peach-100 px-3 py-2 text-sm text-peach-700">{motivoSinDestinos(destinos)}</p>
         ) : (
           <>
             <Field
-              label="Salón de destino"
+              label="Destination classroom"
               value={salonId}
               onChange={(e) => setSalonId(e.target.value)}
               options={[
-                { value: '', label: 'Selecciona un salón' },
+                { value: '', label: 'Select a classroom' },
                 ...destinos.elegibles.map(({ salon: s, cupos: c }) => ({
                   value: s.id,
-                  label: `${s.nombre} · ${s.nivel || 'Sin nivel asignado'} · ${c.disponibles} ${c.disponibles === 1 ? 'cupo' : 'cupos'}`,
+                  label: `${s.nombre} · ${s.nivel || 'No level assigned'} · ${c.disponibles} ${c.disponibles === 1 ? 'seat' : 'seats'}`,
                 })),
               ]}
-              hint="Se muestran todos los salones con cupos que no estén finalizados, sin importar nivel ni docente."
+              hint="All classrooms with free seats that are not finished are shown, regardless of level or teacher."
             />
           </>
         )}
-        <Field label="Motivo (opcional)" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+        <Field label="Reason (optional)" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando || destinos.elegibles.length === 0}>
-            {guardando ? 'Cambiando…' : 'Cambiar de salón'}
+            {guardando ? 'Moving…' : 'Move to another classroom'}
           </Button>
         </div>
       </form>

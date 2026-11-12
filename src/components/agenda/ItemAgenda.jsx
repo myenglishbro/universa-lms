@@ -25,20 +25,20 @@ export default function ItemAgenda({ item: i, cruces = [], feriado = '', accione
           <p className="truncate text-sm text-slate-800">{i.titulo}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
             <span className={`rounded-full px-2 py-0.5 font-medium ${e.chip}`}>{origenLabel[i.origen]}</span>
-            <span>{i.docente || 'Sin docente'}</span>
+            <span>{i.docente || 'No teacher'}</span>
             {i.origen === 'grupal' && i.detalle && <span>· {i.detalle}</span>}
-            {i.tipo === 'recuperacion' && <Badge color="brand">Recuperación</Badge>}
+            {i.tipo === 'recuperacion' && <Badge color="brand">Make-up</Badge>}
           </p>
         </div>
-        <Badge color={porRegistrar ? 'peach' : estado.color}>{porRegistrar ? 'Por registrar' : estado.label}</Badge>
+        <Badge color={porRegistrar ? 'peach' : estado.color}>{porRegistrar ? 'To record' : estado.label}</Badge>
       </div>
 
       {(cruces.length > 0 || feriado) && (
         <ul className="mt-1 space-y-0.5 text-xs text-peach-700">
           {cruces.map((c) => (
-            <li key={c}>⚠ Docente ocupado en: {c}</li>
+            <li key={c}>⚠ Teacher busy with: {c}</li>
           ))}
-          {feriado && <li>⚠ Feriado: {feriado}</li>}
+          {feriado && <li>⚠ Holiday: {feriado}</li>}
         </ul>
       )}
 
@@ -46,34 +46,34 @@ export default function ItemAgenda({ item: i, cruces = [], feriado = '', accione
         {acciones?.editable && i.estado === 'programada' && i.origen === 'particular' && (
           <>
             <Button className="px-2.5 py-1" disabled={Boolean(ocupado)} onClick={() => acciones.confirmar(i)}>
-              {ocupado === claveItem(i) ? 'Confirmando…' : 'Confirmar dictada'}
+              {ocupado === claveItem(i) ? 'Confirming…' : 'Confirm taught'}
             </Button>
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.reprogramar(i)}>
-              Reprogramar
+              Reschedule
             </Button>
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.cancelar(i)}>
-              Cancelar
+              Cancel
             </Button>
           </>
         )}
         {acciones?.editable && i.estado === 'programada' && i.origen === 'grupal' && i.fecha <= hoyLima() && (
           <Button variant="ghost" className="px-2 py-1" disabled={Boolean(ocupado)} onClick={() => acciones.realizada(i)}>
-            {ocupado === claveItem(i) ? 'Registrando…' : 'Registrar realizada'}
+            {ocupado === claveItem(i) ? 'Recording…' : 'Record as held'}
           </Button>
         )}
         {i.origen === 'grupal' ? (
           <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.verSalon(i.salonId)}>
-            Ver salón y estudiantes
+            View classroom and students
           </Button>
         ) : (
           <>
             {i.alumnoId && acciones.verAlumno && (
               <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.verAlumno(i.alumnoId)}>
-                Ver alumno
+                View student
               </Button>
             )}
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.verPaquete(i.paqueteId)}>
-              Ver paquete
+              View package
             </Button>
           </>
         )}

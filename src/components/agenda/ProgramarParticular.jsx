@@ -15,27 +15,27 @@ export default function ProgramarParticular({ paquetes, fechaInicial, onSave, on
     return <ClaseForm paquete={elegido} fechaInicial={fechaInicial} onSave={(v) => onSave(elegido, v)} onClose={onClose} />
 
   return (
-    <Modal title="Programar clase particular" onClose={onClose}>
+    <Modal title="Schedule a private class" onClose={onClose}>
       <div className="space-y-4">
         {disponibles.length === 0 ? (
-          <p className="text-sm text-slate-600">No hay paquetes activos. Registra uno en «Paquetes de horas».</p>
+          <p className="text-sm text-slate-600">There are no active packages. Register one under “Hour packages”.</p>
         ) : (
           <Field
-            label="Paquete del alumno"
+            label="Student's package"
             value={paqueteId}
             onChange={(e) => setPaqueteId(e.target.value)}
             options={[
-              { value: '', label: 'Selecciona un alumno' },
-              ...disponibles.map((p) => ({ value: p.id, label: `${p.alumno} · ${minutosTexto(p.disponibles)} disponibles${p.docente ? ` · ${p.docente}` : ''}` })),
+              { value: '', label: 'Select a student' },
+              ...disponibles.map((p) => ({ value: p.id, label: `${p.alumno} · ${minutosTexto(p.disponibles)} available${p.docente ? ` · ${p.docente}` : ''}` })),
             ]}
           />
         )}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button disabled={!paqueteId} onClick={() => setElegido(disponibles.find((p) => p.id === paqueteId))}>
-            Continuar
+            Continue
           </Button>
         </div>
       </div>

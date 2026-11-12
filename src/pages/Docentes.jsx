@@ -87,37 +87,37 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
       {detalle ? (
         <>
           <button onClick={() => setDetalleId(null)} className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-            <Icon name="back" className="h-4 w-4" /> Volver a docentes
+            <Icon name="back" className="h-4 w-4" /> Back to teachers
           </button>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-4">
               <Avatar nombre={detalle.nombre} fotoUrl={perfiles.get(detalle.id)?.foto_url} tamano="xl" />
               <div>
                 <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold text-slate-900">
-                  {detalle.nombre} {!detalle.activo && <Badge color="slate">Inactivo</Badge>}
+                  {detalle.nombre} {!detalle.activo && <Badge color="slate">Inactive</Badge>}
                 </h1>
-                <p className="text-sm text-slate-500">{detalle.correo || 'Sin correo'}</p>
+                <p className="text-sm text-slate-500">{detalle.correo || 'No email'}</p>
                 {perfiles.get(detalle.id)?.celular && <p className="text-sm text-slate-500">{perfiles.get(detalle.id).celular}</p>}
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => onVerAgenda(detalle.id)}>
-                <Icon name="calendar" className="h-4 w-4" /> Ver en la Agenda
+                <Icon name="calendar" className="h-4 w-4" /> View in Agenda
               </Button>
               {puedeEditar && (
                 <Button variant="secondary" onClick={() => setForm({ docente: detalle })}>
-                  Editar
+                  Edit
                 </Button>
               )}
             </div>
           </div>
 
           <Card className="p-6">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Próximas clases ({DIAS_PROXIMOS} días)</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">Upcoming classes ({DIAS_PROXIMOS} days)</h2>
             {proximas === null ? (
-              <p className="text-sm text-slate-400">Cargando…</p>
+              <p className="text-sm text-slate-400">Loading…</p>
             ) : proximas.length === 0 ? (
-              <p className="text-sm text-slate-400">Sin clases programadas en los próximos {DIAS_PROXIMOS} días.</p>
+              <p className="text-sm text-slate-400">No classes scheduled in the next {DIAS_PROXIMOS} days.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {proximas.map((c) => (
@@ -128,7 +128,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
                       </span>
                       {c.hora_inicio.slice(0, 5)}–{c.hora_fin.slice(0, 5)} · {c.titulo}
                     </span>
-                    <Badge color={c.origen === 'grupal' ? 'brand' : 'peach'}>{c.origen === 'grupal' ? 'Grupal' : 'Particular'}</Badge>
+                    <Badge color={c.origen === 'grupal' ? 'brand' : 'peach'}>{c.origen === 'grupal' ? 'Group' : 'Private'}</Badge>
                   </li>
                 ))}
               </ul>
@@ -136,23 +136,23 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
           </Card>
 
           <Card className="mt-6 p-6">
-            <h2 className="mb-1 text-base font-semibold text-slate-900">Disponibilidad semanal</h2>
+            <h2 className="mb-1 text-base font-semibold text-slate-900">Weekly availability</h2>
             {disp.get(detalle.id)?.size ? (
               <>
                 <p className="mb-3 text-sm text-slate-600">{resumenDisponibilidad(disp.get(detalle.id))}</p>
                 <GrillaDisponibilidad value={disp.get(detalle.id)} />
               </>
             ) : (
-              <p className="text-sm text-slate-400">Este docente aún no marcó su disponibilidad.</p>
+              <p className="text-sm text-slate-400">This teacher has not marked their availability yet.</p>
             )}
           </Card>
 
           {puedeEditar && <CuentaAcceso rol="docente" persona={detalle.id} correoSugerido={detalle.correo ?? ''} />}
 
           <Card className="mt-6 p-6">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Salones asignados</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">Assigned classrooms</h2>
             {misSalones.length === 0 ? (
-              <p className="text-sm text-slate-400">No tiene salones asignados. Asígnalo desde «Editar» en el salón.</p>
+              <p className="text-sm text-slate-400">No classrooms assigned. Assign them from “Edit” on the classroom.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {misSalones.map((s) => (
@@ -161,7 +161,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
                       {s.nombre}
                     </button>
                     <span className="text-xs text-slate-500">
-                      {s.nivel || 'Sin nivel asignado'} · desde {formatFecha(s.fechaInicio)}
+                      {s.nivel || 'No level assigned'} · since {formatFecha(s.fechaInicio)}
                     </span>
                   </li>
                 ))}
@@ -170,9 +170,9 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
           </Card>
 
           <Card className="mt-6 p-6">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Paquetes privados activos</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">Active private packages</h2>
             {misPaquetes.length === 0 ? (
-              <p className="text-sm text-slate-400">No tiene paquetes privados activos asignados.</p>
+              <p className="text-sm text-slate-400">No active private packages assigned.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {misPaquetes.map((p) => (
@@ -180,7 +180,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
                     <button type="button" className="text-sm font-medium text-slate-900 hover:text-brand-700" onClick={() => onVerPaquete(p.id)}>
                       {p.alumno}
                     </button>
-                    <span className="text-xs text-slate-500">{minutosTexto(p.disponibles)} disponibles</span>
+                    <span className="text-xs text-slate-500">{minutosTexto(p.disponibles)} available</span>
                   </li>
                 ))}
               </ul>
@@ -190,16 +190,16 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
       ) : (
         <>
           <PageHeader
-            title="Docentes"
-            description={cargando ? 'Cargando…' : `${docentes.filter((d) => d.activo).length} activos · ${docentes.length} registrados`}
+            title="Teachers"
+            description={cargando ? 'Loading…' : `${docentes.filter((d) => d.activo).length} active · ${docentes.length} registered`}
             action={
               puedeEditar && (
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary" onClick={() => setBuscandoLibre(true)} disabled={cargando || Boolean(error)}>
-                    <Icon name="search" className="h-4 w-4" /> Buscar docente libre
+                    <Icon name="search" className="h-4 w-4" /> Find a free teacher
                   </Button>
                   <Button onClick={() => setForm({ docente: null })} disabled={cargando || Boolean(error)}>
-                    <Icon name="plus" className="h-4 w-4" /> Nuevo docente
+                    <Icon name="plus" className="h-4 w-4" /> New teacher
                   </Button>
                 </div>
               )
@@ -209,31 +209,31 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
             <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
               <div className="relative min-w-56 flex-1 sm:max-w-xs">
                 <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre o correo" className={`${inputClass} pl-9`} />
+                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by name or email" className={`${inputClass} pl-9`} />
               </div>
-              <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar docentes">
-                <option value="activos">Activos</option>
-                <option value="inactivos">Inactivos</option>
-                <option value="todos">Todos</option>
+              <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter teachers">
+                <option value="activos">Active</option>
+                <option value="inactivos">Inactive</option>
+                <option value="todos">All</option>
               </select>
             </div>
             {cargando ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando docentes…</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-500">Loading teachers…</p>
             ) : error ? (
-              <p className="px-4 py-10 text-center text-sm text-red-600">No se pudieron cargar los docentes: {error}</p>
+              <p className="px-4 py-10 text-center text-sm text-red-600">Could not load teachers: {error}</p>
             ) : visibles.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">
-                {docentes.length === 0 ? 'Aún no hay docentes. Registra el primero con «Nuevo docente».' : 'Ningún docente coincide con la búsqueda.'}
+                {docentes.length === 0 ? 'No teachers yet. Register the first one with “New teacher”.' : 'No teacher matches your search.'}
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Docente</th>
-                      <th className="px-4 py-2.5 font-medium">Correo</th>
-                      <th className="px-4 py-2.5 font-medium">Salones</th>
-                      <th className="px-4 py-2.5 font-medium">Paquetes privados</th>
+                      <th className="px-4 py-2.5 font-medium">Teacher</th>
+                      <th className="px-4 py-2.5 font-medium">Email</th>
+                      <th className="px-4 py-2.5 font-medium">Classrooms</th>
+                      <th className="px-4 py-2.5 font-medium">Private packages</th>
                       <th className="px-4 py-2.5" />
                     </tr>
                   </thead>
@@ -249,7 +249,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
                           <td className="px-4 py-2.5 text-slate-600">{d.correo || '—'}</td>
                           <td className="px-4 py-2.5 text-slate-600">{nSal || '—'}</td>
                           <td className="px-4 py-2.5 text-slate-600">{nPaq || '—'}</td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">Ver</td>
+                          <td className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">View</td>
                         </tr>
                       )
                     })}

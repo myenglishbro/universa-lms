@@ -84,7 +84,7 @@ export default function HorarioSemanal({ dias, porDia, conflictos, feriados, hoy
                   <button
                     type="button"
                     onClick={() => onProgramar(d)}
-                    aria-label={`Programar clase particular el ${diaMes(d)}`}
+                    aria-label={`Schedule a private class on ${diaMes(d)}`}
                     className="absolute right-1 top-1 rounded-full p-1 text-slate-300 opacity-0 transition hover:bg-brand-50 hover:text-brand-700 focus:opacity-100 group-hover:opacity-100"
                   >
                     <Icon name="plus" className="h-3.5 w-3.5" />
@@ -143,7 +143,7 @@ export default function HorarioSemanal({ dias, porDia, conflictos, feriados, hoy
                       {cruce && <Icon name="alert" className="h-3 w-3 text-rose-600" />}
                     </span>
                     <span className={`block truncate font-medium ${cancelada ? 'line-through' : ''}`}>{i.titulo}</span>
-                    {h > 52 && <span className="block truncate opacity-75">{i.docente || 'Sin docente'}</span>}
+                    {h > 52 && <span className="block truncate opacity-75">{i.docente || 'No teacher'}</span>}
                   </button>
                 )
               })}

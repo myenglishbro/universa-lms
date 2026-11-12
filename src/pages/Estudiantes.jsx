@@ -76,15 +76,15 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
       {detalle ? (
         <>
           <button onClick={() => setDetalleId(null)} className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-            <Icon name="back" className="h-4 w-4" /> Volver a estudiantes
+            <Icon name="back" className="h-4 w-4" /> Back to students
           </button>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold text-slate-900">
-              {detalle.nombre} {!detalle.activo && <Badge color="slate">Inactivo</Badge>}
+              {detalle.nombre} {!detalle.activo && <Badge color="slate">Inactive</Badge>}
             </h1>
             {puedeEditar && (
               <Button variant="secondary" onClick={() => setForm({ estudiante: detalle })}>
-                Editar
+                Edit
               </Button>
             )}
           </div>
@@ -92,41 +92,41 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
           <Card className="p-6">
             <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
               <div>
-                <dt className="text-xs uppercase text-slate-500">Documento</dt>
+                <dt className="text-xs uppercase text-slate-500">Document</dt>
                 <dd className="text-sm text-slate-900">{detalle.tipo_documento ? `${etiquetaTipoDocumento(detalle.tipo_documento)} · ${detalle.numero_documento}` : '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Fecha de nacimiento</dt>
+                <dt className="text-xs uppercase text-slate-500">Date of birth</dt>
                 <dd className="text-sm text-slate-900">
-                  {detalle.fecha_nacimiento ? `${formatFecha(detalle.fecha_nacimiento)} · ${calcularEdad(detalle.fecha_nacimiento)} años` : '—'}
+                  {detalle.fecha_nacimiento ? `${formatFecha(detalle.fecha_nacimiento)} · ${calcularEdad(detalle.fecha_nacimiento)} years old` : '—'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Nacionalidad · Género</dt>
+                <dt className="text-xs uppercase text-slate-500">Nationality · Gender</dt>
                 <dd className="text-sm text-slate-900">{[detalle.pais_nacionalidad, etiquetaGenero(detalle.genero)].filter(Boolean).join(' · ') || '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Celular</dt>
+                <dt className="text-xs uppercase text-slate-500">Mobile</dt>
                 <dd className="text-sm text-slate-900">{detalle.telefono || '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Correo</dt>
+                <dt className="text-xs uppercase text-slate-500">Email</dt>
                 <dd className="text-sm text-slate-900">{detalle.correo || '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Notas</dt>
+                <dt className="text-xs uppercase text-slate-500">Notes</dt>
                 <dd className="whitespace-pre-line text-sm text-slate-900">{detalle.notas || '—'}</dd>
               </div>
               {puedeEditar && plataforma && (
                 <div className="sm:col-span-3">
                   <dt className="text-xs uppercase text-slate-500">Plataforma MaskPark</dt>
                   <dd className="text-sm text-slate-900">
-                    Usuario: <span className="font-medium">{plataforma.usuario}</span>
+                    Username: <span className="font-medium">{plataforma.usuario}</span>
                     {plataforma.clave && (
                       <>
-                        {' · '}Contraseña: <span className="font-mono">{verClave ? plataforma.clave : '••••••••'}</span>{' '}
+                        {' · '}Password: <span className="font-mono">{verClave ? plataforma.clave : '••••••••'}</span>{' '}
                         <button type="button" onClick={() => setVerClave((x) => !x)} className="text-xs text-brand-700 hover:underline">
-                          {verClave ? 'Ocultar' : 'Mostrar'}
+                          {verClave ? 'Hide' : 'Show'}
                         </button>
                       </>
                     )}
@@ -141,9 +141,9 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
           {puedeEditar && <CuentaAcceso rol="estudiante" persona={detalle.id} correoSugerido={detalle.correo ?? ''} />}
 
           <Card className="mt-6 p-6">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Salones grupales</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">Group classrooms</h2>
             {activas.length === 0 ? (
-              <p className="text-sm text-slate-400">No está matriculado en ningún salón. Matricúlalo desde el detalle de un salón.</p>
+              <p className="text-sm text-slate-400">Not enrolled in any classroom. Enroll them from a classroom's detail page.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {activas.map((m) => {
@@ -152,19 +152,19 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
                     <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                       <div>
                         <button type="button" className="text-sm font-medium text-slate-900 hover:text-brand-700" onClick={() => onVerSalon(m.salon_id)}>
-                          {s?.nombre ?? 'Salón'}
+                          {s?.nombre ?? 'Classroom'}
                         </button>
                         <p className="text-xs text-slate-500">
-                          {s?.nivel || 'Sin nivel asignado'} · {s?.docente || 'Sin docente'} · desde {formatFecha(m.fecha_inicio)}
+                          {s?.nivel || 'No level assigned'} · {s?.docente || 'No teacher'} · since {formatFecha(m.fecha_inicio)}
                         </p>
                       </div>
                       {puedeEditar && (
                         <div className="flex gap-1">
                           <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'cambiar', m })}>
-                            Cambiar de salón
+                            Move to another classroom
                           </Button>
                           <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'retirar', m })}>
-                            Retirar
+                            Withdraw
                           </Button>
                         </div>
                       )}
@@ -175,11 +175,11 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
             )}
             {historial.length > 0 && (
               <details className="mt-3 border-t border-slate-100 pt-3">
-                <summary className="cursor-pointer text-sm text-slate-600">Historial de salones ({historial.length})</summary>
+                <summary className="cursor-pointer text-sm text-slate-600">Classroom history ({historial.length})</summary>
                 <ul className="mt-2 space-y-1 text-xs text-slate-500">
                   {historial.map((m) => (
                     <li key={m.id}>
-                      {salonDe(m.salon_id)?.nombre ?? 'Salón'} · {formatFecha(m.fecha_inicio)} → {formatFecha(m.fecha_fin)}
+                      {salonDe(m.salon_id)?.nombre ?? 'Classroom'} · {formatFecha(m.fecha_inicio)} → {formatFecha(m.fecha_fin)}
                       {m.motivo_retiro && ` · ${m.motivo_retiro}`}
                     </li>
                   ))}
@@ -189,19 +189,19 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
           </Card>
 
           <Card className="mt-6 p-6">
-            <h2 className="mb-3 text-base font-semibold text-slate-900">Paquetes de horas (clases privadas)</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">Hour packages (private classes)</h2>
             {misPaquetes.length === 0 ? (
-              <p className="text-sm text-slate-400">Sin paquetes privados. Se crean en «Paquetes de horas».</p>
+              <p className="text-sm text-slate-400">No private packages. They are created under “Hour packages”.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {misPaquetes.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                     <div>
                       <button type="button" className="text-sm font-medium text-slate-900 hover:text-brand-700" onClick={() => onVerPaquete(p.id)}>
-                        {minutosTexto(p.compradas)} compradas
+                        {minutosTexto(p.compradas)} purchased
                       </button>
                       <p className="text-xs text-slate-500">
-                        {minutosTexto(p.disponibles)} disponibles · {minutosTexto(p.programadas)} programadas · {p.docente || 'Sin docente'}
+                        {minutosTexto(p.disponibles)} available · {minutosTexto(p.programadas)} scheduled · {p.docente || 'No teacher'}
                       </p>
                     </div>
                     <Badge color={estadoPaquete[p.estado].color}>{estadoPaquete[p.estado].label}</Badge>
@@ -214,16 +214,16 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
       ) : (
         <>
           <PageHeader
-            title="Estudiantes"
-            description={cargando ? 'Cargando…' : `${estudiantes.filter((e) => e.activo).length} activos · ${estudiantes.length} registrados`}
+            title="Students"
+            description={cargando ? 'Loading…' : `${estudiantes.filter((e) => e.activo).length} active · ${estudiantes.length} registered`}
             action={
               puedeEditar && (
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary" onClick={() => setImportando(true)} disabled={cargando || Boolean(error)}>
-                    <Icon name="up" className="h-4 w-4" /> Importar JSON
+                    <Icon name="up" className="h-4 w-4" /> Import JSON
                   </Button>
                   <Button onClick={() => setForm({ estudiante: null })} disabled={cargando || Boolean(error)}>
-                    <Icon name="plus" className="h-4 w-4" /> Nuevo estudiante
+                    <Icon name="plus" className="h-4 w-4" /> New student
                   </Button>
                 </div>
               )
@@ -233,32 +233,32 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
             <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
               <div className="relative min-w-56 flex-1 sm:max-w-xs">
                 <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, documento, correo o celular" className={`${inputClass} pl-9`} />
+                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by name, document, email or mobile" className={`${inputClass} pl-9`} />
               </div>
-              <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar estudiantes">
-                <option value="activos">Activos</option>
-                <option value={SIN_MATRICULA}>Sin salón</option>
-                <option value="inactivos">Inactivos</option>
-                <option value="todos">Todos</option>
+              <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter students">
+                <option value="activos">Active</option>
+                <option value={SIN_MATRICULA}>No classroom</option>
+                <option value="inactivos">Inactive</option>
+                <option value="todos">All</option>
               </select>
             </div>
             {cargando ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando estudiantes…</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-500">Loading students…</p>
             ) : error ? (
-              <p className="px-4 py-10 text-center text-sm text-red-600">No se pudieron cargar los estudiantes: {error}</p>
+              <p className="px-4 py-10 text-center text-sm text-red-600">Could not load students: {error}</p>
             ) : visibles.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">
-                {estudiantes.length === 0 ? 'Aún no hay estudiantes. Registra el primero con «Nuevo estudiante».' : 'Ningún estudiante coincide con la búsqueda.'}
+                {estudiantes.length === 0 ? 'No students yet. Register the first one with “New student”.' : 'No student matches your search.'}
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Estudiante</th>
-                      <th className="px-4 py-2.5 font-medium">Contacto</th>
-                      <th className="px-4 py-2.5 font-medium">Salones</th>
-                      <th className="px-4 py-2.5 font-medium">Paquetes</th>
+                      <th className="px-4 py-2.5 font-medium">Student</th>
+                      <th className="px-4 py-2.5 font-medium">Contact</th>
+                      <th className="px-4 py-2.5 font-medium">Classrooms</th>
+                      <th className="px-4 py-2.5 font-medium">Packages</th>
                       <th className="px-4 py-2.5" />
                     </tr>
                   </thead>
@@ -272,9 +272,9 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
                             {e.nombre} {!e.activo && <Badge color="slate">Inactivo</Badge>}
                           </td>
                           <td className="px-4 py-2.5 text-slate-600">{e.correo || e.telefono || '—'}</td>
-                          <td className="px-4 py-2.5 text-slate-600">{sal.length ? sal.join(', ') : <span className="text-slate-400">Sin salón</span>}</td>
-                          <td className="px-4 py-2.5 text-slate-600">{nPaq ? `${nPaq} activo${nPaq === 1 ? '' : 's'}` : '—'}</td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">Ver</td>
+                          <td className="px-4 py-2.5 text-slate-600">{sal.length ? sal.join(', ') : <span className="text-slate-400">No classroom</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-600">{nPaq ? `${nPaq} active` : '—'}</td>
+                          <td className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">View</td>
                         </tr>
                       )
                     })}
@@ -290,9 +290,9 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
       {form && <EstudianteForm key={form.estudiante?.id ?? 'nuevo'} estudiante={form.estudiante} onSave={guardar} onClose={() => setForm(null)} />}
       {modal?.tipo === 'retirar' && (
         <MotivoModal
-          titulo="Retirar del salón"
-          texto="La matrícula queda en el historial y se libera el cupo."
-          confirmar="Retirar"
+          titulo="Withdraw from classroom"
+          texto="The enrollment stays in the history and the seat is freed."
+          confirmar="Withdraw"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.retirarMatricula(modal.m.id, motivo))}
         />

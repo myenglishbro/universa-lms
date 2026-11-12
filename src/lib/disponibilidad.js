@@ -1,13 +1,13 @@
 // Disponibilidad semanal de los profesores: franjas de 1 hora, de 07:00 a 23:00, de lunes a domingo.
 // La franja `hora = 7` es 07:00–08:00 y `hora = 22` es 22:00–23:00. Los días siguen salon_horarios.dia (1 = lunes … 7 = domingo).
 export const DIAS = [
-  { n: 1, corto: 'Lun', largo: 'Lunes' },
-  { n: 2, corto: 'Mar', largo: 'Martes' },
-  { n: 3, corto: 'Mié', largo: 'Miércoles' },
-  { n: 4, corto: 'Jue', largo: 'Jueves' },
-  { n: 5, corto: 'Vie', largo: 'Viernes' },
-  { n: 6, corto: 'Sáb', largo: 'Sábado' },
-  { n: 7, corto: 'Dom', largo: 'Domingo' },
+  { n: 1, corto: 'Mon', largo: 'Monday' },
+  { n: 2, corto: 'Tue', largo: 'Tuesday' },
+  { n: 3, corto: 'Wed', largo: 'Wednesday' },
+  { n: 4, corto: 'Thu', largo: 'Thursday' },
+  { n: 5, corto: 'Fri', largo: 'Friday' },
+  { n: 6, corto: 'Sat', largo: 'Saturday' },
+  { n: 7, corto: 'Sun', largo: 'Sunday' },
 ]
 export const HORA_PRIMERA = 7
 export const HORA_ULTIMA = 22

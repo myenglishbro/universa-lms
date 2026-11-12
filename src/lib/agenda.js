@@ -13,32 +13,32 @@ export const sumarDias = (iso, n) => {
 export const lunesDe = (iso) => sumarDias(iso, -((deISO(iso).getDay() + 6) % 7))
 export const diasDeSemana = (iso) => Array.from({ length: 7 }, (_, i) => sumarDias(lunesDe(iso), i))
 
-const nombresDia = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const nombresDia = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 export const nombreDia = (iso) => nombresDia[deISO(iso).getDay()]
-export const diaMes = (iso) => `${Number(iso.slice(8, 10))} ${meses[Number(iso.slice(5, 7)) - 1]}`
+export const diaMes = (iso) => `${meses[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}`
 export const rangoSemana = (lunes) => `${diaMes(lunes)} – ${diaMes(sumarDias(lunes, 6))} ${sumarDias(lunes, 6).slice(0, 4)}`
 
 export const SIN_DOCENTE = '__sin_docente__'
 
 export const modalidadesAgenda = [
-  { value: '', label: 'Todas las modalidades' },
-  { value: 'grupal', label: 'Grupales (salones)' },
-  { value: 'particular', label: 'Particulares (1 a 1)' },
+  { value: '', label: 'All modalities' },
+  { value: 'grupal', label: 'Group (classrooms)' },
+  { value: 'particular', label: 'Private (1-on-1)' },
 ]
 export const estadosAgenda = [
-  { value: '', label: 'Todos los estados' },
-  { value: 'programada', label: 'Programadas' },
-  { value: 'realizada', label: 'Realizadas' },
-  { value: 'cancelada', label: 'Canceladas' },
+  { value: '', label: 'All statuses' },
+  { value: 'programada', label: 'Scheduled' },
+  { value: 'realizada', label: 'Held' },
+  { value: 'cancelada', label: 'Cancelled' },
 ]
 // Estado unificado de una sesión (una clase particular «dictada» se muestra como «realizada»).
 export const estadoAgendaInfo = {
-  programada: { color: 'peach', label: 'Programada' },
-  realizada: { color: 'brand', label: 'Realizada' },
-  cancelada: { color: 'slate', label: 'Cancelada' },
+  programada: { color: 'peach', label: 'Scheduled' },
+  realizada: { color: 'brand', label: 'Held' },
+  cancelada: { color: 'slate', label: 'Cancelled' },
 }
-export const origenLabel = { grupal: 'Grupal', particular: 'Particular' }
+export const origenLabel = { grupal: 'Group', particular: 'Private' }
 
 export const claveItem = (i) => `${i.origen}:${i.id}`
 const hora = (t) => t.slice(0, 5)

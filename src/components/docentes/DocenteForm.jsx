@@ -22,10 +22,10 @@ export default function DocenteForm({ docente, onSave, onClose }) {
   }
 
   return (
-    <Modal title={docente ? 'Editar docente' : 'Nuevo docente'} onClose={onClose}>
+    <Modal title={docente ? 'Edit teacher' : 'New teacher'} onClose={onClose}>
       <form onSubmit={guardar} className="space-y-4">
-        <Field label="Nombre" value={values.nombre} onChange={(e) => setValues({ ...values, nombre: e.target.value })} required />
-        <Field label="Correo (opcional)" type="email" value={values.correo} onChange={(e) => setValues({ ...values, correo: e.target.value })} />
+        <Field label="Name" value={values.nombre} onChange={(e) => setValues({ ...values, nombre: e.target.value })} required />
+        <Field label="Email (optional)" type="email" value={values.correo} onChange={(e) => setValues({ ...values, correo: e.target.value })} />
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
@@ -33,15 +33,15 @@ export default function DocenteForm({ docente, onSave, onClose }) {
             onChange={(e) => setValues({ ...values, activo: e.target.checked })}
             className="h-4 w-4 accent-brand-600"
           />
-          Docente activo
+          Active teacher
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : docente ? 'Guardar cambios' : 'Registrar docente'}
+            {guardando ? 'Saving…' : docente ? 'Save changes' : 'Register teacher'}
           </Button>
         </div>
       </form>
