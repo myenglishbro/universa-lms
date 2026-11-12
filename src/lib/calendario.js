@@ -2,13 +2,13 @@ import { nombreDia, sumarDias } from './agenda'
 
 // Helpers de sesiones académicas.
 export const estadosSesion = [
-  { value: 'programada', label: 'Programada' },
-  { value: 'realizada', label: 'Realizada' },
-  { value: 'cancelada', label: 'Cancelada' },
+  { value: 'programada', label: 'Scheduled' },
+  { value: 'realizada', label: 'Held' },
+  { value: 'cancelada', label: 'Cancelled' },
 ]
 export const estadoSesionLabel = (v) => estadosSesion.find((e) => e.value === v)?.label ?? v
 
-const diasCortos = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const diasCortos = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // "2026-11-10" -> "Mar 10/11"
 export const formatFechaCorta = (iso) =>
@@ -32,7 +32,7 @@ export const hoyISO = () => {
 
 // Texto relativo: «Hoy», «Mañana» o el día de la semana.
 export function cuando(fecha, hoy = hoyISO()) {
-  if (fecha === hoy) return 'Hoy'
-  if (fecha === sumarDias(hoy, 1)) return 'Mañana'
+  if (fecha === hoy) return 'Today'
+  if (fecha === sumarDias(hoy, 1)) return 'Tomorrow'
   return nombreDia(fecha)
 }

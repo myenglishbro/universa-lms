@@ -7,17 +7,17 @@ export function alertasSalon(salon, estudiantes, puedeEditar) {
   const lista = []
   const activo = salon.estado !== 'finalizado'
   const dias = diasParaFin(salon)
-  if (activo && !salon.docente) lista.push({ tono: 'peach', texto: 'No tiene docente asignado', ir: 'resumen', ayuda: puedeEditar ? 'Asígnalo con «Editar».' : '' })
-  if (activo && !salon.nivel) lista.push({ tono: 'peach', texto: 'No tiene nivel académico', ir: 'resumen', ayuda: puedeEditar ? 'Clasifícalo con «Editar».' : '' })
-  if (salon.estado === 'en_curso' && dias !== null && dias < 0) lista.push({ tono: 'rose', texto: `La fecha de fin ya pasó (hace ${-dias} ${dias === -1 ? 'día' : 'días'})`, ir: 'calendario', ayuda: 'Revisa si sigue activo o hay que cerrarlo.' })
+  if (activo && !salon.docente) lista.push({ tono: 'peach', texto: 'No teacher assigned', ir: 'resumen', ayuda: puedeEditar ? 'Assign one with “Edit”.' : '' })
+  if (activo && !salon.nivel) lista.push({ tono: 'peach', texto: 'No academic level', ir: 'resumen', ayuda: puedeEditar ? 'Set it with “Edit”.' : '' })
+  if (salon.estado === 'en_curso' && dias !== null && dias < 0) lista.push({ tono: 'rose', texto: `The end date has passed (${-dias} ${dias === -1 ? 'day' : 'days'} ago)`, ir: 'calendario', ayuda: 'Check whether it is still active or should be closed.' })
   if (salon.estado === 'en_curso' && p && p.total > 0 && p.realizadas >= p.total && !(p.porRegistrar > 0))
-    lista.push({ tono: 'brand', texto: 'Ya se realizaron todas las sesiones', ir: 'resumen', ayuda: puedeEditar ? 'Cambia el estado a «Finalizado» para liberar al docente y cerrar matrículas.' : '' })
-  if (activo && !(p && p.sesiones > 0)) lista.push({ tono: 'slate', texto: 'Aún no tiene calendario de clases', ir: 'calendario', ayuda: 'Genera las sesiones para poder dar seguimiento.' })
-  if (p?.porRegistrar > 0) lista.push({ tono: 'peach', texto: `${p.porRegistrar} ${p.porRegistrar === 1 ? 'clase ya pasó' : 'clases ya pasaron'} sin registrar`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Márcalas como realizadas o canceladas.' })
+    lista.push({ tono: 'brand', texto: 'All sessions have been held', ir: 'resumen', ayuda: puedeEditar ? 'Change the status to “Finished” to free the teacher and close enrollments.' : '' })
+  if (activo && !(p && p.sesiones > 0)) lista.push({ tono: 'slate', texto: 'No class calendar yet', ir: 'calendario', ayuda: 'Generate the sessions to be able to track progress.' })
+  if (p?.porRegistrar > 0) lista.push({ tono: 'peach', texto: `${p.porRegistrar} ${p.porRegistrar === 1 ? 'class has passed' : 'classes have passed'} without being recorded`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Mark them as held or cancelled.' })
   const sinGrab = salon.pendientes?.sinGrabacion ?? 0
-  if (sinGrab > 0) lista.push({ tono: 'peach', texto: `${sinGrab} ${sinGrab === 1 ? 'clase' : 'clases'} sin grabación`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Pídele al docente que suba la grabación de cada clase.' })
-  if (p?.sinProgramar > 0) lista.push({ tono: 'peach', texto: `Faltan ${p.sinProgramar} sesiones por programar`, ir: 'calendario', ayuda: 'Por eso la fecha de fin es solo una estimación.' })
+  if (sinGrab > 0) lista.push({ tono: 'peach', texto: `${sinGrab} ${sinGrab === 1 ? 'class' : 'classes'} without a recording`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Ask the teacher to upload the recording of each class.' })
+  if (p?.sinProgramar > 0) lista.push({ tono: 'peach', texto: `${p.sinProgramar} sessions still to schedule`, ir: 'calendario', ayuda: 'That is why the end date is only an estimate.' })
   if (salon.estado === 'en_curso' && estudiantes && !estudiantes.cargando && cuposSalon(salon, estudiantes.matriculas).ocupados === 0)
-    lista.push({ tono: 'slate', texto: 'No tiene estudiantes matriculados', ir: 'estudiantes', ayuda: '' })
+    lista.push({ tono: 'slate', texto: 'No students enrolled', ir: 'estudiantes', ayuda: '' })
   return lista
 }

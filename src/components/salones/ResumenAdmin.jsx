@@ -22,7 +22,7 @@ export function PorAtender({ alertas, onIr, aviso = '' }) {
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2500)
     } catch {
-      window.prompt('Copia el mensaje:', aviso)
+      window.prompt('Copy the message:', aviso)
     }
   }
   if (alertas.length === 0)
@@ -31,20 +31,20 @@ export function PorAtender({ alertas, onIr, aviso = '' }) {
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-brand-600">
           <Icon name="check" className="h-5 w-5" />
         </span>
-        Todo en orden: este salón no tiene pendientes.
+        All good: this classroom has nothing pending.
       </div>
     )
   return (
-    <section aria-label="Por atender" className="mb-6 rounded-2xl border border-peach-200 bg-peach-50/50 p-4">
+    <section aria-label="To review" className="mb-6 rounded-2xl border border-peach-200 bg-peach-50/50 p-4">
       <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
-        <Icon name="alert" className="h-4 w-4 text-peach-700" /> Por atender ({alertas.length})
+        <Icon name="alert" className="h-4 w-4 text-peach-700" /> To review ({alertas.length})
         {aviso && (
           <button
             type="button"
             onClick={copiar}
             className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-xs font-medium text-peach-700 ring-1 ring-inset ring-peach-200 hover:bg-peach-50"
           >
-            <Icon name={copiado ? 'check' : 'copy'} className="h-3.5 w-3.5" /> {copiado ? 'Mensaje copiado' : 'Copiar aviso al docente'}
+            <Icon name={copiado ? 'check' : 'copy'} className="h-3.5 w-3.5" /> {copiado ? 'Message copied' : 'Copy notice for the teacher'}
           </button>
         )}
       </h2>
@@ -95,37 +95,37 @@ export default function ResumenAdmin({ salon, estudiantes, puedeEditar, onVerDoc
   const cupos = estudiantes && !estudiantes.cargando ? cuposSalon(salon, estudiantes.matriculas) : null
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Bloque icono="doc" titulo="Programa académico">
-        <Dato label="Nivel académico">{salon.nivel || <span className="text-peach-700">Sin nivel asignado</span>}</Dato>
-        <Dato label="Curso">{salon.curso || '—'}</Dato>
-        <Dato label="Plan académico">
+      <Bloque icono="doc" titulo="Academic program">
+        <Dato label="Academic level">{salon.nivel || <span className="text-peach-700">No level assigned</span>}</Dato>
+        <Dato label="Course">{salon.curso || '—'}</Dato>
+        <Dato label="Academic plan">
           {salon.plan ? (
             <>
               {descripcionPlan({ ...salon.plan, tipoAlumno: ['nuevo', 'continuo'].includes(salon.plan.tipoAlumno) ? salon.plan.tipoAlumno : '' })}
               <span className="block text-xs text-slate-500">
-                {textoCiclos(salon.cicloDesde, salon.cicloHasta)} · {salon.plan.sesionesSemana} clases por semana
+                {textoCiclos(salon.cicloDesde, salon.cicloHasta)} · {salon.plan.sesionesSemana} classes per week
               </span>
             </>
           ) : (
-            <span className="text-slate-400">Sin plan</span>
+            <span className="text-slate-400">No plan</span>
           )}
         </Dato>
-        <Dato label="Frecuencia de clases">
+        <Dato label="Class frequency">
           {salon.frecuencia ? (
             <>
               {salon.frecuencia.nombre}
               <span className="block text-xs text-slate-500">
-                {estructuraTexto(salon.frecuencia.minutos)} por semana{salon.frecuencia.intensidad ? ` · ${salon.frecuencia.intensidad}` : ''}
+                {estructuraTexto(salon.frecuencia.minutos)} per week{salon.frecuencia.intensidad ? ` · ${salon.frecuencia.intensidad}` : ''}
               </span>
             </>
           ) : (
-            <span className="text-slate-400">Sin frecuencia</span>
+            <span className="text-slate-400">No frequency</span>
           )}
         </Dato>
       </Bloque>
 
-      <Bloque icono="users" titulo="Docente y cupos">
-        <Dato label="Docente asignado">
+      <Bloque icono="users" titulo="Teacher and seats">
+        <Dato label="Assigned teacher">
           {salon.docente ? (
             onVerDocente && salon.docenteId ? (
               <button type="button" className="font-semibold text-brand-700 hover:underline" onClick={() => onVerDocente(salon.docenteId)}>
@@ -135,16 +135,16 @@ export default function ResumenAdmin({ salon, estudiantes, puedeEditar, onVerDoc
               <strong>{salon.docente}</strong>
             )
           ) : (
-            <span className="text-peach-700">Sin docente asignado{puedeEditar && ': asígnalo en «Editar»'}</span>
+            <span className="text-peach-700">No teacher assigned{puedeEditar && ': assign one under “Edit”'}</span>
           )}
         </Dato>
-        <Dato label="Capacidad">
-          {salon.capacidad} estudiantes
+        <Dato label="Capacity">
+          {salon.capacidad} students
           {cupos && (
             <>
               <div
                 role="progressbar"
-                aria-label="Cupos ocupados"
+                aria-label="Seats taken"
                 aria-valuenow={cupos.ocupados}
                 aria-valuemin={0}
                 aria-valuemax={cupos.capacidad}
@@ -153,16 +153,16 @@ export default function ResumenAdmin({ salon, estudiantes, puedeEditar, onVerDoc
                 <div className={`h-full rounded-full ${cupos.lleno ? 'bg-peach-500' : 'bg-brand-500'}`} style={{ width: `${Math.min(100, (cupos.ocupados / Math.max(cupos.capacidad, 1)) * 100)}%` }} />
               </div>
               <span className="mt-1 block text-xs text-slate-500">
-                {cupos.ocupados} matriculados · {cupos.disponibles} {cupos.disponibles === 1 ? 'cupo libre' : 'cupos libres'}
+                {cupos.ocupados} enrolled · {cupos.disponibles} {cupos.disponibles === 1 ? 'seat available' : 'seats available'}
               </span>
             </>
           )}
         </Dato>
       </Bloque>
 
-      <Bloque icono="calendar" titulo="Fechas">
-        <Dato label="Inicio">{formatFecha(salon.fechaInicio)}</Dato>
-        <Dato label="Fin estimado">
+      <Bloque icono="calendar" titulo="Dates">
+        <Dato label="Start">{formatFecha(salon.fechaInicio)}</Dato>
+        <Dato label="Estimated end">
           {formatFecha(fechaFinSalon(salon))}
           {salon.fechaFin && salon.estado === 'en_curso' && (
             <span className="ml-2">
@@ -170,12 +170,12 @@ export default function ResumenAdmin({ salon, estudiantes, puedeEditar, onVerDoc
             </span>
           )}
         </Dato>
-        <p className="text-xs text-slate-400">Los estudiantes pueden incorporarse con el salón ya iniciado; eso no cambia la fecha de fin.</p>
+        <p className="text-xs text-slate-400">Students can join after the classroom has started; this does not change the end date.</p>
       </Bloque>
 
-      <Bloque icono="clock" titulo="Horario semanal">
+      <Bloque icono="clock" titulo="Weekly schedule">
         {salon.horarios.length === 0 ? (
-          <p className="text-sm text-slate-400">Sin horarios registrados</p>
+          <p className="text-sm text-slate-400">No schedule on record</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {salon.horarios.map((h, i) => (
@@ -192,7 +192,7 @@ export default function ResumenAdmin({ salon, estudiantes, puedeEditar, onVerDoc
 
       {salon.observaciones && (
         <Card className="p-5 lg:col-span-2">
-          <h2 className="mb-2 text-sm font-semibold text-slate-900">Observaciones</h2>
+          <h2 className="mb-2 text-sm font-semibold text-slate-900">Notes</h2>
           <p className="whitespace-pre-line text-sm text-slate-700">{salon.observaciones}</p>
         </Card>
       )}

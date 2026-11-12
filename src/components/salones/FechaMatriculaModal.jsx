@@ -15,8 +15,8 @@ export default function FechaMatriculaModal({ titulo, texto, fechaActual, inicio
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!fecha) return setError('Elige la fecha')
-    if (fecha > hoy) return setError('La fecha no puede ser futura')
+    if (!fecha) return setError('Choose the date')
+    if (fecha > hoy) return setError('The date cannot be in the future')
     setGuardando(true)
     setError('')
     try {
@@ -32,29 +32,29 @@ export default function FechaMatriculaModal({ titulo, texto, fechaActual, inicio
       <form onSubmit={enviar} className="space-y-4">
         {texto && <p className="text-sm text-slate-600">{texto}</p>}
         <Field
-          label={alcance === 'todas' ? 'Matriculados desde' : 'Matriculado desde'}
+          label={alcance === 'todas' ? 'Enrolled since' : 'Enrolled since'}
           type="date"
           value={fecha}
           max={hoy}
           onChange={(e) => setFecha(e.target.value)}
           required
-          hint={fechaActual ? `Hoy figura desde el ${formatFecha(fechaActual)}.` : undefined}
+          hint={fechaActual ? `Currently listed since ${formatFecha(fechaActual)}.` : undefined}
         />
         {inicioSalon && inicioSalon <= hoy && fecha !== inicioSalon && (
           <button type="button" className="text-sm text-brand-700 hover:underline" onClick={() => setFecha(inicioSalon)}>
-            Usar el inicio del salón ({formatFecha(inicioSalon)})
+            Use the classroom start date ({formatFecha(inicioSalon)})
           </button>
         )}
         <p className="rounded-lg bg-peach-50 px-3 py-2 text-xs text-peach-700">
-          Las clases desde esa fecha pasarán a incluir al estudiante en la asistencia y en la participación. Las notas ya publicadas no se recalculan solas.
+          Classes from that date on will include the student in attendance and participation. Grades already published are not recalculated automatically.
         </p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar fecha'}
+            {guardando ? 'Saving…' : 'Save date'}
           </Button>
         </div>
       </form>

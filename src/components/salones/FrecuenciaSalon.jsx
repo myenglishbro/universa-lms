@@ -12,18 +12,18 @@ export default function FrecuenciaSalon({ catalogo, frecuenciaId, modalidadCodig
   if (errorFrecuencias)
     return (
       <p className="text-sm text-slate-500 sm:col-span-2">
-        No se pudieron cargar las frecuencias ({errorFrecuencias}). Desactiva esta opción para guardar el salón sin frecuencia.
+        Could not load the frequencies ({errorFrecuencias}). Turn this option off to save the classroom without a frequency.
       </p>
     )
 
-  const etiqueta = (f) => `${f.nombre} · ${estructuraTexto(f.minutos)}${f.id === frecuenciaId && !f.activa ? ' (inactiva)' : ''}`
+  const etiqueta = (f) => `${f.nombre} · ${estructuraTexto(f.minutos)}${f.id === frecuenciaId && !f.activa ? ' (inactive)' : ''}`
 
   return (
     <div className="sm:col-span-2">
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-slate-700">Frecuencia de clases</span>
+        <span className="mb-1 block text-sm font-medium text-slate-700">Class frequency</span>
         <select value={frecuenciaId} onChange={(e) => onChange(e.target.value)} className={inputClass}>
-          <option value="">Selecciona una frecuencia</option>
+          <option value="">Select a frequency</option>
           {agruparPorIntensidad(opciones).map((g) => (
             <optgroup key={g.intensidad} label={g.intensidad}>
               {g.items.map((f) => (
@@ -36,13 +36,13 @@ export default function FrecuenciaSalon({ catalogo, frecuenciaId, modalidadCodig
         </select>
         <span className="mt-1 block text-xs text-slate-500">
           {elegida
-            ? `${estructuraTexto(elegida.minutos)} por semana · ${horasSemanaTexto(elegida)}.${elegida.dias ? '' : ' No exige días específicos.'}`
-            : 'Define cuántas clases hay por semana y cuánto dura cada una.'}
+            ? `${estructuraTexto(elegida.minutos)} per week · ${horasSemanaTexto(elegida)}.${elegida.dias ? '' : ' Does not require specific days.'}`
+            : 'Defines how many classes there are per week and how long each lasts.'}
         </span>
       </label>
       {opciones.length === 0 && (
         <p className="mt-1 text-xs text-peach-700">
-          No hay frecuencias activas {modalidad ? `para ${modalidad.nombre}` : 'para salones grupales'}. Un administrador puede crearlas en «Frecuencias».
+          There are no active frequencies {modalidad ? `for ${modalidad.nombre}` : 'for group classrooms'}. An administrator can create them under “Frequencies”.
         </p>
       )}
     </div>

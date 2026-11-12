@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
-import { estadosSesion, formatFechaCorta } from '../../lib/calendario'
+import { estadoSesionLabel, estadosSesion, formatFechaCorta } from '../../lib/calendario'
 import { hoyLima } from '../../lib/salones'
 
 const titulos = {
-  reprogramar: 'Reprogramar sesión',
-  recuperar: 'Programar recuperación',
-  corregir: 'Corregir sesión',
+  reprogramar: 'Reschedule session',
+  recuperar: 'Schedule make-up',
+  corregir: 'Correct session',
 }
 
 // modo 'reprogramar': mueve una sesión programada. 'recuperar': repone una sesión cancelada.
@@ -61,30 +61,30 @@ export default function SesionModal({ modo, sesion, proponer, onSave, onClose })
         {modo === 'corregir' ? (
           <>
             <p className="text-sm text-slate-600">
-              Esta sesión ya está registrada como <b>{sesion.estado}</b>. Los cambios quedan anotados con su motivo.
+              This session is already recorded as <b>{estadoSesionLabel(sesion.estado).toLowerCase()}</b>. Changes are logged with their reason.
             </p>
-            <Field label="Nuevo estado" value={v.estado} onChange={cambiar('estado')} options={opcionesEstado} />
-            <Field label="Motivo de la corrección" as="textarea" rows="2" value={v.texto} onChange={cambiar('texto')} required />
+            <Field label="New status" value={v.estado} onChange={cambiar('estado')} options={opcionesEstado} />
+            <Field label="Reason for the correction" as="textarea" rows="2" value={v.texto} onChange={cambiar('texto')} required />
           </>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2">
-              <Field label="Fecha" type="date" min={modo === 'recuperar' ? hoyLima() : undefined} value={v.fecha} onChange={cambiar('fecha')} required />
-              <Field label="Inicio" type="time" value={v.horaInicio} onChange={cambiar('horaInicio')} required />
-              <Field label="Fin" type="time" value={v.horaFin} onChange={cambiar('horaFin')} required />
+              <Field label="Date" type="date" min={modo === 'recuperar' ? hoyLima() : undefined} value={v.fecha} onChange={cambiar('fecha')} required />
+              <Field label="Start" type="time" value={v.horaInicio} onChange={cambiar('horaInicio')} required />
+              <Field label="End" type="time" value={v.horaFin} onChange={cambiar('horaFin')} required />
             </div>
             {modo === 'reprogramar' && (
-              <Field label="Motivo (opcional)" as="textarea" rows="2" value={v.texto} onChange={cambiar('texto')} />
+              <Field label="Reason (optional)" as="textarea" rows="2" value={v.texto} onChange={cambiar('texto')} />
             )}
           </>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
+            {guardando ? 'Saving…' : 'Save'}
           </Button>
         </div>
       </form>

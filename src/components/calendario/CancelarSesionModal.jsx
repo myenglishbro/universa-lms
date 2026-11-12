@@ -68,48 +68,48 @@ export default function CancelarSesionModal({ sesion, proponer, onConfirm, onClo
   )
 
   return (
-    <Modal title={`Cancelar sesión del ${formatFechaCorta(sesion.fecha)}`} onClose={onClose}>
+    <Modal title={`Cancel session on ${formatFechaCorta(sesion.fecha)}`} onClose={onClose}>
       <form onSubmit={confirmar} className="space-y-4">
         <p className="text-sm text-slate-600">
-          La sesión cancelada no cuenta como realizada y el total de sesiones requerido no cambia.
+          A cancelled session does not count as held and the required total of sessions does not change.
         </p>
-        <Field label="Motivo (opcional)" as="textarea" rows="2" value={nota} onChange={(e) => setNota(e.target.value)} />
+        <Field label="Reason (optional)" as="textarea" rows="2" value={nota} onChange={(e) => setNota(e.target.value)} />
 
         <fieldset className="space-y-2">
-          <legend className="mb-1 text-sm font-medium text-slate-700">Recuperación</legend>
+          <legend className="mb-1 text-sm font-medium text-slate-700">Make-up class</legend>
           {propuesta === undefined ? (
-            <p className="text-sm text-slate-500">Buscando la siguiente fecha disponible…</p>
+            <p className="text-sm text-slate-500">Looking for the next available date…</p>
           ) : (
             radio(
               'propuesta',
               propuesta ? (
                 <>
-                  Programar la propuesta: <b>{formatFechaCorta(propuesta.fecha)}</b>, {propuesta.hora_inicio}–{propuesta.hora_fin}
+                  Schedule the suggestion: <b>{formatFechaCorta(propuesta.fecha)}</b>, {propuesta.hora_inicio}–{propuesta.hora_fin}
                 </>
               ) : (
-                'No hay horarios disponibles para proponer una fecha'
+                'There are no available time slots to suggest a date'
               ),
               !propuesta,
             )
           )}
-          {radio('otra', 'Elegir otra fecha')}
+          {radio('otra', 'Choose another date')}
           {opcion === 'otra' && (
             <div className="grid grid-cols-3 gap-2 pl-6">
-              <Field label="Fecha" type="date" min={hoyLima()} value={otra.fecha} onChange={(e) => setOtra({ ...otra, fecha: e.target.value })} required />
-              <Field label="Inicio" type="time" value={otra.horaInicio} onChange={(e) => setOtra({ ...otra, horaInicio: e.target.value })} required />
-              <Field label="Fin" type="time" value={otra.horaFin} onChange={(e) => setOtra({ ...otra, horaFin: e.target.value })} required />
+              <Field label="Date" type="date" min={hoyLima()} value={otra.fecha} onChange={(e) => setOtra({ ...otra, fecha: e.target.value })} required />
+              <Field label="Start" type="time" value={otra.horaInicio} onChange={(e) => setOtra({ ...otra, horaInicio: e.target.value })} required />
+              <Field label="End" type="time" value={otra.horaFin} onChange={(e) => setOtra({ ...otra, horaFin: e.target.value })} required />
             </div>
           )}
-          {radio('pendiente', 'Dejar la recuperación pendiente (quedará como sesión sin programar)')}
+          {radio('pendiente', 'Leave the make-up pending (it will stay as an unscheduled session)')}
         </fieldset>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Volver
+            Back
           </Button>
           <Button type="submit" disabled={guardando || propuesta === undefined}>
-            {guardando ? 'Guardando…' : recuperacion ? 'Cancelar y programar recuperación' : 'Cancelar sesión'}
+            {guardando ? 'Saving…' : recuperacion ? 'Cancel and schedule make-up' : 'Cancel session'}
           </Button>
         </div>
       </form>

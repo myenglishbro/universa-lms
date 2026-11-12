@@ -27,7 +27,7 @@ export function resumenCandidatos(estudiantes, matriculas, salonId) {
   const dentro = new Set(matriculasActivas(matriculas, salonId).map((m) => m.alumno_id))
   const ya = estudiantes.filter((e) => dentro.has(e.id)).length
   const inactivos = estudiantes.filter((e) => e.activo === false && !dentro.has(e.id)).length
-  return `${estudiantes.length} registrados: ${ya} ya matriculados aquí, ${inactivos} inactivos`
+  return `${estudiantes.length} registered: ${ya} already enrolled here, ${inactivos} inactive`
 }
 
 export const SIN_MATRICULA = '__sin_matricula__'
@@ -52,10 +52,10 @@ export function destinosCambio(matricula, salones, matriculas) {
 }
 
 export function motivoSinDestinos({ excluidos, otros }) {
-  if (otros === 0) return 'No hay otros salones registrados.'
+  if (otros === 0) return 'There are no other classrooms registered.'
   const partes = []
-  if (excluidos.finalizados) partes.push(`${excluidos.finalizados} finalizado${excluidos.finalizados === 1 ? '' : 's'}`)
-  if (excluidos.llenos) partes.push(`${excluidos.llenos} sin cupos`)
-  if (excluidos.yaMatriculado) partes.push(`${excluidos.yaMatriculado} donde ya está matriculado`)
-  return `No hay salones disponibles para el traslado (${partes.join(', ')}). Un salón finalizado o lleno no admite traslados: aumenta su capacidad o cambia su estado desde «Editar».`
+  if (excluidos.finalizados) partes.push(`${excluidos.finalizados} finished`)
+  if (excluidos.llenos) partes.push(`${excluidos.llenos} full`)
+  if (excluidos.yaMatriculado) partes.push(`${excluidos.yaMatriculado} where already enrolled`)
+  return `No classrooms available for the transfer (${partes.join(', ')}). A finished or full classroom does not accept transfers: increase its capacity or change its status from “Edit”.`
 }

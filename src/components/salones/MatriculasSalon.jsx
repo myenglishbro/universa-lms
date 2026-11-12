@@ -20,7 +20,7 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
   const cupos = cuposSalon(salon, matriculas)
   const activas = matriculasActivas(matriculas, salon.id)
   const historial = matriculas.filter((m) => m.salon_id === salon.id && m.estado === 'retirada')
-  const nombre = (id) => estudiantes.find((e) => e.id === id)?.nombre ?? 'Estudiante'
+  const nombre = (id) => estudiantes.find((e) => e.id === id)?.nombre ?? 'Student'
 
   const [busqueda, setBusqueda] = useState('')
   const [marcados, setMarcados] = useState([])
@@ -63,40 +63,40 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
   return (
     <Card className="mt-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-slate-900">Estudiantes matriculados</h2>
+        <h2 className="text-base font-semibold text-slate-900">Enrolled students</h2>
         <span className="flex items-center gap-2 text-sm">
           <span className="text-slate-600">
-            {cupos.ocupados} de {cupos.capacidad}
+            {cupos.ocupados} of {cupos.capacidad}
           </span>
           <Badge color={cupos.lleno ? 'peach' : 'brand'}>
-            {cupos.lleno ? 'Salón lleno' : `${cupos.disponibles} ${cupos.disponibles === 1 ? 'cupo disponible' : 'cupos disponibles'}`}
+            {cupos.lleno ? 'Classroom full' : `${cupos.disponibles} ${cupos.disponibles === 1 ? 'seat available' : 'seats available'}`}
           </Badge>
         </span>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
         <div className={`h-full ${cupos.lleno ? 'bg-peach-500' : 'bg-brand-500'}`} style={{ width: `${Math.min(100, (cupos.ocupados / Math.max(cupos.capacidad, 1)) * 100)}%` }} />
       </div>
-      <p className="mt-2 text-xs text-slate-500">Matricular no es un pago ni un paquete de horas: solo asigna al estudiante a este salón.</p>
+      <p className="mt-2 text-xs text-slate-500">Enrolling is not a payment or an hour package: it only assigns the student to this classroom.</p>
       {puedeEditar && activas.some((m) => m.fecha_inicio > salon.fechaInicio) && salon.fechaInicio <= hoyLima() && (
         <p className="mt-2 rounded-lg bg-peach-50 px-3 py-2 text-xs text-peach-700">
-          Algunos estudiantes figuran matriculados después del inicio del salón y no aparecen en la asistencia de las clases anteriores.{' '}
+          Some students are enrolled after the classroom started and do not appear in the attendance of earlier classes.{' '}
           <button type="button" className="font-medium underline" onClick={() => setModal({ tipo: 'fechas' })}>
-            Matricular desde una fecha pasada
+            Enroll from a past date
           </button>
         </p>
       )}
 
       {errorCarga && (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          No se pudieron cargar los estudiantes o las matrículas ({errorCarga}). Revisa que la migración de matrículas esté ejecutada y vuelve a cargar la página.
+          Could not load students or enrollments ({errorCarga}). Check that the enrollments migration has been run and reload the page.
         </p>
       )}
       {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       {cargando ? (
-        <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+        <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
       ) : activas.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400">Aún no hay estudiantes matriculados.</p>
+        <p className="py-6 text-center text-sm text-slate-400">No students enrolled yet.</p>
       ) : (
         <ul className="mt-3 divide-y divide-slate-100">
           {activas.map((m) => {
@@ -108,20 +108,20 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
                     {nombre(m.alumno_id)}
                   </button>
                   <p className="text-xs text-slate-500">
-                    Desde {formatFecha(m.fecha_inicio)}
+                    Since {formatFecha(m.fecha_inicio)}
                     {e?.telefono && ` · ${e.telefono}`}
                   </p>
                 </div>
                 {puedeEditar && (
                   <div className="flex gap-1">
                     <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'fecha', m })}>
-                      Cambiar fecha
+                      Change date
                     </Button>
                     <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'cambiar', m })}>
-                      Cambiar de salón
+                      Move to another classroom
                     </Button>
                     <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'retirar', m })}>
-                      Retirar
+                      Withdraw
                     </Button>
                   </div>
                 )}
@@ -133,11 +133,11 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
 
       {puedeEditar && !cargando && (
         <div className="mt-4 border-t border-slate-100 pt-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Agregar estudiantes</h3>
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Add students</h3>
           {finalizado ? (
-            <p className="text-sm text-slate-500">El salón está finalizado: no admite nuevas matrículas.</p>
+            <p className="text-sm text-slate-500">The classroom is finished: it does not accept new enrollments.</p>
           ) : cupos.lleno ? (
-            <p className="text-sm text-peach-700">No quedan cupos. Retira a alguien o aumenta la capacidad del salón (Editar).</p>
+            <p className="text-sm text-peach-700">No seats left. Withdraw someone or increase the classroom capacity (Edit).</p>
           ) : (
             <>
               <div className="relative sm:max-w-sm">
@@ -145,14 +145,14 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
                 <input
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar estudiante por nombre, correo o teléfono"
+                  placeholder="Search student by name, email or phone"
                   className={`${inputClass} pl-9`}
-                  aria-label="Buscar estudiante para matricular"
+                  aria-label="Search student to enroll"
                 />
               </div>
               {visibles.length === 0 ? (
                 <p className="mt-2 text-xs text-slate-500">
-                  {hayBusqueda ? 'Ningún estudiante activo coincide.' : 'No hay más estudiantes activos para matricular.'} ({resumenCandidatos(estudiantes, matriculas, salon.id)})
+                  {hayBusqueda ? 'No active student matches.' : 'There are no more active students to enroll.'} ({resumenCandidatos(estudiantes, matriculas, salon.id)})
                 </p>
               ) : (
                 <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
@@ -167,14 +167,14 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
                   ))}
                 </ul>
               )}
-              {candidatos.length > MAX_LISTA && <p className="mt-1 text-xs text-slate-500">Mostrando {MAX_LISTA} de {candidatos.length}; escribe para acotar.</p>}
+              {candidatos.length > MAX_LISTA && <p className="mt-1 text-xs text-slate-500">Showing {MAX_LISTA} of {candidatos.length}; type to narrow down.</p>}
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <Button onClick={matricular} disabled={guardando || marcados.length === 0 || sobran}>
-                  {guardando ? 'Matriculando…' : `Matricular estudiantes${marcados.length ? ` (${marcados.length})` : ''}`}
+                  {guardando ? 'Enrolling…' : `Enroll students${marcados.length ? ` (${marcados.length})` : ''}`}
                 </Button>
-                {sobran && <span className="text-xs text-peach-700">Solo quedan {cupos.disponibles} cupos.</span>}
+                {sobran && <span className="text-xs text-peach-700">Only {cupos.disponibles} seats left.</span>}
                 <button type="button" className="text-sm text-brand-700 hover:underline" onClick={() => setModal({ tipo: 'nuevo' })}>
-                  ¿No está? Registrar estudiante nuevo
+                  Not listed? Register a new student
                 </button>
               </div>
             </>
@@ -184,7 +184,7 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
 
       {historial.length > 0 && (
         <details className="mt-4 border-t border-slate-100 pt-3">
-          <summary className="cursor-pointer text-sm text-slate-600">Historial de retiros ({historial.length})</summary>
+          <summary className="cursor-pointer text-sm text-slate-600">Withdrawal history ({historial.length})</summary>
           <ul className="mt-2 space-y-1 text-xs text-slate-500">
             {historial.map((m) => (
               <li key={m.id}>
@@ -198,17 +198,17 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
 
       {modal?.tipo === 'retirar' && (
         <MotivoModal
-          titulo="Retirar del salón"
-          texto={`${nombre(modal.m.alumno_id)} dejará de ocupar un cupo. La matrícula queda en el historial.`}
-          confirmar="Retirar"
+          titulo="Withdraw from classroom"
+          texto={`${nombre(modal.m.alumno_id)} will no longer take a seat. The enrollment stays in the history.`}
+          confirmar="Withdraw"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.retirarMatricula(modal.m.id, motivo))}
         />
       )}
       {modal?.tipo === 'fecha' && (
         <FechaMatriculaModal
-          titulo="Fecha de matrícula"
-          texto={`${nombre(modal.m.alumno_id)}: elige desde qué día cuenta en este salón. Para registrar la asistencia de clases pasadas, usa una fecha anterior a esas clases.`}
+          titulo="Enrollment date"
+          texto={`${nombre(modal.m.alumno_id)}: choose from which day they count in this classroom. To record attendance for past classes, use a date before those classes.`}
           fechaActual={modal.m.fecha_inicio}
           inicioSalon={salon.fechaInicio}
           onClose={() => setModal(null)}
@@ -217,8 +217,8 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
       )}
       {modal?.tipo === 'fechas' && (
         <FechaMatriculaModal
-          titulo="Matricular desde una fecha pasada"
-          texto="Se aplica a todos los estudiantes matriculados que figuran con una fecha posterior. Los que ya empezaron antes no cambian."
+          titulo="Enroll from a past date"
+          texto="Applies to all enrolled students listed with a later date. Those who started earlier do not change."
           alcance="todas"
           inicioSalon={salon.fechaInicio}
           onClose={() => setModal(null)}

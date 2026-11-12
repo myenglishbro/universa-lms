@@ -109,16 +109,16 @@ export default function AsignacionDocentes({ salones, docentes, onAsignar, onClo
   const cargando = disp === null || choques === null
 
   return (
-    <Modal wide="xl" title="Salones por asignar" onClose={onClose}>
+    <Modal wide="xl" title="Classrooms to assign" onClose={onClose}>
       <p className="mb-4 text-sm text-slate-600">
-        Salones planificados o en curso con horario y sin docente. Se sugieren docentes libres en <strong>todo</strong> el horario y en sus fechas, primero los que
-        tienen menos salones activos.
+        Planned or in-progress classrooms with a schedule and no teacher. Teachers who are free for the <strong>whole</strong> schedule and its dates are suggested, starting with those
+        who have the fewest active classrooms.
       </p>
-      {errorCarga && <p className="mb-3 text-sm text-red-600">No se pudieron calcular las sugerencias: {errorCarga}</p>}
+      {errorCarga && <p className="mb-3 text-sm text-red-600">Could not calculate suggestions: {errorCarga}</p>}
       {objetivos.length === 0 ? (
-        <p className="py-8 text-center text-sm text-slate-500">No hay salones activos sin docente.</p>
+        <p className="py-8 text-center text-sm text-slate-500">There are no active classrooms without a teacher.</p>
       ) : cargando && !errorCarga ? (
-        <p className="py-8 text-center text-sm text-slate-500">Calculando sugerencias…</p>
+        <p className="py-8 text-center text-sm text-slate-500">Calculating suggestions…</p>
       ) : (
         <ul className="space-y-3">
           {objetivos.map((s) => {
@@ -130,18 +130,18 @@ export default function AsignacionDocentes({ salones, docentes, onAsignar, onClo
                   <div>
                     <span className="font-semibold text-slate-900">{s.nombre}</span>
                     <span className="ml-2 text-xs text-slate-500">{s.codigo}</span>
-                    <span className="ml-2 align-middle"><Badge color={s.estado === 'en_curso' ? 'peach' : 'slate'}>{s.estado === 'en_curso' ? 'En curso · sin docente' : 'Planificado'}</Badge></span>
+                    <span className="ml-2 align-middle"><Badge color={s.estado === 'en_curso' ? 'peach' : 'slate'}>{s.estado === 'en_curso' ? 'In progress · no teacher' : 'Planned'}</Badge></span>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {s.nivel || 'Sin nivel'} · {s.estado === 'en_curso' ? 'inició' : 'desde'} {formatFecha(s.fechaInicio)}
+                    {s.nivel || 'No level'} · {s.estado === 'en_curso' ? 'started' : 'from'} {formatFecha(s.fechaInicio)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-slate-600">{formatHorario(s.horarios)}</p>
 
                 {top.length === 0 ? (
                   <p className="mt-3 rounded-lg bg-peach-50 px-3 py-2 text-sm text-peach-700">
-                    Ningún docente disponible en ese horario{descartados > 0 ? ` (${descartados} descartados por choque o disponibilidad)` : ''}. Revisa los horarios del
-                    salón o la disponibilidad de los docentes.
+                    No teacher available at that time{descartados > 0 ? ` (${descartados} ruled out by conflicts or availability)` : ''}. Check the classroom's schedule
+                    or the teachers' availability.
                   </p>
                 ) : (
                   <ul className="mt-3 space-y-2">
@@ -149,17 +149,17 @@ export default function AsignacionDocentes({ salones, docentes, onAsignar, onClo
                       <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
                         <div className="flex flex-wrap items-center gap-2 text-sm">
                           <span className="font-medium text-slate-900">{d.nombre}</span>
-                          <Badge color={estado === 'libre' ? 'brand' : 'slate'}>{estado === 'libre' ? 'Disponible' : 'Sin disponibilidad registrada'}</Badge>
-                          <span className="text-xs text-slate-500">{n === 0 ? 'Sin salones' : `${n} ${n === 1 ? 'salón' : 'salones'} activos`}</span>
+                          <Badge color={estado === 'libre' ? 'brand' : 'slate'}>{estado === 'libre' ? 'Available' : 'No availability on record'}</Badge>
+                          <span className="text-xs text-slate-500">{n === 0 ? 'No classrooms' : `${n} active ${n === 1 ? 'classroom' : 'classrooms'}`}</span>
                         </div>
                         <Button className="px-3 py-1.5" disabled={Boolean(asignando)} onClick={() => asignar(s, d.id)}>
-                          {asignando === `${s.id}:${d.id}` ? 'Asignando…' : 'Asignar'}
+                          {asignando === `${s.id}:${d.id}` ? 'Assigning…' : 'Assign'}
                         </Button>
                       </li>
                     ))}
                   </ul>
                 )}
-                {lista.length > MAX_SUGERIDOS && <p className="mt-2 text-xs text-slate-500">y {lista.length - MAX_SUGERIDOS} más; puedes elegirlos desde «Editar salón».</p>}
+                {lista.length > MAX_SUGERIDOS && <p className="mt-2 text-xs text-slate-500">and {lista.length - MAX_SUGERIDOS} more; you can choose them from “Edit classroom”.</p>}
                 {errores[s.id] && <p className="mt-2 text-sm text-red-600">{errores[s.id]}</p>}
               </li>
             )

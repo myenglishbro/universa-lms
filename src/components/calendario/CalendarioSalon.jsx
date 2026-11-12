@@ -48,31 +48,31 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
   if (!p) {
     contenido = (
       <Card className="p-5 text-sm text-slate-500">
-        Este salón no tiene calendario. {puedeEditar ? 'Define el «Total de sesiones» en Editar para activarlo.' : ''}
+        This classroom has no calendar. {puedeEditar ? 'Set the “Total sessions” under Edit to enable it.' : ''}
       </Card>
     )
   } else if (p.sesiones === 0) {
     contenido = (
       <Card className="flex flex-wrap items-center justify-between gap-3 p-5 text-sm text-slate-600">
         <span>
-          Calendario sin generar: {p.total} sesiones a partir del {salon.fechaInicio.split('-').reverse().join('/')}.
-          {salon.horarios.length === 0 && ' Registra al menos un horario semanal para poder generarlo.'}
+          Calendar not generated: {p.total} sessions starting on {salon.fechaInicio.split('-').reverse().join('/')}.
+          {salon.horarios.length === 0 && ' Add at least one weekly time slot to be able to generate it.'}
         </span>
         {puedeEditar && (
           <Button onClick={() => correr(cal.generar)} disabled={ocupado || salon.horarios.length === 0}>
-            {ocupado ? 'Generando…' : 'Generar calendario'}
+            {ocupado ? 'Generating…' : 'Generate calendar'}
           </Button>
         )}
       </Card>
     )
   } else if (cal.cargando) {
-    contenido = <Card className="p-5 text-sm text-slate-500">Cargando sesiones…</Card>
+    contenido = <Card className="p-5 text-sm text-slate-500">Loading sessions…</Card>
   } else if (cal.error) {
     contenido = (
       <Card className="p-5 text-sm">
-        <p className="text-red-600">No se pudieron cargar las sesiones: {cal.error}</p>
+        <p className="text-red-600">Could not load sessions: {cal.error}</p>
         <Button variant="secondary" className="mt-3" onClick={cal.recargar}>
-          Reintentar
+          Retry
         </Button>
       </Card>
     )
@@ -94,7 +94,7 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
 
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-lg font-semibold text-slate-900">Calendario académico</h2>
+      <h2 className="mb-3 text-lg font-semibold text-slate-900">Academic calendar</h2>
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {contenido}
 

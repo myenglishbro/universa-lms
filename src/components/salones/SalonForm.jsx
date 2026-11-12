@@ -124,31 +124,31 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
     if (!franjas) return 'sin_datos'
     return cubreHorarios(franjas, horariosParaDocente) ? 'libre' : 'ocupado'
   }
-  const etiquetaDocente = { choque: '⛔ ocupado en otro salón', libre: '✓ disponible en este horario', ocupado: 'no disponible en este horario', sin_datos: 'sin disponibilidad registrada' }
+  const etiquetaDocente = { choque: '⛔ busy in another classroom', libre: '✓ available at this time', ocupado: 'not available at this time', sin_datos: 'no availability on record' }
   const orden = { libre: 0, sin_datos: 1, ocupado: 2, choque: 3 }
   const lista = docentes.filter((d) => d.activo || d.id === values.docenteId).map((d) => ({ d, e: estadoDocente(d) }))
   if (sugerir || lista.some((x) => x.e === 'choque')) lista.sort((a, b) => (orden[a.e] ?? 1) - (orden[b.e] ?? 1) || a.d.nombre.localeCompare(b.d.nombre))
   const nLibres = lista.filter((x) => x.e === 'libre').length
-  const opcionesDocente = [{ value: '', label: 'Sin asignar' }, ...lista.map(({ d, e }) => ({ value: d.id, label: e === 'choque' ? `${d.nombre} · ⛔ ocupado: ${choquesDocente(d.id)[0]}${choquesDocente(d.id).length > 1 ? ` y ${choquesDocente(d.id).length - 1} más` : ''}` : e ? `${d.nombre} · ${etiquetaDocente[e]}` : d.nombre }))]
+  const opcionesDocente = [{ value: '', label: 'Unassigned' }, ...lista.map(({ d, e }) => ({ value: d.id, label: e === 'choque' ? `${d.nombre} · ⛔ busy: ${choquesDocente(d.id)[0]}${choquesDocente(d.id).length > 1 ? ` and ${choquesDocente(d.id).length - 1} more` : ''}` : e ? `${d.nombre} · ${etiquetaDocente[e]}` : d.nombre }))]
   const ayudaDocente = sugerir
     ? nLibres > 0
-      ? `${nLibres} ${nLibres === 1 ? 'docente está disponible' : 'docentes están disponibles'} en este horario.`
-      : 'Ningún docente marcó disponibilidad para este horario.'
-    : 'Elige primero los horarios del salón para ver qué docentes están disponibles.'
-  const opcionesNivel = [{ value: '', label: 'Selecciona un nivel' }, ...niveles.map((n) => ({ value: n.id, label: n.nombre }))]
+      ? `${nLibres} ${nLibres === 1 ? 'teacher is available' : 'teachers are available'} at this time.`
+      : 'No teacher has marked availability for this time.'
+    : 'Choose the classroom schedule first to see which teachers are available.'
+  const opcionesNivel = [{ value: '', label: 'Select a level' }, ...niveles.map((n) => ({ value: n.id, label: n.nombre }))]
 
   const validar = () => {
     const e = {}
-    if (values.horarios.some((h) => h.horaFin <= h.horaInicio)) e.horarios = 'La hora de fin debe ser posterior a la de inicio'
+    if (values.horarios.some((h) => h.horaFin <= h.horaInicio)) e.horarios = 'The end time must be after the start time'
     if (values.docenteId && choquesDocente(values.docenteId).length)
-      e.docente = `El docente ya está ocupado en ese horario: ${choquesDocente(values.docenteId).join(', ')}`
-    if (!values.nivelId) e.nivel = 'Selecciona el nivel académico'
-    if (usaPlan && !values.planId) e.plan = 'Completa el plan académico o desactívalo.'
-    if (usaFrecuencia && !values.frecuenciaId) e.frecuencia = 'Elige una frecuencia o desactívala.'
-    if (avisos.some((a) => a.severidad === 'error')) e.horarios = 'Corrige los horarios para que coincidan con la frecuencia o el plan'
-    if (tieneCalendario && values.totalSesiones === '') e.totalSesiones = 'No se puede quitar: el salón ya tiene sesiones'
+      e.docente = `The teacher is already busy at that time: ${choquesDocente(values.docenteId).join(', ')}`
+    if (!values.nivelId) e.nivel = 'Select the academic level'
+    if (usaPlan && !values.planId) e.plan = 'Complete the academic plan or turn it off.'
+    if (usaFrecuencia && !values.frecuenciaId) e.frecuencia = 'Choose a frequency or turn it off.'
+    if (avisos.some((a) => a.severidad === 'error')) e.horarios = 'Fix the schedule so it matches the frequency or plan'
+    if (tieneCalendario && values.totalSesiones === '') e.totalSesiones = 'Cannot be removed: the classroom already has sessions'
     else if (values.totalSesiones !== '' && salon?.progreso && Number(values.totalSesiones) < salon.progreso.realizadas)
-      e.totalSesiones = `No puede ser menor que las sesiones ya realizadas (${salon.progreso.realizadas})`
+      e.totalSesiones = `Cannot be less than the sessions already held (${salon.progreso.realizadas})`
     return e
   }
 
@@ -180,35 +180,35 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
 
   return (
     <>
-      <Modal wide="xl" title={salon ? 'Editar salón' : 'Nuevo salón'} onClose={onClose}>
+      <Modal wide="xl" title={salon ? 'Edit classroom' : 'New classroom'} onClose={onClose}>
         <form onSubmit={guardar}>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
             <div className="space-y-6">
-              <Bloque numero="1" titulo="Datos básicos" subtitulo="Cómo se identifica el salón y quién lo dicta.">
+              <Bloque numero="1" titulo="Basic details" subtitulo="How the classroom is identified and who teaches it.">
                 <div className={grid}>
-                  {salon && <Field label="Código" name="codigo" value={values.codigo} disabled readOnly hint="Se asigna automáticamente." />}
-                  <Field label="Nombre" name="nombre" value={values.nombre} onChange={cambiar} required />
+                  {salon && <Field label="Code" name="codigo" value={values.codigo} disabled readOnly hint="Assigned automatically." />}
+                  <Field label="Name" name="nombre" value={values.nombre} onChange={cambiar} required />
                   <Field
-                    label="Nivel académico"
+                    label="Academic level"
                     name="nivelId"
                     value={values.nivelId}
                     onChange={cambiarNivel}
                     options={opcionesNivel}
                     error={errors.nivel}
-                    hint={salon && !salon.nivelId ? 'Este salón aún no tiene nivel: elige uno para poder guardar.' : 'Clasifica el salón y filtra el Dashboard.'}
+                    hint={salon && !salon.nivelId ? 'This classroom has no level yet: choose one to save.' : 'Classifies the classroom and filters the Dashboard.'}
                     required
                   />
                   <div>
-                    <Field label="Docente" name="docenteId" value={values.docenteId} onChange={cambiar} options={opcionesDocente} error={errors.docente} hint={dispDocentes !== null ? ayudaDocente : undefined} />
+                    <Field label="Teacher" name="docenteId" value={values.docenteId} onChange={cambiar} options={opcionesDocente} error={errors.docente} hint={dispDocentes !== null ? ayudaDocente : undefined} />
                     <Button type="button" variant="ghost" className="mt-1 px-2 py-1" onClick={() => setNuevoDocente(true)}>
-                      + Nuevo docente
+                      + New teacher
                     </Button>
                   </div>
-                  <Field label="Estado del salón" name="estado" value={values.estado} onChange={cambiar} options={estados} />
+                  <Field label="Classroom status" name="estado" value={values.estado} onChange={cambiar} options={estados} />
                 </div>
               </Bloque>
 
-              <Bloque numero="2" titulo="Configuración académica" subtitulo="Opcional. Puedes usar un plan, una frecuencia, los dos o ninguno.">
+              <Bloque numero="2" titulo="Academic setup" subtitulo="Optional. You can use a plan, a frequency, both or neither.">
                 <ConfiguracionAcademica
                   catalogo={catalogo}
                   nivelCodigo={nivel?.codigo ?? ''}
@@ -224,50 +224,50 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                 />
               </Bloque>
 
-              <Bloque numero="3" titulo="Programación de clases" subtitulo="Cuándo se dictan las clases.">
+              <Bloque numero="3" titulo="Class schedule" subtitulo="When classes take place.">
                 <div className="space-y-4">
                   {resumen.clasesTexto && (
                     <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-slate-700">
-                      Este salón necesita <strong className="font-semibold text-slate-900">{resumen.clasesTexto}</strong> por semana.
+                      This classroom needs <strong className="font-semibold text-slate-900">{resumen.clasesTexto}</strong> per week.
                     </p>
                   )}
                   <HorariosEditor horarios={values.horarios} onChange={(horarios) => parchear({ horarios })} error={errors.horarios} />
                   {avisos.map((a, i) => (
                     <p key={i} className={`text-sm ${a.severidad === 'error' ? 'text-red-600' : 'text-peach-700'}`}>
-                      {a.severidad === 'error' ? 'Horario: ' : 'Aviso: '}
+                      {a.severidad === 'error' ? 'Schedule: ' : 'Notice: '}
                       {a.mensaje}
                     </p>
                   ))}
                   {tieneCalendario && (
                     <p className="text-xs text-slate-500">
-                      Al cambiar los horarios solo se regeneran las sesiones futuras regulares. Las realizadas, canceladas, pasadas y las de fecha fijada
-                      se conservan.
+                      Changing the schedule only regenerates future regular sessions. Held, cancelled, past and date-pinned sessions
+                      are kept.
                     </p>
                   )}
                   <div className={grid}>
                     <Field
-                      label="Fecha de inicio"
+                      label="Start date"
                       name="fechaInicio"
                       type="date"
                       value={values.fechaInicio}
                       onChange={cambiar}
                       disabled={tieneCalendario}
-                      hint={tieneCalendario ? 'No se puede cambiar con sesiones registradas' : undefined}
+                      hint={tieneCalendario ? 'Cannot be changed once sessions exist' : undefined}
                       required
                     />
                     <Field
-                      label="Fecha estimada de finalización"
+                      label="Estimated end date"
                       name="fechaFin"
                       type="date"
                       value={values.fechaFin}
                       disabled
                       readOnly
-                      hint="Se calcula sola con el inicio, el horario y el total de sesiones; se ajusta con reprogramaciones y cancelaciones."
+                      hint="Calculated automatically from the start date, schedule and total sessions; adjusted for rescheduling and cancellations."
                     />
                     {/* Con plan y sin calendario el total lo fija el plan; en los demás casos es editable. */}
                     {(!values.planId || tieneCalendario) && (
                       <Field
-                        label="Total de sesiones"
+                        label="Total sessions"
                         name="totalSesiones"
                         type="number"
                         min="1"
@@ -275,17 +275,17 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                         value={values.totalSesiones}
                         onChange={cambiar}
                         error={errors.totalSesiones}
-                        hint="Cantidad de clases (no horas). Habilita el calendario."
+                        hint="Number of classes (not hours). Enables the calendar."
                       />
                     )}
                   </div>
                 </div>
               </Bloque>
 
-              <Bloque numero="4" titulo="Información adicional">
+              <Bloque numero="4" titulo="Additional information">
                 <div className={grid}>
-                  <Field label="Capacidad máxima" name="capacidad" type="number" min="1" step="1" value={values.capacidad} onChange={cambiar} required />
-                  <Field label="Observaciones" name="observaciones" as="textarea" rows="2" value={values.observaciones} onChange={cambiar} className="sm:col-span-2" />
+                  <Field label="Maximum capacity" name="capacidad" type="number" min="1" step="1" value={values.capacidad} onChange={cambiar} required />
+                  <Field label="Notes" name="observaciones" as="textarea" rows="2" value={values.observaciones} onChange={cambiar} className="sm:col-span-2" />
                 </div>
               </Bloque>
             </div>
@@ -294,7 +294,7 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
               <div className="lg:sticky lg:top-4">
                 <h3 className="mb-3 flex items-center gap-3 text-base font-semibold leading-6 text-slate-900">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">5</span>
-                  Resumen
+                  Summary
                 </h3>
                 <ResumenSalon datos={resumen} />
               </div>
@@ -305,10 +305,10 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
 
           <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
+              Cancel
             </Button>
             <Button type="submit" disabled={guardando}>
-              {guardando ? 'Guardando…' : salon ? 'Guardar cambios' : 'Crear salón'}
+              {guardando ? 'Saving…' : salon ? 'Save changes' : 'Create classroom'}
             </Button>
           </div>
         </form>

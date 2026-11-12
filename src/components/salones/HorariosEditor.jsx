@@ -10,7 +10,7 @@ export default function HorariosEditor({ horarios, onChange, error }) {
 
   return (
     <fieldset>
-      <legend className="mb-1 text-sm font-medium text-slate-700">Horarios de clase</legend>
+      <legend className="mb-1 text-sm font-medium text-slate-700">Class schedule</legend>
       <div className="space-y-2">
         {horarios.map((h, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2">
@@ -18,7 +18,7 @@ export default function HorariosEditor({ horarios, onChange, error }) {
               value={h.dia}
               onChange={(e) => cambiar(i, 'dia', Number(e.target.value))}
               className={`${inputClass} w-full sm:w-36`}
-              aria-label="Día"
+              aria-label="Day"
             >
               {diasSemana.map((d) => (
                 <option key={d.value} value={d.value}>
@@ -26,14 +26,14 @@ export default function HorariosEditor({ horarios, onChange, error }) {
                 </option>
               ))}
             </select>
-            <input type="time" value={h.horaInicio} onChange={(e) => cambiar(i, 'horaInicio', e.target.value)} className={`${inputClass} w-auto flex-1`} aria-label="Hora de inicio" required />
+            <input type="time" value={h.horaInicio} onChange={(e) => cambiar(i, 'horaInicio', e.target.value)} className={`${inputClass} w-auto flex-1`} aria-label="Start time" required />
             <span className="text-slate-400">–</span>
-            <input type="time" value={h.horaFin} onChange={(e) => cambiar(i, 'horaFin', e.target.value)} className={`${inputClass} w-auto flex-1`} aria-label="Hora de fin" required />
+            <input type="time" value={h.horaFin} onChange={(e) => cambiar(i, 'horaFin', e.target.value)} className={`${inputClass} w-auto flex-1`} aria-label="End time" required />
             <button
               type="button"
               onClick={() => onChange(horarios.filter((_, j) => j !== i))}
               className="rounded p-1 text-slate-400 hover:text-red-600"
-              aria-label="Quitar horario"
+              aria-label="Remove time slot"
             >
               <Icon name="close" className="h-4 w-4" />
             </button>
@@ -47,7 +47,7 @@ export default function HorariosEditor({ horarios, onChange, error }) {
         className="mt-1 px-2 py-1"
         onClick={() => onChange([...horarios, { dia: 1, horaInicio: '', horaFin: '' }])}
       >
-        <Icon name="plus" className="h-4 w-4" /> Agregar horario
+        <Icon name="plus" className="h-4 w-4" /> Add time slot
       </Button>
     </fieldset>
   )

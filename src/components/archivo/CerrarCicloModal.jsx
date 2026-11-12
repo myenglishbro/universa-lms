@@ -23,8 +23,8 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
   const confirmar = async (e) => {
     e.preventDefault()
     setError('')
-    if (!ciclo.trim()) return setError('Escribe el nombre del ciclo, por ejemplo 2026-II')
-    if (elegidos.size === 0) return setError('Elige al menos un salón')
+    if (!ciclo.trim()) return setError('Enter the cycle name, for example 2026-II')
+    if (elegidos.size === 0) return setError('Choose at least one classroom')
     setGuardando(true)
     try {
       await onConfirm([...elegidos], ciclo.trim(), { descargar })
@@ -35,19 +35,19 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
   }
 
   return (
-    <Modal title="Cerrar ciclo y archivar" onClose={onClose} wide>
+    <Modal title="Close cycle and archive" onClose={onClose} wide>
       <form onSubmit={confirmar} className="space-y-4">
         <p className="text-sm text-slate-600">
-          Los salones elegidos dejan de verse en «Salones grupales» y en los portales, y pasan a <strong>Archivo de ciclos</strong> con sus estudiantes y el informe de notas de cada uno tal como están hoy. No se borra nada.
+          The chosen classrooms disappear from “Group classrooms” and from the portals, and move to <strong>Cycle archive</strong> with their students and each student's grade report as they are today. Nothing is deleted.
         </p>
         <Field
-          label="Nombre del ciclo"
+          label="Cycle name"
           value={ciclo}
           onChange={(e) => setCiclo(e.target.value)}
-          placeholder="Ej. 2026-II"
+          placeholder="E.g. 2026-II"
           list="ciclos-existentes"
           autoFocus
-          hint={ciclosExistentes.length ? 'Puedes reutilizar un ciclo ya archivado para añadirle más salones.' : undefined}
+          hint={ciclosExistentes.length ? 'You can reuse an already archived cycle to add more classrooms to it.' : undefined}
         />
         <datalist id="ciclos-existentes">
           {ciclosExistentes.map((c) => (
@@ -57,7 +57,7 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
 
         <fieldset>
           <legend className="mb-1 text-sm font-medium text-slate-700">
-            Salones finalizados ({elegidos.size} de {finalizados.length})
+            Finished classrooms ({elegidos.size} of {finalizados.length})
           </legend>
           <ul className="max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200">
             {finalizados.map((s) => (
@@ -67,7 +67,7 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
                   <span className="flex-1">
                     <span className="font-medium text-slate-900">{s.nombre}</span>
                     <span className="block text-xs text-slate-500">
-                      {s.docente || 'Sin docente'} · {formatFecha(s.fechaInicio)} → {formatFecha(s.fechaFin)}
+                      {s.docente || 'No teacher'} · {formatFecha(s.fechaInicio)} → {formatFecha(s.fechaFin)}
                     </span>
                   </span>
                 </label>
@@ -79,13 +79,13 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-peach-200 bg-peach-50 px-4 py-3 text-sm text-peach-700">
           <input type="checkbox" className="mt-0.5" checked={descargar} onChange={(e) => setDescargar(e.target.checked)} />
           <span>
-            <strong>Descargar el Excel (assessment file) de cada salón antes de archivar</strong>
-            <span className="block text-xs">Recomendado: guarda las notas, la asistencia y los comentarios del ciclo en un archivo con la marca de Universa. Tu navegador puede pedir permiso para descargar varios archivos.</span>
+            <strong>Download each classroom's Excel (assessment file) before archiving</strong>
+            <span className="block text-xs">Recommended: saves the cycle's grades, attendance and comments in a file with the Universa brand. Your browser may ask permission to download several files.</span>
           </span>
         </label>
 
         <p className="text-xs text-slate-500">
-          Las matrículas activas de estos salones quedan cerradas con el motivo «Ciclo cerrado». Solo se archivan salones en estado <em>Finalizado</em>.
+          Active enrollments in these classrooms are closed automatically as part of the cycle closure. Only classrooms with status <em>Finished</em> are archived.
         </p>
         {error && (
           <p role="alert" className="text-sm text-red-600">
@@ -94,10 +94,10 @@ export default function CerrarCicloModal({ finalizados, ciclosExistentes, onConf
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? (descargar ? 'Preparando Excel y archivando…' : 'Archivando…') : 'Archivar ciclo'}
+            {guardando ? (descargar ? 'Preparing Excel and archiving…' : 'Archiving…') : 'Archive cycle'}
           </Button>
         </div>
       </form>

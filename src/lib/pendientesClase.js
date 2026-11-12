@@ -6,17 +6,17 @@ export function pendientesDeSalon(salon) {
   const lista = []
   const sinAsistencia = salon.progreso?.porRegistrar ?? 0
   const sinGrabacion = salon.pendientes?.sinGrabacion ?? 0
-  if (sinAsistencia > 0) lista.push({ clave: 'asistencia', texto: `registrar la asistencia de ${sinAsistencia} ${sinAsistencia === 1 ? 'clase' : 'clases'}` })
-  if (sinGrabacion > 0) lista.push({ clave: 'grabacion', texto: `subir la grabación de ${sinGrabacion} ${sinGrabacion === 1 ? 'clase' : 'clases'}` })
+  if (sinAsistencia > 0) lista.push({ clave: 'asistencia', texto: `record attendance for ${sinAsistencia} ${sinAsistencia === 1 ? 'class' : 'classes'}` })
+  if (sinGrabacion > 0) lista.push({ clave: 'grabacion', texto: `upload the recording for ${sinGrabacion} ${sinGrabacion === 1 ? 'class' : 'classes'}` })
   return lista
 }
 
-const unir = (items) => (items.length > 1 ? `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}` : items[0] ?? '')
+const unir = (items) => (items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}` : items[0] ?? '')
 
 // Mensaje corto para enviar al docente por el canal que use la institución.
 export function mensajeAviso(salon) {
   const items = pendientesDeSalon(salon).map((p) => p.texto)
   if (!items.length) return ''
-  const saludo = salon.docente ? `Hola ${salon.docente}` : 'Hola'
-  return `${saludo}, del salón ${salon.nombre} falta ${unir(items)}. Por favor actualízalo en el portal docente. ¡Gracias!`
+  const saludo = salon.docente ? `Hello ${salon.docente}` : 'Hello'
+  return `${saludo}, for classroom ${salon.nombre} you still need to ${unir(items)}. Please update it in the teacher portal. Thank you!`
 }

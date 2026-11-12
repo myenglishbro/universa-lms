@@ -16,11 +16,11 @@ function Fila({ s, numero, avisos, repuesta, acciones, puedeRecuperar, ocupado }
         {s.horaInicio}–{s.horaFin}
       </span>
       <span className="flex flex-1 flex-wrap items-center gap-1.5">
-        {s.tipo === 'recuperacion' && <Badge color="brand">Recuperación</Badge>}
-        {s.manual && s.tipo === 'regular' && <Badge>Fecha fijada</Badge>}
-        {s.estado === 'realizada' && <Badge color="brand">Realizada</Badge>}
-        {cancelada && <Badge>Cancelada</Badge>}
-        {cancelada && repuesta && <span className="text-xs text-slate-500">repuesta el {formatFecha(repuesta.fecha)}</span>}
+        {s.tipo === 'recuperacion' && <Badge color="brand">Make-up</Badge>}
+        {s.manual && s.tipo === 'regular' && <Badge>Date pinned</Badge>}
+        {s.estado === 'realizada' && <Badge color="brand">Held</Badge>}
+        {cancelada && <Badge>Cancelled</Badge>}
+        {cancelada && repuesta && <span className="text-xs text-slate-500">made up on {formatFecha(repuesta.fecha)}</span>}
         {avisos.map((a) => (
           <Badge key={a} color="peach">
             {a}
@@ -31,27 +31,27 @@ function Fila({ s, numero, avisos, repuesta, acciones, puedeRecuperar, ocupado }
         <span className="flex gap-1">
           {s.estado === 'programada' && s.fecha <= hoyLima() && (
             <Button variant="ghost" className="px-2 py-1" disabled={ocupado} onClick={() => acciones.realizada(s)}>
-              Realizada
+              Held
             </Button>
           )}
           {s.estado === 'programada' && (
             <>
               <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.cancelar(s)}>
-                Cancelar
+                Cancel
               </Button>
               <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.reprogramar(s)}>
-                Reprogramar
+                Reschedule
               </Button>
             </>
           )}
           {cancelada && !repuesta && puedeRecuperar && (
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.recuperar(s)}>
-              Programar recuperación
+              Schedule make-up
             </Button>
           )}
           {s.estado !== 'programada' && (
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.corregir(s)}>
-              Corregir
+              Correct
             </Button>
           )}
         </span>
@@ -79,8 +79,8 @@ export default function SesionesLista({ sesiones, conflictos, feriados, sinProgr
   const avisosDe = (s) => {
     if (s.estado !== 'programada') return []
     const avisos = []
-    if (diasFeriado.has(s.fecha)) avisos.push(`Feriado: ${diasFeriado.get(s.fecha)}`)
-    for (const c of conflictos.filter((x) => x.sesionId === s.id)) avisos.push(`Docente ocupado en ${c.texto}`)
+    if (diasFeriado.has(s.fecha)) avisos.push(`Holiday: ${diasFeriado.get(s.fecha)}`)
+    for (const c of conflictos.filter((x) => x.sesionId === s.id)) avisos.push(`Teacher busy with ${c.texto}`)
     return avisos
   }
 
@@ -104,17 +104,17 @@ export default function SesionesLista({ sesiones, conflictos, feriados, sinProgr
   return (
     <Card className="mt-4 divide-y divide-slate-200">
       {porRegistrar.length > 0 && (
-        <Grupo titulo={`Por registrar (${porRegistrar.length}) · sesiones pasadas pendientes de validar`} color="text-peach-700">
+        <Grupo titulo={`To record (${porRegistrar.length}) · past sessions pending confirmation`} color="text-peach-700">
           {porRegistrar.map(fila)}
         </Grupo>
       )}
-      <Grupo titulo={`Próximas sesiones (${proximas.length})`}>
-        {proximas.length === 0 ? <li className="px-4 py-3 text-sm text-slate-400">No hay sesiones próximas programadas.</li> : proximas.map(fila)}
+      <Grupo titulo={`Upcoming sessions (${proximas.length})`}>
+        {proximas.length === 0 ? <li className="px-4 py-3 text-sm text-slate-400">There are no upcoming sessions scheduled.</li> : proximas.map(fila)}
       </Grupo>
       {historial.length > 0 && (
         <details>
           <summary className="cursor-pointer px-4 py-2 text-xs font-medium uppercase text-slate-500">
-            Historial ({historial.length})
+            History ({historial.length})
           </summary>
           <ul className="divide-y divide-slate-100">{historial.map(fila)}</ul>
         </details>

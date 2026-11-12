@@ -13,15 +13,15 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
       <table className="w-full text-left text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <th className="px-4 py-2.5 font-medium">Salón</th>
-            <th className="px-4 py-2.5 font-medium">Nivel académico</th>
-            <th className="px-4 py-2.5 font-medium">Docente</th>
-            <th className="px-4 py-2.5 font-medium">Horario</th>
-            <th className="px-4 py-2.5 font-medium">Inicio</th>
-            <th className="px-4 py-2.5 font-medium">Fin estimado</th>
-            <th className="px-4 py-2.5 font-medium">Avance</th>
-            <th className="px-4 py-2.5 font-medium">Capacidad</th>
-            <th className="px-4 py-2.5 font-medium">Estado</th>
+            <th className="px-4 py-2.5 font-medium">Classroom</th>
+            <th className="px-4 py-2.5 font-medium">Academic level</th>
+            <th className="px-4 py-2.5 font-medium">Teacher</th>
+            <th className="px-4 py-2.5 font-medium">Schedule</th>
+            <th className="px-4 py-2.5 font-medium">Start</th>
+            <th className="px-4 py-2.5 font-medium">Estimated end</th>
+            <th className="px-4 py-2.5 font-medium">Progress</th>
+            <th className="px-4 py-2.5 font-medium">Capacity</th>
+            <th className="px-4 py-2.5 font-medium">Status</th>
             <th className="px-4 py-2.5" />
           </tr>
         </thead>
@@ -33,7 +33,7 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                 <div className="text-xs text-slate-500">{s.codigo}</div>
               </td>
               <td className="px-4 py-2.5">
-                <div>{s.nivel || <span className="text-peach-700">Sin nivel asignado</span>}</div>
+                <div>{s.nivel || <span className="text-peach-700">No level assigned</span>}</div>
                 {s.curso && <div className="text-xs text-slate-500">{s.curso}</div>}
                 {s.plan && (
                   <div className="text-xs text-slate-500">
@@ -47,7 +47,7 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                     <Avatar nombre={s.docente} fotoUrl={fotos.get(s.docenteId)} tamano="sm" /> {s.docente}
                   </span>
                 ) : (
-                  <span className="text-slate-400">Sin asignar</span>
+                  <span className="text-slate-400">Unassigned</span>
                 )}
               </td>
               <td className="px-4 py-2.5 text-slate-600">{formatHorario(s.horarios)}</td>
@@ -56,13 +56,13 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                 {formatFecha(fechaFinSalon(s))}
                 {proximoAFinalizar(s) && (
                   <span className="ml-2">
-                    <Badge color="peach">Por finalizar</Badge>
+                    <Badge color="peach">Ending soon</Badge>
                   </span>
                 )}
               </td>
               <td className="whitespace-nowrap px-4 py-2.5">
                 {s.progreso && s.progreso.sesiones > 0 ? (
-                  <span title={`${s.progreso.realizadas} realizadas de ${s.progreso.total}`}>
+                  <span title={`${s.progreso.realizadas} held of ${s.progreso.total}`}>
                     {s.progreso.realizadas}/{s.progreso.total}
                   </span>
                 ) : (
@@ -75,11 +75,11 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
               </td>
               <td className="whitespace-nowrap px-4 py-2.5 text-right">
                 <Button variant="ghost" className="px-2 py-1" onClick={() => onVer(s.id)}>
-                  Ver
+                  View
                 </Button>
                 {puedeEditar && (
                   <Button variant="ghost" className="px-2 py-1" onClick={() => onEditar(s.id)}>
-                    Editar
+                    Edit
                   </Button>
                 )}
               </td>

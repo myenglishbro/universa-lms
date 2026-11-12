@@ -5,10 +5,10 @@
 // { id, nivelCodigo, nivel, nivelOrden, modalidadCodigo, modalidad, minutos, sesionesSemana, tipoAlumno,
 //   totalSesiones, horasTotales, semanas, vigente, estadoDato, aprobado, ciclos: [{ ciclo, sesiones, horas }] }
 
-export const tipoAlumnoLabel = { nuevo: 'Alumno nuevo', continuo: 'Alumno continuo' }
+export const tipoAlumnoLabel = { nuevo: 'New student', continuo: 'Continuing student' }
 
 export const claveHorario = (p) => `${p.minutos}-${p.sesionesSemana}`
-export const etiquetaHorario = (p) => `${p.minutos} min · ${p.sesionesSemana} ${p.sesionesSemana === 1 ? 'clase' : 'clases'} por semana`
+export const etiquetaHorario = (p) => `${p.minutos} min · ${p.sesionesSemana} ${p.sesionesSemana === 1 ? 'class' : 'classes'} per week`
 
 const unicos = (lista, clave) => [...new Map(lista.map((x) => [clave(x), x])).values()]
 
@@ -72,15 +72,15 @@ export function normalizarSeleccion(planes, sel) {
   return s
 }
 
-export const textoCiclos = (desde, hasta) => (desde === hasta ? `Ciclo ${desde}` : `Ciclos ${desde}–${hasta}`)
+export const textoCiclos = (desde, hasta) => (desde === hasta ? `Cycle ${desde}` : `Cycles ${desde}–${hasta}`)
 
 // Opciones de ciclos: nivel completo o cada ciclo por separado. value = "desde-hasta".
 export function opcionesCiclos(plan) {
   const n = plan.ciclos.map((c) => c.ciclo)
-  if (n.length <= 1) return [{ value: `${n[0]}-${n[0]}`, label: `Ciclo único (${n[0]})` }]
+  if (n.length <= 1) return [{ value: `${n[0]}-${n[0]}`, label: `Single cycle (${n[0]})` }]
   return [
-    { value: `${n[0]}-${n[n.length - 1]}`, label: `Nivel completo · ${textoCiclos(n[0], n[n.length - 1]).toLowerCase()}` },
-    ...n.map((c) => ({ value: `${c}-${c}`, label: `Solo ciclo ${c}` })),
+    { value: `${n[0]}-${n[n.length - 1]}`, label: `Full level · ${textoCiclos(n[0], n[n.length - 1]).toLowerCase()}` },
+    ...n.map((c) => ({ value: `${c}-${c}`, label: `Cycle ${c} only` })),
   ]
 }
 
@@ -98,7 +98,7 @@ export function cuota(plan, desde, hasta) {
   return { sesiones, horas, semanas: Math.ceil(sesiones / plan.sesionesSemana) }
 }
 
-export const formatHoras = (h) => h.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+export const formatHoras = (h) => h.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 export const descripcionPlan = (p) =>
   [p.nivel, p.modalidad, `${p.minutos} min`, tipoAlumnoLabel[p.tipoAlumno]].filter(Boolean).join(' · ')

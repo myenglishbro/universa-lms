@@ -45,17 +45,17 @@ export default function PlanAcademico({ catalogo, nivelCodigo, values, onChange,
     onChange(parche)
   }
 
-  if (cargando) return <p className="text-sm text-slate-500 sm:col-span-2">Cargando planes académicos…</p>
+  if (cargando) return <p className="text-sm text-slate-500 sm:col-span-2">Loading academic plans…</p>
   if (errorCatalogo)
     return (
       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 sm:col-span-2">
-        No se pudieron cargar los planes académicos ({errorCatalogo}). Desactiva esta opción para guardar el salón sin plan.
+        Could not load the academic plans ({errorCatalogo}). Turn this option off to save the classroom without a plan.
       </p>
     )
 
-  if (!nivelCodigo) return <p className="text-sm text-slate-500 sm:col-span-2">Primero elige el nivel académico en «Datos básicos».</p>
+  if (!nivelCodigo) return <p className="text-sm text-slate-500 sm:col-span-2">First choose the academic level in “Basic details”.</p>
   if (disponibles.length === 0)
-    return <p className="text-sm text-slate-500 sm:col-span-2">Este nivel no tiene planes académicos disponibles. Puedes guardar el salón sin plan.</p>
+    return <p className="text-sm text-slate-500 sm:col-span-2">This level has no academic plans available. You can save the classroom without a plan.</p>
 
   const horarios = sel.nivel ? horariosDe(disponibles, sel.modalidad, sel.nivel) : []
   const tipos = sel.horario ? tiposAlumnoDe(disponibles, sel) : []
@@ -65,41 +65,41 @@ export default function PlanAcademico({ catalogo, nivelCodigo, values, onChange,
   return (
     <>
       <Field
-        label="Modalidad"
+        label="Modality"
         value={sel.modalidad}
         onChange={(e) => elegir('modalidad', e.target.value)}
-        options={[{ value: '', label: 'Selecciona una modalidad' }, ...modalidadesDe(disponibles)]}
+        options={[{ value: '', label: 'Select a modality' }, ...modalidadesDe(disponibles)]}
       />
       {sel.modalidad && (
         <Field
-          label="Clases del plan"
+          label="Plan classes"
           value={sel.horario}
           onChange={(e) => elegir('horario', e.target.value)}
-          options={[{ value: '', label: 'Selecciona' }, ...horarios]}
-          hint="Cuántas clases por semana y cuánto dura cada una, según el plan."
+          options={[{ value: '', label: 'Select' }, ...horarios]}
+          hint="How many classes per week and how long each lasts, per the plan."
         />
       )}
       {tipos.length > 0 && (
         <Field
-          label="¿El alumno es nuevo o continúa?"
+          label="Is the student new or continuing?"
           value={sel.tipo}
           onChange={(e) => elegir('tipo', e.target.value)}
-          options={[{ value: '', label: 'Selecciona' }, ...tipos]}
-          hint="Cambia la cantidad de sesiones del plan."
+          options={[{ value: '', label: 'Select' }, ...tipos]}
+          hint="Changes the number of sessions in the plan."
         />
       )}
       {plan && (
         <Field
-          label="Ciclos que cubre el salón"
+          label="Cycles covered by the classroom"
           value={`${values.cicloDesde}-${values.cicloHasta}`}
           onChange={(e) => elegirCiclos(e.target.value)}
           options={ciclos}
-          hint={ciclos.length > 1 ? 'Elige el nivel completo o un solo ciclo.' : undefined}
+          hint={ciclos.length > 1 ? 'Choose the whole level or a single cycle.' : undefined}
         />
       )}
       {plan && resumen && (
         <p className="text-sm text-slate-600 sm:col-span-2">
-          <strong className="font-semibold text-slate-900">{resumen.sesiones} sesiones</strong> · {formatHoras(resumen.horas)} h
+          <strong className="font-semibold text-slate-900">{resumen.sesiones} sessions</strong> · {formatHoras(resumen.horas)} h
           <span className="text-slate-500"> · {etiquetaHorario(plan)}</span>
         </p>
       )}

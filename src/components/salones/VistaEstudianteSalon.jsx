@@ -49,8 +49,8 @@ export default function VistaEstudianteSalon({ salon, servicio = portalReal, asi
       <p className="mb-4 flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
         <Icon name="eye" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          Vista de estudiante (solo lectura): así ven este curso sus estudiantes. No ven lo oculto. Los ejercicios, las calificaciones y la asistencia son personales de cada
-          estudiante: revísalos en las pestañas de administración de este salón.
+          Student view (read-only): this is how students see this course. They do not see hidden items. Exercises, grades and attendance are personal to each
+          student: review them in this classroom's administration tabs.
         </span>
       </p>
       <CursoEstudiante curso={curso} proximas={clases} vistaPrevia servicio={servicioVista} asistencia={asistencia} onVolver={() => {}} />

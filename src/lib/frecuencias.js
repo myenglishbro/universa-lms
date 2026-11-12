@@ -7,8 +7,8 @@
 
 export const FORMATO_SALON = 'grupal' // los salones de Universa son grupales; la arquitectura admite también 'privado'
 export const formatos = [
-  { value: 'grupal', label: 'Grupal' },
-  { value: 'privado', label: 'Privado' },
+  { value: 'grupal', label: 'Group' },
+  { value: 'privado', label: 'Private' },
 ]
 export const formatoLabel = (v) => formatos.find((f) => f.value === v)?.label ?? v
 
@@ -18,7 +18,7 @@ export const horasTexto = (minutos) => `${num(minutos / 60)} h`
 
 // "5 × 1 h" o, con clases de distinta duración, "2 × 2 h + 1 × 1 h".
 export function estructuraTexto(minutos) {
-  if (!minutos?.length) return 'Sin definir'
+  if (!minutos?.length) return 'Not defined'
   const grupos = []
   for (const m of [...minutos].sort((a, b) => b - a)) {
     const g = grupos.find((x) => x.m === m)
@@ -28,7 +28,7 @@ export function estructuraTexto(minutos) {
   return grupos.map((g) => `${g.n} × ${horasTexto(g.m)}`).join(' + ')
 }
 
-export const horasSemanaTexto = (f) => (f.horasSemana == null ? '—' : `${num(f.horasSemana)} h por semana`)
+export const horasSemanaTexto = (f) => (f.horasSemana == null ? '—' : `${num(f.horasSemana)} h per week`)
 
 export const estadoFrecuencia = (f) => (f.estado === 'pendiente' ? 'pendiente' : f.activa ? 'activa' : 'inactiva')
 
@@ -46,7 +46,7 @@ export function frecuenciasParaSalon(frecuencias, { formato = FORMATO_SALON, mod
 export function agruparPorIntensidad(lista) {
   const grupos = []
   for (const f of lista) {
-    const nombre = f.intensidad || 'Otras'
+    const nombre = f.intensidad || 'Other'
     const g = grupos.find((x) => x.intensidad === nombre)
     if (g) g.items.push(f)
     else grupos.push({ intensidad: nombre, items: [f] })
@@ -59,6 +59,6 @@ export const duracionesParaMostrar = (f, modalidadId) =>
   f.duraciones.filter((d) => !modalidadId || d.modalidadId === modalidadId)
 
 export const textoDuracion = (d) => {
-  const meses = d.meses === 1 ? '1 mes' : `${num(d.meses)} meses`
-  return `${d.modalidad} (${num(d.horasNivel)} h por nivel): aprox. ${num(d.semanas)} semanas (${meses})`
+  const meses = d.meses === 1 ? '1 month' : `${num(d.meses)} months`
+  return `${d.modalidad} (${num(d.horasNivel)} h per level): approx. ${num(d.semanas)} weeks (${meses})`
 }

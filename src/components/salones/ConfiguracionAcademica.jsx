@@ -60,13 +60,13 @@ export default function ConfiguracionAcademica({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Opcion activa={usaPlan} onToggle={alternarPlan} titulo="Usar un plan académico" descripcion="Calcula las sesiones y los ciclos del nivel." />
-        <Opcion activa={usaFrecuencia} onToggle={alternarFrecuencia} titulo="Usar una frecuencia de clases" descripcion="Revisa las clases por semana y su duración." />
+        <Opcion activa={usaPlan} onToggle={alternarPlan} titulo="Use an academic plan" descripcion="Calculates the level's sessions and cycles." />
+        <Opcion activa={usaFrecuencia} onToggle={alternarFrecuencia} titulo="Use a class frequency" descripcion="Checks classes per week and their length." />
       </div>
 
       {usaPlan && (
         <div>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Plan académico</h4>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Academic plan</h4>
           <div className="grid gap-4 sm:grid-cols-2">
             <PlanAcademico catalogo={catalogo} nivelCodigo={nivelCodigo} values={values} onChange={onChange} tieneCalendario={tieneCalendario} />
           </div>
@@ -76,7 +76,7 @@ export default function ConfiguracionAcademica({
 
       {usaFrecuencia && (
         <div>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Frecuencia</h4>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Frequency</h4>
           <div className="grid gap-4 sm:grid-cols-2">
             <FrecuenciaSalon
               catalogo={catalogo}
@@ -91,7 +91,7 @@ export default function ConfiguracionAcademica({
 
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
         {mensajeModo[modoConfiguracion({ planId: usaPlan, frecuenciaId: usaFrecuencia })]}
-        {tieneCalendario && usaPlan && ' Este salón ya tiene calendario: cambiar el plan no modifica sus sesiones.'}
+        {tieneCalendario && usaPlan && ' This classroom already has a calendar: changing the plan does not modify its sessions.'}
       </p>
     </div>
   )

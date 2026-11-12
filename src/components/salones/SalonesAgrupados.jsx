@@ -15,7 +15,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
   const [abiertos, setAbiertos] = useState(() => new Set())
   const grupos = [
     ...niveles.map((n) => ({ id: n.id, nombre: n.nombre, lista: salones.filter((s) => s.nivelId === n.id) })),
-    { id: SIN_NIVEL, nombre: 'Sin nivel asignado', lista: salones.filter((s) => !s.nivelId) },
+    { id: SIN_NIVEL, nombre: 'No level assigned', lista: salones.filter((s) => !s.nivelId) },
   ].filter((g) => g.lista.length > 0)
 
   const estaAbierto = (id) => abrirTodo || grupos.length === 1 || abiertos.has(id)
@@ -32,7 +32,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
     <div>
       <div className="flex items-center justify-between gap-2 px-4 pt-3">
         <p className="text-sm text-slate-500">
-          {grupos.length} {grupos.length === 1 ? 'nivel' : 'niveles'} · {salones.length} {salones.length === 1 ? 'salón' : 'salones'}
+          {grupos.length} {grupos.length === 1 ? 'level' : 'levels'} · {salones.length} {salones.length === 1 ? 'classroom' : 'classrooms'}
         </p>
         {grupos.length > 1 && !abrirTodo && (
           <button
@@ -40,7 +40,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
             onClick={() => setAbiertos(todosAbiertos ? new Set() : new Set(grupos.map((g) => g.id)))}
             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
           >
-            <Icon name={todosAbiertos ? 'up' : 'down'} className="h-4 w-4" /> {todosAbiertos ? 'Contraer todo' : 'Expandir todo'}
+            <Icon name={todosAbiertos ? 'up' : 'down'} className="h-4 w-4" /> {todosAbiertos ? 'Collapse all' : 'Expand all'}
           </button>
         )}
       </div>
@@ -52,7 +52,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
           const nPend = g.lista.filter(conPendientes).length
           const panel = `nivel-${g.id}`
           return (
-            <section key={g.id} aria-label={`Nivel ${g.nombre}`} className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${abierto ? 'border-brand-200 shadow-sm' : 'border-slate-200 hover:border-brand-200 hover:shadow-sm'}`}>
+            <section key={g.id} aria-label={`Level ${g.nombre}`} className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${abierto ? 'border-brand-200 shadow-sm' : 'border-slate-200 hover:border-brand-200 hover:shadow-sm'}`}>
               <button
                 type="button"
                 aria-expanded={abierto}
@@ -67,7 +67,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-base font-bold text-brand-800">{g.nombre}</span>
                   <span className="block text-xs text-slate-500">
-                    {g.lista.length} {g.lista.length === 1 ? 'salón' : 'salones'}
+                    {g.lista.length} {g.lista.length === 1 ? 'classroom' : 'classrooms'}
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
@@ -83,7 +83,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
                   })}
                   {nPend > 0 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-peach-50 px-2 py-0.5 font-medium text-peach-700 ring-1 ring-inset ring-peach-200">
-                      <Icon name="alert" className="h-3 w-3" /> {nPend} con pendientes
+                      <Icon name="alert" className="h-3 w-3" /> {nPend} with pending items
                     </span>
                   )}
                 </span>
