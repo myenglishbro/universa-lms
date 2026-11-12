@@ -24,8 +24,8 @@ test('la plantilla de ejemplo es válida de punta a punta', () => {
 
 test('normalizarFila: obligatorios, documento, fecha, género, correo y celular', () => {
   assert.deepEqual(normalizarFila({}, HOY).errores, ['Falta "nombres".', 'Falta "apellidos".'])
-  assert.match(normalizarFila(ok({ tipo_documento: 'dni', numero_documento: '123' }), HOY).errores[0], /8 dígitos/)
-  assert.match(normalizarFila(ok({ numero_documento: '72266090' }), HOY).errores[0], /tipo de documento/)
+  assert.match(normalizarFila(ok({ tipo_documento: 'dni', numero_documento: '123' }), HOY).errores[0], /8 digits/)
+  assert.match(normalizarFila(ok({ numero_documento: '72266090' }), HOY).errores[0], /document type/)
   assert.match(normalizarFila(ok({ tipo_documento: 'inventado', numero_documento: '1' }), HOY).errores[0], /no válido/)
   assert.equal(normalizarFila(ok({ tipo_documento: 'DNI (Perú)', numero_documento: '72 266 090' }), HOY).fila.numeroDocumento, '72266090')
   assert.equal(normalizarFila(ok({ tipo_documento: 'Carné de extranjería', numero_documento: 'ab-12345' }), HOY).fila.tipoDocumento, 'ce')
