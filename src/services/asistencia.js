@@ -5,6 +5,8 @@ const rpc = async (nombre, args) => datos(await supabase.rpc(nombre, args))
 
 // Docente asignado o administración
 export const clasesDelSalon = (salonId) => rpc('portal_clases_salon', { p_salon: salonId })
+// Ids de las sesiones del salón que ya tienen grabación subida
+export const clasesConGrabacion = async (salonId) => (await rpc('clases_con_grabacion', { p_salon: salonId })).map((r) => r.sesion_id)
 export const sesionRegistro = (sesionId) => rpc('sesion_registro', { p_sesion: sesionId })
 export const resumenDelSalon = (salonId) => rpc('asistencia_resumen_salon', { p_salon: salonId })
 // Guarda asistencia + tema + materiales de una vez (primera vez o corrección). `alumnos`: [{ alumnoId, estado }]

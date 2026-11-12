@@ -77,6 +77,12 @@ export async function listarProgreso() {
   )
 }
 
+// Clases pasadas sin registro o sin grabación por salón (indexado por id). Es un extra: si falla, la lista de salones sigue funcionando.
+export async function listarPendientes() {
+  const filas = datos(await supabase.rpc('pendientes_salones'))
+  return Object.fromEntries(filas.map((r) => [r.salon_id, { sinRegistro: r.sin_registro, sinGrabacion: r.sin_grabacion, desde: r.primera_fecha }]))
+}
+
 // Niveles académicos oficiales (clasificación única de los salones).
 export async function listarNiveles() {
   return datos(await supabase.from('niveles').select('id, codigo, nombre, orden').order('orden'))

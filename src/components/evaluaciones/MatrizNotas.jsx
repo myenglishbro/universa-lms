@@ -1,7 +1,8 @@
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
+import Icon from '../ui/Icon'
 import useCarga from '../../hooks/useCarga'
 import { ESTADOS_CELDA, agruparPorCiclo, fmtNota, notaSobreEvaluado, textoCelda } from '../../lib/evaluaciones'
 import { descargarInforme } from '../../lib/informeNotas'
@@ -11,253 +12,265 @@ import CeldaNota from './CeldaNota'
 import FormativeModal from './FormativeModal'
 import ParticipacionModal from './ParticipacionModal'
 
-// Anchos de las columnas fijas (px). Se usan para que queden pegadas a la izquierda al desplazar.
-const W = { nivel: 84, ciclo: 56, modulo: 92, comp: 168, peso: 60 }
-const LEFT = { nivel: 0, ciclo: W.nivel, modulo: W.nivel + W.ciclo, comp: W.nivel + W.ciclo + W.modulo, peso: W.nivel + W.ciclo + W.modulo + W.comp }
-const fija = (k, bg, extra = '') => ({ style: { left: LEFT[k], width: W[k], minWidth: W[k] }, className: `sticky z-10 border-b border-r border-slate-200 ${bg} px-2 py-1.5 text-left align-top text-xs ${extra}` })
+// Anchos de las columnas fijas (px): solo Componente y Peso quedan pegadas a la izquierda al desplazar.
+const W = { comp: 208, peso: 56 }
+const ALTO_CAB = 76
+const fija = (k, bg, extra = '') => ({
+  style: { left: k === 'peso' ? W.comp : 0, width: W[k], minWidth: W[k] },
+  className: `sticky z-10 border-b border-slate-100 ${bg} px-3 py-2 text-left align-middle text-sm ${extra}`,
+})
 
+// Aspecto de cada estado de una celda: punto de color + fondo suave. Se entiende de un vistazo sin leer la leyenda.
+const UI_ESTADO = {
+  publicada: { caja: 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100', punto: 'bg-emerald-500' },
+  borrador: { caja: 'bg-amber-50 text-amber-900 hover:bg-amber-100', punto: 'bg-amber-400' },
+  listo: { caja: 'bg-amber-50 text-amber-900 hover:bg-amber-100', punto: 'bg-amber-400' },
+  parcial: { caja: 'bg-sky-50 text-sky-900 hover:bg-sky-100', punto: 'bg-sky-400' },
+  en_curso: { caja: 'bg-sky-50 text-sky-900 hover:bg-sky-100', punto: 'bg-sky-400' },
+  sin_nota: { caja: 'border border-dashed border-slate-200 bg-white text-slate-300 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600', punto: '' },
+  sin_clases: { caja: 'bg-slate-50 text-slate-300 hover:bg-slate-100', punto: '' },
+}
+const uiEstado = (celda) => UI_ESTADO[celda?.estado ?? 'sin_nota'] ?? UI_ESTADO.sin_nota
+const pendiente = (celda) => celda?.estado !== 'publicada'
+
+const iniciales = (nombre = '') =>
+  nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0].toUpperCase())
+    .join('')
+const nombreCorto = (nombre = '') => {
+  const p = nombre.split(/\s+/).filter(Boolean)
+  return p.length > 2 ? `${p[0]} ${p[p.length > 3 ? 2 : 1]}` : nombre
+}
 const pesoTxt = (n) => (Number(n) > 0 ? fmtNota(n) : '')
-const aporteTxt = (c) => (c?.aporte == null ? '' : fmtNota(c.aporte))
 
-// El contenido de una celda: nota, avance (5/10) o guion. Colores discretos por estado.
+// Una celda: nota grande, detalle pequeño (avance o aporte) y punto de estado. Clic para abrir la ficha.
 function BotonCelda({ celda, evaluacion, alumno, onAbrir }) {
   const est = ESTADOS_CELDA[celda?.estado ?? 'sin_nota']
-  const sub =
+  const ui = uiEstado(celda)
+  const vacia = !celda || celda.estado === 'sin_nota' || celda.estado === 'sin_clases'
+  const detalle =
     celda?.tipo === 'formative'
       ? celda.provisional
-        ? `avance · ${celda.unidades_registradas}/${celda.unidades_total} unid.${celda.participacion?.aplica ? ` · ${celda.participacion.cumplidas}/${celda.participacion.registradas} clases` : ''}`
-        : `${celda.unidades_total} unid.${celda.participacion?.aplica ? ' + clases' : ''}`
+        ? `${celda.unidades_registradas}/${celda.unidades_total} unid.${celda.participacion?.aplica ? ` · ${celda.participacion.cumplidas}/${celda.participacion.registradas} cl.` : ''}`
+        : ''
       : celda?.tipo === 'participacion' && celda.total > 0 && celda.registradas > 0 && celda.puntaje != null
         ? `${celda.cumplidas}/${celda.total} clases`
         : celda?.tipo !== 'participacion' && celda?.unidades_total > 1 && celda.puntaje != null
           ? `${celda.unidades_registradas}/${celda.unidades_total} unid.`
           : ''
+  const aporte = celda?.aporte != null ? `aporta ${fmtNota(celda.aporte)}` : ''
   return (
     <button
       type="button"
       onClick={() => onAbrir(evaluacion, alumno)}
       aria-label={`${evaluacion.nombre} de ${alumno.nombre}`}
-      title={`${est.texto} — clic para abrir`}
-      className={`flex min-h-10 w-full flex-col items-center justify-center rounded px-2 py-1 text-sm font-medium hover:ring-2 hover:ring-brand-300 ${est.clase} ${celda?.estado === 'borrador' || celda?.estado === 'listo' ? 'italic' : ''}`}
+      title={`${est.texto} — clic para ${vacia ? 'calificar' : 'abrir'}`}
+      className={`group relative flex min-h-12 w-full flex-col items-center justify-center rounded-lg px-2 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${ui.caja}`}
     >
-      <span>{textoCelda(celda)}</span>
-      {sub && <span className="text-[10px] font-normal opacity-70">{sub}</span>}
+      {ui.punto && <span aria-hidden className={`absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full ${ui.punto}`} />}
+      {vacia ? (
+        <>
+          <span className="text-base leading-tight group-hover:hidden">—</span>
+          <Icon name="plus" className="hidden h-4 w-4 group-hover:block" />
+        </>
+      ) : (
+        <>
+          <span className="text-base font-semibold leading-tight">{textoCelda(celda)}</span>
+          {(detalle || aporte) && <span className="text-[10px] font-normal leading-tight opacity-70">{[detalle, aporte].filter(Boolean).join(' · ')}</span>}
+        </>
+      )}
     </button>
   )
 }
 
-// Subtotal de un módulo (solo notas publicadas): nota sobre lo evaluado y puntos acumulados.
-function SubtotalModulo({ r, columna }) {
-  if (!r || r.sin_plantilla) return <span className="text-slate-300">—</span>
-  if (columna === 'puntaje')
-    return (
-      <span title={r.remedial ? `Remedial (original: ${fmtNota(r.puntos_original)} puntos)` : undefined}>
-        {r.peso_evaluado > 0 ? fmtNota(r.nota) : '—'}
-        {r.remedial && <span className="ml-1 rounded bg-rose-50 px-1 text-[10px] text-rose-700">Remedial</span>}
-        {r.parcial && r.peso_evaluado > 0 && <span className="ml-1 rounded bg-amber-50 px-1 text-[10px] text-amber-700">parcial</span>}
+const Marca = ({ children, tono }) => (
+  <span className={`ml-1 rounded px-1 text-[10px] font-medium ${tono === 'rose' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`}>{children}</span>
+)
+
+// Subtotal de un módulo (solo notas publicadas): puntos acumulados arriba, nota sobre lo evaluado abajo.
+function SubtotalModulo({ r }) {
+  if (!r || r.sin_plantilla || !(r.peso_evaluado > 0)) return <span className="text-slate-300">—</span>
+  return (
+    <span title={r.remedial ? `Remedial (original: ${fmtNota(r.puntos_original)} puntos)` : undefined}>
+      <span className="font-semibold">
+        {fmtNota(r.puntos)} / {fmtNota(r.peso_total)}
       </span>
-    )
-  return <span>{r.peso_evaluado > 0 ? `${fmtNota(r.puntos)} / ${fmtNota(r.peso_total)}` : '—'}</span>
+      <span className="block text-[10px] font-normal text-slate-500">
+        nota {fmtNota(r.nota)}
+        {r.remedial && <Marca tono="rose">Remedial</Marca>}
+        {r.parcial && <Marca>parcial</Marca>}
+      </span>
+    </span>
+  )
 }
 
-function SubtotalAgregado({ r, columna }) {
+function SubtotalAgregado({ r }) {
   if (!r || !(Number(r.escala_evaluada) > 0)) return <span className="text-slate-300">—</span>
-  if (columna === 'puntaje')
-    return (
-      <span>
-        {fmtNota(notaSobreEvaluado(r))}
-        {r.remedial && <span className="ml-1 rounded bg-rose-50 px-1 text-[10px] text-rose-700">Remedial</span>}
-        {r.parcial && <span className="ml-1 rounded bg-amber-50 px-1 text-[10px] text-amber-700">parcial</span>}
+  return (
+    <span>
+      <span className="font-semibold">
+        {fmtNota(r.puntos)} / {fmtNota(r.escala)}
       </span>
-    )
-  return <span>{`${fmtNota(r.puntos)} / ${fmtNota(r.escala)}`}</span>
+      <span className="block text-[10px] font-normal opacity-70">
+        nota {fmtNota(notaSobreEvaluado(r))}
+        {r.remedial && <Marca tono="rose">Remedial</Marca>}
+        {r.parcial && <Marca>parcial</Marca>}
+      </span>
+    </span>
+  )
 }
 
 function Leyenda() {
+  const items = [
+    ['bg-emerald-500', 'Publicada'],
+    ['bg-amber-400', 'Borrador / lista para publicar'],
+    ['bg-sky-400', 'En curso (incompleta)'],
+  ]
   return (
-    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-      {['publicada', 'borrador', 'en_curso', 'sin_nota'].map((k) => (
-        <span key={k} className="inline-flex items-center gap-1">
-          <span className={`inline-block h-3 w-3 rounded border border-slate-200 ${ESTADOS_CELDA[k].clase}`} />
-          {k === 'borrador' ? 'Borrador / lista para publicar' : k === 'en_curso' ? 'En curso (incompleta)' : ESTADOS_CELDA[k].texto}
+    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+      {items.map(([c, t]) => (
+        <span key={t} className="inline-flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${c}`} /> {t}
         </span>
       ))}
+      <span className="inline-flex items-center gap-1.5">
+        <span className="h-2.5 w-4 rounded border border-dashed border-slate-300" /> Sin registrar
+      </span>
       <span>Los subtotales cuentan solo notas publicadas.</span>
     </p>
   )
 }
 
-function Tabla({ datos, onAbrir, onInforme }) {
-  const { modulos, alumnos, salon, consolidacion } = datos
-  const grupos = agruparPorCiclo(modulos)
+// Fila que ocupa todo el ancho (Ciclo, Módulo). El texto queda pegado a la izquierda aunque se desplace.
+function Seccion({ columnas, className, children }) {
+  return (
+    <tr>
+      <td colSpan={columnas} className={`border-b border-slate-100 p-0 ${className}`}>
+        <div className="sticky left-0 w-max px-3 py-2">{children}</div>
+      </td>
+    </tr>
+  )
+}
+
+function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme }) {
+  const { modulos, salon, consolidacion } = datos
+  const grupos = useMemo(() => agruparPorCiclo(modulos), [modulos])
   const resumen = (a, id) => a.resumen.modulos.find((x) => x.modulo_id === id)
   const resumenCiclo = (a, ciclo) => a.resumen.ciclos.find((c) => (c.ciclo ?? null) === ciclo)
-
-  // Filas en orden, con los rowSpan de las columnas agrupadas (Nivel, Ciclo, Módulo) ya calculados.
-  const filasModulo = (m) => m.evaluaciones.length + 1
-  const filasCiclo = (g) => g.modulos.reduce((s, m) => s + filasModulo(m), 0) + 1
-  const totalFilas = grupos.reduce((s, g) => s + filasCiclo(g), 0) + 2
-  const filas = []
-  for (const g of grupos) {
-    let primeraCiclo = true
-    for (const m of g.modulos) {
-      let primeraModulo = true
-      const base = () => {
-        const f = { g, m, nivel: filas.length === 0, ciclo: primeraCiclo, modulo: primeraModulo }
-        primeraCiclo = false
-        primeraModulo = false
-        return f
-      }
-      for (const ev of m.evaluaciones) filas.push({ ...base(), tipo: 'eval', ev })
-      filas.push({ ...base(), tipo: 'modulo' })
-    }
-    filas.push({ tipo: 'ciclo', g })
-  }
-  const nivelTxt = salon.nivel ?? 'Sin nivel'
-
-  const celdasAgrupadas = (f) => (
-    <>
-      {f.nivel && (
-        <td rowSpan={totalFilas} {...fija('nivel', 'bg-white', 'font-medium text-slate-700')}>
-          {nivelTxt}
-        </td>
-      )}
-      {f.ciclo && (
-        <td rowSpan={filasCiclo(f.g)} {...fija('ciclo', 'bg-white', 'font-medium text-slate-700')}>
-          {f.g.ciclo != null ? `Ciclo ${f.g.ciclo}` : 'Sin ciclo'}
-        </td>
-      )}
-      {f.modulo && (
-        <td rowSpan={filasModulo(f.m)} {...fija('modulo', 'bg-white', 'font-medium text-slate-800')}>
-          {f.m.nombre}
-          {f.m.plantilla && <span className="block text-[10px] font-normal text-slate-400">{f.m.plantilla}</span>}
-        </td>
-      )}
-    </>
-  )
+  const columnas = 2 + alumnos.length
+  const verEval = (ev) => !soloPendientes || alumnos.some((a) => pendiente(a.celdas[ev.id]))
+  const cabComp = fija('comp', 'bg-white')
+  const cabPeso = fija('peso', 'bg-white')
 
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white">
+    <div className="max-h-[75vh] overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table className="w-max min-w-full border-separate border-spacing-0 text-sm" aria-label="Matriz de calificaciones">
         <thead>
-          <tr>
-            {[['nivel', 'Nivel'], ['ciclo', 'Ciclo'], ['modulo', 'Módulo'], ['comp', 'Componente'], ['peso', 'Peso']].map(([k, t]) => {
-              const f = fija(k, 'bg-slate-50', 'font-semibold text-slate-700')
-              return (
-                <th key={k} rowSpan={2} style={{ ...f.style, top: 0, zIndex: 30 }} className={f.className}>
-                  {t}
-                </th>
-              )
-            })}
+          <tr style={{ height: ALTO_CAB }}>
+            <th style={{ ...cabComp.style, top: 0, zIndex: 30 }} className={`${cabComp.className} border-slate-200 font-semibold text-slate-700`}>
+              Componente
+              <span className="block text-[11px] font-normal text-slate-400">{salon.nivel ?? 'Sin nivel'}</span>
+            </th>
+            <th style={{ ...cabPeso.style, top: 0, zIndex: 30 }} className={`${cabPeso.className} border-slate-200 text-right text-xs font-semibold text-slate-500`}>
+              Peso
+            </th>
             {alumnos.map((a) => (
-              <th key={a.alumno_id} colSpan={2} className="sticky top-0 z-20 h-8 border-b border-r border-slate-200 bg-slate-50 px-3 py-1.5 text-center text-xs font-semibold text-slate-800">
-                <span className="block">{a.nombre}</span>
-                <button type="button" aria-label={`Informe de ${a.nombre}`} onClick={() => onInforme(a)} className="text-[10px] font-normal text-brand-700 underline">
+              <th key={a.alumno_id} className="sticky top-0 z-20 min-w-32 border-b border-slate-200 bg-white px-2 py-2 text-center font-normal">
+                <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{iniciales(a.nombre)}</span>
+                <span className="mt-1 block max-w-32 truncate text-xs font-semibold text-slate-800" title={a.nombre}>
+                  {nombreCorto(a.nombre)}
+                </span>
+                <button type="button" aria-label={`Informe de ${a.nombre}`} onClick={() => onInforme(a)} className="text-[10px] text-brand-700 hover:underline">
                   Informe PDF
                 </button>
               </th>
             ))}
           </tr>
-          <tr>
-            {alumnos.map((a) => (
-              <Fragment key={a.alumno_id}>
-                <th className="sticky top-8 z-20 min-w-24 border-b border-r border-slate-200 bg-slate-50 px-2 py-1 text-center text-[11px] font-medium text-slate-500">Puntaje</th>
-                <th className="sticky top-8 z-20 min-w-24 border-b border-r border-slate-200 bg-slate-50 px-2 py-1 text-center text-[11px] font-medium text-slate-500">Aporte</th>
-              </Fragment>
-            ))}
-          </tr>
         </thead>
         <tbody>
-          {filas.map((f, i) => {
-            if (f.tipo === 'eval')
-              return (
-                <tr key={f.ev.id}>
-                  {celdasAgrupadas(f)}
-                  <td {...fija('comp', 'bg-white', 'text-slate-800')}>
-                    {f.ev.nombre}
-                    {f.ev.tipo === 'participacion' && <span className="block text-[10px] text-slate-400">participación por clase</span>}
-                    {f.ev.tipo === 'formative' && <span className="block text-[10px] text-slate-400">3 unidades{Number(f.ev.peso_participacion) > 0 ? ` + ${fmtNota(f.ev.peso_participacion)} % participación` : ''}</span>}
-                  </td>
-                  <td {...fija('peso', 'bg-white', 'text-right text-slate-600')}>{fmtNota(f.ev.peso)}</td>
-                  {alumnos.map((a) => {
-                    const c = a.celdas[f.ev.id]
-                    return (
-                      <Fragment key={a.alumno_id}>
-                        <td className="border-b border-r border-slate-100 p-1 text-center">
-                          <BotonCelda celda={c} evaluacion={{ ...f.ev, modulo: f.m.nombre }} alumno={a} onAbrir={onAbrir} />
+          {grupos.map((g) => (
+            <Fragment key={g.ciclo ?? 'sin'}>
+              <Seccion columnas={columnas} className="bg-brand-600 text-white">
+                <span className="text-xs font-semibold uppercase tracking-wider">{g.ciclo != null ? `Ciclo ${g.ciclo}` : 'Sin ciclo'}</span>
+              </Seccion>
+              {g.modulos.map((m) => {
+                const evals = m.evaluaciones.filter(verEval)
+                if (soloPendientes && evals.length === 0) return null
+                return (
+                  <Fragment key={m.id}>
+                    <Seccion columnas={columnas} className="bg-slate-50">
+                      <span className="text-sm font-semibold text-slate-800">{m.nombre}</span>
+                      {m.plantilla && <span className="ml-2 text-xs font-normal text-slate-400">{m.plantilla}</span>}
+                      {!m.version_id && <span className="ml-2 text-xs font-normal text-amber-600">Sin plantilla asignada</span>}
+                    </Seccion>
+                    {evals.map((ev) => (
+                      <tr key={ev.id}>
+                        <td {...fija('comp', 'bg-white', 'text-slate-800')}>
+                          {ev.nombre}
+                          {ev.tipo === 'participacion' && <span className="block text-[10px] text-slate-400">participación por clase</span>}
+                          {ev.tipo === 'formative' && <span className="block text-[10px] text-slate-400">3 unidades{Number(ev.peso_participacion) > 0 ? ` + ${fmtNota(ev.peso_participacion)} % participación` : ''}</span>}
                         </td>
-                        <td className={`border-b border-r border-slate-100 px-2 text-center text-xs ${c?.estado === 'publicada' ? 'text-slate-800' : 'italic text-slate-400'}`}>{aporteTxt(c)}</td>
-                      </Fragment>
-                    )
-                  })}
-                </tr>
-              )
-            if (f.tipo === 'modulo')
-              return (
-                <tr key={`s${f.m.id}`} className="bg-slate-50 font-medium">
-                  {celdasAgrupadas(f)}
-                  <td {...fija('comp', 'bg-slate-50', 'font-semibold text-slate-700')}>{f.m.version_id ? 'Subtotal del módulo' : 'Sin plantilla asignada'}</td>
-                  <td {...fija('peso', 'bg-slate-50', 'text-right text-slate-600')}>{f.m.escala != null ? fmtNota(f.m.escala) : ''}</td>
-                  {alumnos.map((a) => (
-                    <Fragment key={a.alumno_id}>
-                      <td className="border-b border-r border-slate-100 px-2 py-1.5 text-center text-sm">
-                        <SubtotalModulo r={resumen(a, f.m.id)} columna="puntaje" />
-                      </td>
-                      <td className="border-b border-r border-slate-100 px-2 py-1.5 text-center text-sm">
-                        <SubtotalModulo r={resumen(a, f.m.id)} columna="aporte" />
-                      </td>
-                    </Fragment>
-                  ))}
-                </tr>
-              )
-            return (
-              <tr key={`c${i}`} className="bg-brand-50 font-semibold">
-                <td colSpan={2} {...fija('modulo', 'bg-brand-50', 'text-brand-800')} style={{ left: LEFT.modulo }}>
-                  Subtotal {f.g.ciclo != null ? `ciclo ${f.g.ciclo}` : 'sin ciclo'}
-                </td>
-                <td {...fija('peso', 'bg-brand-50', 'text-right text-brand-800')}>{pesoTxt(f.g.modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
-                {alumnos.map((a) => (
-                  <Fragment key={a.alumno_id}>
-                    <td className="border-b border-r border-brand-100 px-2 py-1.5 text-center text-sm">
-                      <SubtotalAgregado r={resumenCiclo(a, f.g.ciclo)} columna="puntaje" />
-                    </td>
-                    <td className="border-b border-r border-brand-100 px-2 py-1.5 text-center text-sm">
-                      <SubtotalAgregado r={resumenCiclo(a, f.g.ciclo)} columna="aporte" />
-                    </td>
+                        <td {...fija('peso', 'bg-white', 'text-right text-xs text-slate-500')}>{fmtNota(ev.peso)}</td>
+                        {alumnos.map((a) => (
+                          <td key={a.alumno_id} className="border-b border-slate-100 p-1">
+                            <BotonCelda celda={a.celdas[ev.id]} evaluacion={{ ...ev, modulo: m.nombre }} alumno={a} onAbrir={onAbrir} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    {m.version_id && (
+                      <tr>
+                        <td {...fija('comp', 'bg-slate-50', 'text-xs font-semibold text-slate-600')}>Subtotal del módulo</td>
+                        <td {...fija('peso', 'bg-slate-50', 'text-right text-xs text-slate-500')}>{m.escala != null ? fmtNota(m.escala) : ''}</td>
+                        {alumnos.map((a) => (
+                          <td key={a.alumno_id} className="border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-center text-sm">
+                            <SubtotalModulo r={resumen(a, m.id)} />
+                          </td>
+                        ))}
+                      </tr>
+                    )}
                   </Fragment>
+                )
+              })}
+              <tr>
+                <td {...fija('comp', 'bg-brand-50', 'text-xs font-semibold text-brand-800')}>Subtotal {g.ciclo != null ? `ciclo ${g.ciclo}` : 'sin ciclo'}</td>
+                <td {...fija('peso', 'bg-brand-50', 'text-right text-xs text-brand-700')}>{pesoTxt(g.modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
+                {alumnos.map((a) => (
+                  <td key={a.alumno_id} className="border-b border-brand-100 bg-brand-50 px-2 py-1.5 text-center text-sm text-brand-900">
+                    <SubtotalAgregado r={resumenCiclo(a, g.ciclo)} />
+                  </td>
                 ))}
               </tr>
-            )
-          })}
-          <tr className="bg-slate-100 font-semibold">
-            <td colSpan={3} {...fija('ciclo', 'bg-slate-100', 'text-slate-800')} style={{ left: LEFT.ciclo }}>
-              Resultado acumulado del nivel (puntos publicados)
+            </Fragment>
+          ))}
+          <tr>
+            <td {...fija('comp', 'bg-slate-100', 'text-xs font-semibold text-slate-800')}>
+              Acumulado del nivel
+              <span className="block text-[10px] font-normal text-slate-500">puntos publicados</span>
             </td>
-            <td {...fija('peso', 'bg-slate-100', 'text-right text-slate-700')}>{pesoTxt(modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
+            <td {...fija('peso', 'bg-slate-100', 'text-right text-xs text-slate-600')}>{pesoTxt(modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
             {alumnos.map((a) => (
-              <Fragment key={a.alumno_id}>
-                <td className="border-b border-r border-slate-200 px-2 py-1.5 text-center text-sm">
-                  <SubtotalAgregado r={a.resumen.acumulado} columna="puntaje" />
-                </td>
-                <td className="border-b border-r border-slate-200 px-2 py-1.5 text-center text-sm">
-                  <SubtotalAgregado r={a.resumen.acumulado} columna="aporte" />
-                </td>
-              </Fragment>
+              <td key={a.alumno_id} className="border-b border-slate-200 bg-slate-100 px-2 py-2 text-center text-sm text-slate-900">
+                <SubtotalAgregado r={a.resumen.acumulado} />
+              </td>
             ))}
           </tr>
-          <tr className="bg-white font-semibold">
-            <td colSpan={3} {...fija('ciclo', 'bg-white', 'text-slate-900')} style={{ left: LEFT.ciclo }}>
-              Resultado final del nivel
-            </td>
-            <td {...fija('peso', 'bg-white', 'text-right text-slate-600')} />
+          <tr>
+            <td {...fija('comp', 'bg-white', 'text-xs font-semibold text-slate-900')}>Resultado final del nivel</td>
+            <td {...fija('peso', 'bg-white')} />
             {alumnos.map((a) => (
-              <td key={a.alumno_id} colSpan={2} className="border-b border-r border-slate-200 px-2 py-1.5 text-center text-xs">
+              <td key={a.alumno_id} className="border-b border-slate-100 px-2 py-2 text-center text-xs">
                 {a.nivel?.definido && consolidacion.confirmada ? (
-                  <span className="text-sm">
+                  <span className="text-base font-semibold">
                     {fmtNota(a.nivel.nota)} {a.nivel.parcial && <Badge color="peach">Parcial</Badge>}
                   </span>
                 ) : (
-                  <span className="font-normal text-slate-400">Pendiente de regla confirmada por Coordinación</span>
+                  <span className="font-normal text-slate-400" title="Pendiente de regla confirmada por Coordinación">
+                    Pendiente
+                  </span>
                 )}
               </td>
             ))}
@@ -361,6 +374,8 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
   const [editor, setEditor] = useState(null)
   const [informeListo, setInformeListo] = useState(null)
   const [fallo, setFallo] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+  const [soloPendientes, setSoloPendientes] = useState(false)
   const ancha = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 1024px)').matches : true
   const [vista, setVista] = useState(vistaInicial ?? (ancha ? 'tabla' : 'alumno'))
 
@@ -379,6 +394,8 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       </Card>
     )
 
+  const q = busqueda.trim().toLowerCase()
+  const alumnosVisibles = q ? datos.alumnos.filter((x) => x.nombre.toLowerCase().includes(q)) : datos.alumnos
   const abrir = (evaluacion, alumno) => setEditor({ evaluacion, alumno })
   const informe = async (a) => {
     setFallo('')
@@ -404,21 +421,59 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           }}
         />
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Leyenda />
-        <div className="flex gap-1 text-sm" role="group" aria-label="Vista de la matriz">
-          {[['tabla', 'Tabla'], ['alumno', 'Por estudiante']].map(([id, t]) => (
-            <button key={id} aria-pressed={vista === id} onClick={() => setVista(id)} className={`rounded-lg px-3 py-1.5 font-medium ${vista === id ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100'}`}>
-              {t}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        {vista === 'tabla' && (
+          <>
+            <label className="relative min-w-48 flex-1 sm:max-w-xs">
+              <span className="sr-only">Buscar estudiante</span>
+              <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar estudiante…"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </label>
+            <button
+              type="button"
+              aria-pressed={soloPendientes}
+              onClick={() => setSoloPendientes((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${soloPendientes ? 'bg-amber-100 text-amber-800' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+            >
+              <Icon name="filter" className="h-4 w-4" /> Solo pendientes
             </button>
-          ))}
+            <span className="text-xs text-slate-400">
+              {alumnosVisibles.length === datos.alumnos.length ? `${datos.alumnos.length} estudiantes` : `${alumnosVisibles.length} de ${datos.alumnos.length} estudiantes`}
+            </span>
+          </>
+        )}
+        <div className="ml-auto flex items-center gap-1 text-sm" role="group" aria-label="Vista de la matriz">
+          <div className="flex rounded-xl bg-slate-100 p-0.5">
+            {[['tabla', 'Tabla'], ['alumno', 'Por estudiante']].map(([id, t]) => (
+              <button key={id} aria-pressed={vista === id} onClick={() => setVista(id)} className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${vista === id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
           <Button variant="ghost" className="px-2 py-1 text-xs" onClick={recargar}>
             Actualizar
           </Button>
         </div>
       </div>
+      {vista === 'tabla' && <Leyenda />}
       {fallo && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
-      {vista === 'tabla' ? <Tabla datos={datos} onAbrir={abrir} onInforme={informe} /> : <VistaAlumno datos={datos} onAbrir={abrir} onInforme={informe} />}
+      {vista === 'tabla' ? (
+        alumnosVisibles.length ? (
+          <Tabla datos={datos} alumnos={alumnosVisibles} soloPendientes={soloPendientes} onAbrir={abrir} onInforme={informe} />
+        ) : (
+          <Card className="p-6 text-center">
+            <p className="text-sm text-slate-500">Ningún estudiante coincide con «{busqueda}».</p>
+          </Card>
+        )
+      ) : (
+        <VistaAlumno datos={datos} onAbrir={abrir} onInforme={informe} />
+      )}
       {editor && (
         <Editor
           evaluacionId={editor.evaluacion.id}

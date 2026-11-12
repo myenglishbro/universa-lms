@@ -20,9 +20,9 @@ export default function useSalones() {
       api
         .sincronizarEstados()
         .catch(() => 0)
-        .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes()]))
-        .then(([s, progreso, p, d]) => {
-          const todos = s.map((salon) => ({ ...salon, progreso: progreso[salon.id] ?? null }))
+        .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes(), api.listarPendientes().catch(() => ({}))]))
+        .then(([s, progreso, p, d, pend]) => {
+          const todos = s.map((salon) => ({ ...salon, progreso: progreso[salon.id] ?? null, pendientes: pend[salon.id] ?? null }))
           setSalones(todos.filter((x) => !x.archivadoAt))
           setArchivados(todos.filter((x) => x.archivadoAt))
           setNiveles(p)

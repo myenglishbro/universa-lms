@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
@@ -13,7 +14,17 @@ const TONO = {
 }
 
 // Franja «Por atender»: un aviso por línea, cada uno con acceso directo a la pestaña donde se resuelve.
-export function PorAtender({ alertas, onIr }) {
+export function PorAtender({ alertas, onIr, aviso = '' }) {
+  const [copiado, setCopiado] = useState(false)
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(aviso)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2500)
+    } catch {
+      window.prompt('Copia el mensaje:', aviso)
+    }
+  }
   if (alertas.length === 0)
     return (
       <div className="mb-6 flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -27,6 +38,15 @@ export function PorAtender({ alertas, onIr }) {
     <section aria-label="Por atender" className="mb-6 rounded-2xl border border-peach-200 bg-peach-50/50 p-4">
       <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Icon name="alert" className="h-4 w-4 text-peach-700" /> Por atender ({alertas.length})
+        {aviso && (
+          <button
+            type="button"
+            onClick={copiar}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-xs font-medium text-peach-700 ring-1 ring-inset ring-peach-200 hover:bg-peach-50"
+          >
+            <Icon name={copiado ? 'check' : 'copy'} className="h-3.5 w-3.5" /> {copiado ? 'Mensaje copiado' : 'Copiar aviso al docente'}
+          </button>
+        )}
       </h2>
       <ul className="space-y-1.5">
         {alertas.map((a) => (

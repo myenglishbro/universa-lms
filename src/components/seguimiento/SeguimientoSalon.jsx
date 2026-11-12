@@ -14,16 +14,22 @@ const hora = (h) => (h ?? '').slice(0, 5)
 
 // Clases del calendario con su estado de registro, avance por sesiones y resumen por estudiante.
 // Lo usan el docente asignado (portal) y la administración (detalle del salón): mismas funciones, mismas reglas.
-export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, portal = portalReal }) {
+export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, portal = portalReal, onCambio }) {
   const cargarClases = useCallback(() => servicio.clasesDelSalon(salonId), [servicio, salonId])
   const cargarProgreso = useCallback(() => servicio.progresoDelSalon(salonId), [servicio, salonId])
   const cargarResumen = useCallback(() => servicio.resumenDelSalon(salonId), [servicio, salonId])
+  // La grabación es un extra: si no se puede consultar, simplemente no se marca.
+  const cargarGrabaciones = useCallback(() => (servicio.clasesConGrabacion ? servicio.clasesConGrabacion(salonId).catch(() => null) : Promise.resolve(null)), [servicio, salonId])
+  const grabaciones = useCarga(cargarGrabaciones, null)
+  const conGrabacion = new Set(grabaciones.datos ?? [])
+  const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const sinGrabacion = (c) => grabaciones.datos != null && c.fecha < hoy && !conGrabacion.has(c.sesion_id)
   const clases = useCarga(cargarClases, [])
   const progreso = useCarga(cargarProgreso, null)
   const resumen = useCarga(cargarResumen, [])
   const [abierta, setAbierta] = useState(null)
 
-  const recargarTodo = () => Promise.all([clases.recargar(), progreso.recargar(), resumen.recargar()])
+  const recargarTodo = () => Promise.all([clases.recargar(), progreso.recargar(), resumen.recargar(), grabaciones.recargar(), onCambio?.()])
   const pendientes = clases.datos.filter((c) => c.estado_registro === 'pendiente').length
 
   return (
@@ -42,7 +48,10 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
           <h2 className="text-base font-semibold text-slate-900">Clases</h2>
-          {pendientes > 0 && <Badge color="peach">{pendientes} por registrar</Badge>}
+          <div className="flex flex-wrap gap-1.5">
+            {pendientes > 0 && <Badge color="peach">{pendientes} sin asistencia</Badge>}
+            {clases.datos.filter(sinGrabacion).length > 0 && <Badge color="peach">{clases.datos.filter(sinGrabacion).length} sin grabación</Badge>}
+          </div>
         </div>
         {clases.error ? (
           <p className="px-4 py-6 text-sm text-red-600">No se pudieron cargar las clases: {clases.error}</p>
@@ -60,6 +69,7 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
                     <p className="text-sm font-medium text-slate-900">
                       Clase {c.numero} · {formatFecha(c.fecha)} · {hora(c.hora_inicio)}–{hora(c.hora_fin)}{' '}
                       <Badge color={r.color}>{r.label}</Badge>
+                      {sinGrabacion(c) && <span className="ml-1"><Badge color="peach">Sin grabación</Badge></span>}
                       {c.tipo === 'recuperacion' && <span className="ml-1"><Badge color="slate">Recuperación</Badge></span>}
                     </p>
                     {c.estado_registro === 'registrada' ? (

@@ -1,10 +1,13 @@
+import Avatar from '../ui/Avatar'
 import Button from '../ui/Button'
+import useFotosDocentes from '../../hooks/useFotosDocentes'
 import Badge from '../ui/Badge'
 import EstadoBadge from './EstadoBadge'
 import { textoCiclos } from '../../lib/catalogo'
 import { fechaFinSalon, formatFecha, formatHorario, proximoAFinalizar } from '../../lib/salones'
 
 export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) {
+  const fotos = useFotosDocentes()
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
@@ -38,7 +41,15 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                   </div>
                 )}
               </td>
-              <td className="px-4 py-2.5">{s.docente || <span className="text-slate-400">Sin asignar</span>}</td>
+              <td className="px-4 py-2.5">
+                {s.docente ? (
+                  <span className="flex items-center gap-2">
+                    <Avatar nombre={s.docente} fotoUrl={fotos.get(s.docenteId)} tamano="sm" /> {s.docente}
+                  </span>
+                ) : (
+                  <span className="text-slate-400">Sin asignar</span>
+                )}
+              </td>
               <td className="px-4 py-2.5 text-slate-600">{formatHorario(s.horarios)}</td>
               <td className="whitespace-nowrap px-4 py-2.5">{formatFecha(s.fechaInicio)}</td>
               <td className="whitespace-nowrap px-4 py-2.5">

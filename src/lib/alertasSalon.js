@@ -14,6 +14,8 @@ export function alertasSalon(salon, estudiantes, puedeEditar) {
     lista.push({ tono: 'brand', texto: 'Ya se realizaron todas las sesiones', ir: 'resumen', ayuda: puedeEditar ? 'Cambia el estado a «Finalizado» para liberar al docente y cerrar matrículas.' : '' })
   if (activo && !(p && p.sesiones > 0)) lista.push({ tono: 'slate', texto: 'Aún no tiene calendario de clases', ir: 'calendario', ayuda: 'Genera las sesiones para poder dar seguimiento.' })
   if (p?.porRegistrar > 0) lista.push({ tono: 'peach', texto: `${p.porRegistrar} ${p.porRegistrar === 1 ? 'clase ya pasó' : 'clases ya pasaron'} sin registrar`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Márcalas como realizadas o canceladas.' })
+  const sinGrab = salon.pendientes?.sinGrabacion ?? 0
+  if (sinGrab > 0) lista.push({ tono: 'peach', texto: `${sinGrab} ${sinGrab === 1 ? 'clase' : 'clases'} sin grabación`, ir: puedeEditar ? 'asistencia' : 'calendario', ayuda: 'Pídele al docente que suba la grabación de cada clase.' })
   if (p?.sinProgramar > 0) lista.push({ tono: 'peach', texto: `Faltan ${p.sinProgramar} sesiones por programar`, ir: 'calendario', ayuda: 'Por eso la fecha de fin es solo una estimación.' })
   if (salon.estado === 'en_curso' && estudiantes && !estudiantes.cargando && cuposSalon(salon, estudiantes.matriculas).ocupados === 0)
     lista.push({ tono: 'slate', texto: 'No tiene estudiantes matriculados', ir: 'estudiantes', ayuda: '' })

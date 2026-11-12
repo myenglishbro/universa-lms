@@ -3,7 +3,7 @@ import Button from '../ui/Button'
 import { Anillo } from '../ui/Anillo'
 import { inputClass } from '../ui/Field'
 import Icon from '../ui/Icon'
-import Tabs from '../ui/Tabs'
+import SalonNav from './SalonNav'
 import Tile from '../ui/Tile'
 import CalendarioSalon from '../calendario/CalendarioSalon'
 import EjerciciosSalon from '../ejercicios/EjerciciosSalon'
@@ -18,6 +18,7 @@ import MatriculasSalon from './MatriculasSalon'
 import MatriculasSalonAuto from './MatriculasSalonAuto'
 import ResumenAdmin, { PorAtender } from './ResumenAdmin'
 import { alertasSalon } from '../../lib/alertasSalon'
+import { mensajeAviso } from '../../lib/pendientesClase'
 import { porcentajeAvance } from '../../lib/asistencia'
 import { cuposSalon } from '../../lib/matriculas'
 import { portadaDe } from '../../lib/recursos'
@@ -47,20 +48,31 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
   const dias = diasParaFin(salon)
   const alertas = useMemo(() => alertasSalon(salon, estudiantes, puedeEditar), [salon, estudiantes, puedeEditar])
 
-  const tabs = [
-    { id: 'resumen', label: 'Resumen' },
-    { id: 'estudiantes', label: 'Estudiantes', conteo: cupos ? cupos.ocupados : null },
-    { id: 'calendario', label: 'Calendario', conteo: p?.sesiones || null },
+  const grupos = [
+    {
+      titulo: 'General',
+      items: [
+        { id: 'resumen', label: 'Resumen', icono: 'home' },
+        { id: 'estudiantes', label: 'Estudiantes', icono: 'users', conteo: cupos ? cupos.ocupados : null },
+        { id: 'calendario', label: 'Calendario', icono: 'calendar', conteo: p?.sesiones || null },
+      ],
+    },
     ...(puedeEditar
       ? [
-          { id: 'asistencia', label: 'Clases y asistencia', conteo: p?.porRegistrar || null },
-          { id: 'evaluaciones', label: 'Evaluaciones' },
-          { id: 'ejercicios', label: 'Ejercicios' },
-          { id: 'recursos', label: 'Recursos del curso' },
-          { id: 'vista', label: 'Vista de estudiante' },
+          {
+            titulo: 'Gestión académica',
+            items: [
+              { id: 'asistencia', label: 'Clases y asistencia', icono: 'check', conteo: p?.porRegistrar || null },
+              { id: 'evaluaciones', label: 'Evaluaciones', icono: 'chart' },
+              { id: 'ejercicios', label: 'Ejercicios', icono: 'pen' },
+              { id: 'recursos', label: 'Recursos del curso', icono: 'book' },
+            ],
+          },
+          { titulo: 'Previsualizar', items: [{ id: 'vista', label: 'Vista de estudiante', icono: 'eye' }] },
         ]
       : []),
   ]
+  const tabs = grupos.flatMap((g) => g.items)
 
   const ir = (id) => {
     setTab(tabs.some((t) => t.id === id) ? id : 'resumen')
@@ -138,11 +150,12 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
         />
       </div>
 
-      <PorAtender alertas={alertas} onIr={ir} />
+      <PorAtender alertas={alertas} onIr={ir} aviso={puedeEditar ? mensajeAviso(salon) : ''} />
 
-      <Tabs tabs={tabs} activa={tab} onCambiar={setTab} etiqueta="Secciones del salón" />
+      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+      <SalonNav grupos={grupos} activa={tab} onCambiar={setTab} />
 
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="pt-6">
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="min-w-0">
         {tab === 'resumen' && <ResumenAdmin salon={salon} estudiantes={estudiantes} puedeEditar={puedeEditar} onVerDocente={onVerDocente} />}
 
         {/* Con datos compartidos desde la app se usan; si no llegan, la sección los carga por su cuenta (nunca queda vacía). */}
@@ -168,7 +181,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
 
         {tab === 'recursos' && puedeEditar && <GestionContenido key={salon.id} salonId={salon.id} />}
 
-        {tab === 'asistencia' && puedeEditar && <SeguimientoSalon key={salon.id} salonId={salon.id} />}
+        {tab === 'asistencia' && puedeEditar && <SeguimientoSalon key={salon.id} salonId={salon.id} onCambio={onRecargar} />}
 
         {tab === 'evaluaciones' && puedeEditar && (
           <div className="space-y-4">
@@ -176,6 +189,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
             <EvaluacionesPanel key={`e${salon.id}`} salonId={salon.id} esAdmin />
           </div>
         )}
+      </div>
       </div>
     </>
   )

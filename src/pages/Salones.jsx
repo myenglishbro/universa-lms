@@ -3,7 +3,6 @@ import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
-import PageHeader from '../components/ui/PageHeader'
 import CerrarCicloModal from '../components/archivo/CerrarCicloModal'
 import AsignacionDocentes, { porAsignar } from '../components/salones/AsignacionDocentes'
 import SalonDetalle from '../components/salones/SalonDetalle'
@@ -12,7 +11,6 @@ import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
 import { descargarCompendio } from '../services/compendio'
-import Ayuda from '../components/ui/Ayuda'
 import Tile from '../components/ui/Tile'
 import { SIN_NIVEL, coincideNivel, estados, proximoAFinalizar } from '../lib/salones'
 
@@ -46,6 +44,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [nivel, setNivel] = useState('')
   const [estado, setEstado] = useState('')
   const [vista, setVista] = useState('tarjetas')
+  const [menuMas, setMenuMas] = useState(false)
   const [detalleId, setDetalleId] = useState(salonInicialId)
   const [cerrandoCiclo, setCerrandoCiclo] = useState(false)
   const [asignando, setAsignando] = useState(false)
@@ -65,7 +64,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const pendientes = salones.filter((s) => s.estado === 'pendiente').length
   const incompletos = salones.filter((s) => s.estado !== 'finalizado' && (!s.docente || !s.nivel)).length
   const nPorAsignar = porAsignar(salones).length
-  const sinRegistrar = salones.filter((s) => s.progreso?.porRegistrar > 0).length
+  const sinRegistrar = salones.filter((s) => s.progreso?.porRegistrar > 0 || s.pendientes?.sinGrabacion > 0).length
 
   const guardar = async (valores) => {
     await guardarSalon(form.salon?.id ?? null, valores)
@@ -94,47 +93,78 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
         />
       ) : (
         <>
-          <PageHeader
-            title="Salones grupales"
-            description="Cada salón con su avance, su docente y lo que falta atender" 
-            action={
-              puedeEditar && (
-                <div className="flex flex-wrap gap-2">
-                  {nPorAsignar > 0 && (
-                    <Button variant="secondary" onClick={() => setAsignando(true)}>
-                      <Icon name="teacher" className="h-4 w-4" /> Por asignar ({nPorAsignar})
-                    </Button>
+          <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-sm">
+                <Icon name="building" className="h-6 w-6" />
+              </span>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Salones grupales</h1>
+                <p className="mt-0.5 text-sm text-slate-500">Avance, docente y pendientes de cada salón</p>
+              </div>
+            </div>
+            {puedeEditar && (
+              <div className="flex flex-wrap items-center gap-2">
+                {nPorAsignar > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAsignando(true)}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full bg-peach-50 px-4 py-2 text-sm font-semibold text-peach-700 ring-1 ring-inset ring-peach-200 transition hover:bg-peach-100"
+                  >
+                    <Icon name="teacher" className="h-4 w-4" /> Por asignar
+                    <span className="rounded-full bg-peach-700 px-2 py-0.5 text-xs text-white">{nPorAsignar}</span>
+                  </button>
+                )}
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={menuMas}
+                    onClick={() => setMenuMas((v) => !v)}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
+                  >
+                    Más acciones <Icon name="down" className="h-4 w-4" />
+                  </button>
+                  {menuMas && (
+                    <>
+                      <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-20 cursor-default" onClick={() => setMenuMas(false)} />
+                      <div role="menu" className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg">
+                        <button
+                          role="menuitem"
+                          type="button"
+                          disabled={cargando || Boolean(error)}
+                          onClick={() => { setMenuMas(false); setImportando(true) }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50 disabled:opacity-50"
+                        >
+                          <Icon name="up" className="h-4 w-4 text-brand-600" /> Importar salones (JSON)
+                        </button>
+                        {finalizados.length > 0 && (
+                          <button
+                            role="menuitem"
+                            type="button"
+                            onClick={() => { setMenuMas(false); setCerrandoCiclo(true) }}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50"
+                          >
+                            <Icon name="box" className="h-4 w-4 text-brand-600" /> Cerrar ciclo
+                            <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{finalizados.length}</span>
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
-                  {finalizados.length > 0 && (
-                    <Button variant="secondary" onClick={() => setCerrandoCiclo(true)}>
-                      <Icon name="box" className="h-4 w-4" /> Cerrar ciclo
-                    </Button>
-                  )}
-                  <Button variant="secondary" onClick={() => setImportando(true)} disabled={cargando || Boolean(error)}>
-                    <Icon name="up" className="h-4 w-4" /> Importar JSON
-                  </Button>
-                  <Button onClick={() => setForm({ salon: null })} disabled={cargando || Boolean(error)}>
-                    <Icon name="plus" className="h-4 w-4" /> Nuevo salón
-                  </Button>
                 </div>
-              )
-            }
-          />
-
-          <Ayuda id="salones" titulo="¿Cómo leer esta pantalla?">
-            <p>
-              Cada tarjeta es un <strong>salón grupal</strong>. El círculo muestra cuánto del curso ya se dictó. Toca una tarjeta para ver el <strong>detalle</strong>: estudiantes, calendario, asistencia y notas, cada uno en su pestaña.
-            </p>
-            <p className="text-slate-600">
-              Las etiquetas de color avisan qué mirar primero: <strong className="text-rose-700">rojo</strong> = ya debió terminar, <strong className="text-peach-700">durazno</strong> = termina pronto o falta registrar clases, <strong className="text-brand-700">morado</strong> = en orden.
-            </p>
-          </Ayuda>
+                <Button onClick={() => setForm({ salon: null })} disabled={cargando || Boolean(error)}>
+                  <Icon name="plus" className="h-4 w-4" /> Nuevo salón
+                </Button>
+              </div>
+            )}
+          </header>
 
           {!cargando && !error && salones.length > 0 && (
             <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Tile icono="building" tono="brand" valor={activos} etiqueta="En curso" nota={pendientes > 0 ? `${pendientes} por empezar` : undefined} />
               <Tile icono="flag" tono={porFinalizar > 0 ? 'peach' : 'slate'} valor={porFinalizar} etiqueta="Por finalizar (14 días)" />
-              <Tile icono="eye" tono={sinRegistrar > 0 ? 'peach' : 'slate'} valor={sinRegistrar} etiqueta="Con clases sin registrar" />
+              <Tile icono="eye" tono={sinRegistrar > 0 ? 'peach' : 'slate'} valor={sinRegistrar} etiqueta="Con asistencia o grabación pendiente" />
               <Tile icono="info" tono={incompletos > 0 ? 'peach' : 'slate'} valor={incompletos} etiqueta="Sin docente o nivel" />
             </div>
           )}
@@ -211,7 +241,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
               (vista === 'tabla' ? (
                 <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ) : (
-                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
+                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ))
             )}
           </Card>
