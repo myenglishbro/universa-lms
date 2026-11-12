@@ -54,7 +54,7 @@ export default function Layout({ base, current, onNavigate, usuario, onSignOut, 
       <div className={`transition-[padding] duration-200 ${colapsado ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`}>
         {/* Barra superior solo en móvil */}
         <header className="flex h-14 items-center gap-3 bg-brand-600 px-4 lg:hidden">
-          <button onClick={() => setOpen(true)} aria-label="Abrir menú" className="text-brand-100">
+          <button onClick={() => setOpen(true)} aria-label="Open menu" className="text-brand-100">
             <Icon name="menu" className="h-6 w-6" />
           </button>
           <img src="/landing/logo.png" alt="Universa" className="h-6 w-auto" />

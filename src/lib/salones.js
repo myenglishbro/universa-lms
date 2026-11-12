@@ -1,8 +1,8 @@
 // Constantes y helpers de Salones grupales. Los valores coinciden con los de la base de datos.
 export const estados = [
-  { value: 'pendiente', label: 'Planificado' },
-  { value: 'en_curso', label: 'En curso' },
-  { value: 'finalizado', label: 'Finalizado' },
+  { value: 'pendiente', label: 'Planned' },
+  { value: 'en_curso', label: 'In progress' },
+  { value: 'finalizado', label: 'Finished' },
 ]
 // Valor de filtro para los salones que aún no tienen nivel académico (pendientes de reclasificar).
 export const SIN_NIVEL = '__sin_nivel__'
@@ -12,13 +12,13 @@ export const estadoLabel = (valor) => estados.find((e) => e.value === valor)?.la
 
 // dia: 1 = lunes ... 7 = domingo (igual que salon_horarios.dia)
 export const diasSemana = [
-  { value: 1, label: 'Lunes', corto: 'Lun' },
-  { value: 2, label: 'Martes', corto: 'Mar' },
-  { value: 3, label: 'Miércoles', corto: 'Mié' },
-  { value: 4, label: 'Jueves', corto: 'Jue' },
-  { value: 5, label: 'Viernes', corto: 'Vie' },
-  { value: 6, label: 'Sábado', corto: 'Sáb' },
-  { value: 7, label: 'Domingo', corto: 'Dom' },
+  { value: 1, label: 'Monday', corto: 'Mon' },
+  { value: 2, label: 'Tuesday', corto: 'Tue' },
+  { value: 3, label: 'Wednesday', corto: 'Wed' },
+  { value: 4, label: 'Thursday', corto: 'Thu' },
+  { value: 5, label: 'Friday', corto: 'Fri' },
+  { value: 6, label: 'Saturday', corto: 'Sat' },
+  { value: 7, label: 'Sunday', corto: 'Sun' },
 ]
 
 // Días de anticipación para marcar un salón como "próximo a finalizar".
@@ -71,9 +71,9 @@ export function proximoAFinalizar(salon) {
 export function textoFin(salon) {
   const dias = diasParaFin(salon)
   if (dias === null) return ''
-  if (dias < 0) return 'Fecha de fin vencida'
-  if (dias === 0) return 'Finaliza hoy'
-  return `Faltan ${dias} ${dias === 1 ? 'día' : 'días'}`
+  if (dias < 0) return 'End date has passed'
+  if (dias === 0) return 'Ends today'
+  return `${dias} ${dias === 1 ? 'day' : 'days'} left`
 }
 
 export const formatFecha = (iso) => (iso ? iso.split('-').reverse().join('/') : '—')

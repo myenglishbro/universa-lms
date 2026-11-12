@@ -29,7 +29,9 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
   const [error, setError] = useState('')
 
   const eliminar = async () => {
-    if (!window.confirm(`¿Eliminar el salón «${salon.nombre}»?\n\nSe borrarán su horario y calendario y el docente quedará libre. Esta acción no se puede deshacer.`)) return
+    if (!window.confirm(`Delete classroom “${salon.nombre}”?
+
+Its schedule and calendar will be deleted and the teacher will be freed up. This cannot be undone.`)) return
     setError('')
     try {
       await onEliminar(salon.id)
@@ -62,23 +64,23 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
     {
       titulo: 'General',
       items: [
-        { id: 'resumen', label: 'Resumen', icono: 'home' },
-        { id: 'estudiantes', label: 'Estudiantes', icono: 'users', conteo: cupos ? cupos.ocupados : null },
-        { id: 'calendario', label: 'Calendario', icono: 'calendar', conteo: p?.sesiones || null },
+        { id: 'resumen', label: 'Overview', icono: 'home' },
+        { id: 'estudiantes', label: 'Students', icono: 'users', conteo: cupos ? cupos.ocupados : null },
+        { id: 'calendario', label: 'Calendar', icono: 'calendar', conteo: p?.sesiones || null },
       ],
     },
     ...(puedeEditar
       ? [
           {
-            titulo: 'Gestión académica',
+            titulo: 'Academic management',
             items: [
-              { id: 'asistencia', label: 'Clases y asistencia', icono: 'check', conteo: p?.porRegistrar || null },
-              { id: 'evaluaciones', label: 'Evaluaciones', icono: 'chart' },
-              { id: 'ejercicios', label: 'Ejercicios', icono: 'pen' },
-              { id: 'recursos', label: 'Recursos del curso', icono: 'book' },
+              { id: 'asistencia', label: 'Classes & attendance', icono: 'check', conteo: p?.porRegistrar || null },
+              { id: 'evaluaciones', label: 'Assessments', icono: 'chart' },
+              { id: 'ejercicios', label: 'Exercises', icono: 'pen' },
+              { id: 'recursos', label: 'Course resources', icono: 'book' },
             ],
           },
-          { titulo: 'Previsualizar', items: [{ id: 'vista', label: 'Vista de estudiante', icono: 'eye' }] },
+          { titulo: 'Preview', items: [{ id: 'vista', label: 'Student view', icono: 'eye' }] },
         ]
       : []),
   ]
@@ -92,7 +94,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
   return (
     <>
       <button onClick={onVolver} className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-        <Icon name="back" className="h-4 w-4" /> Volver a salones
+        <Icon name="back" className="h-4 w-4" /> Back to classrooms
       </button>
 
       <div className={`relative mb-5 overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-white shadow-md sm:p-8 ${portadaDe(salon.nombre)}`}>
@@ -107,10 +109,10 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
             <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{salon.nombre}</h1>
             <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
-                <Icon name="box" className="h-4 w-4" /> {salon.nivel || 'Sin nivel'}
+                <Icon name="box" className="h-4 w-4" /> {salon.nivel || 'No level'}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Icon name="teacher" className="h-4 w-4" /> {salon.docente || 'Sin docente'}
+                <Icon name="teacher" className="h-4 w-4" /> {salon.docente || 'No teacher'}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Icon name="clock" className="h-4 w-4" /> {formatHorario(salon.horarios)}
@@ -118,7 +120,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
             </p>
             {puedeEditar && (
               <div className="mt-5 flex flex-wrap items-center gap-2">
-                <select value={salon.estado} onChange={cambiarEstado} disabled={cambiando} className={`${inputClass} w-auto`} aria-label="Cambiar estado">
+                <select value={salon.estado} onChange={cambiarEstado} disabled={cambiando} className={`${inputClass} w-auto`} aria-label="Change status">
                   {estados.map((e) => (
                     <option key={e.value} value={e.value}>
                       {e.label}
@@ -126,22 +128,22 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
                   ))}
                 </select>
                 <Button variant="secondary" onClick={onEditar}>
-                  <Icon name="pencil" className="h-4 w-4" /> Editar salón
+                  <Icon name="pencil" className="h-4 w-4" /> Edit classroom
                 </Button>
                 <BotonCompendio salon={salon} />
                 {onEliminar && (
                   <Button variant="secondary" onClick={eliminar}>
-                    <Icon name="trash" className="h-4 w-4" /> Eliminar
+                    <Icon name="trash" className="h-4 w-4" /> Delete
                   </Button>
                 )}
               </div>
             )}
           </div>
           <div className="flex items-center gap-3 rounded-2xl bg-white/95 p-3 pr-5 text-slate-900 shadow-lg">
-            <Anillo valor={pct} size={72} grosor={8} etiqueta="Avance del salón" />
+            <Anillo valor={pct} size={72} grosor={8} etiqueta="Classroom progress" />
             <div>
-              <p className="text-xs text-slate-500">Avance del salón</p>
-              <p className="text-sm font-semibold text-brand-800">{p?.total ? `${p.realizadas} de ${p.total} clases` : 'Sin total definido'}</p>
+              <p className="text-xs text-slate-500">Classroom progress</p>
+              <p className="text-sm font-semibold text-brand-800">{p?.total ? `${p.realizadas} of ${p.total} classes` : 'No total defined'}</p>
             </div>
           </div>
         </div>
@@ -149,19 +151,19 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile icono="users" tono="brand" valor={cupos ? `${cupos.ocupados}/${cupos.capacidad}` : '…'} etiqueta="Estudiantes matriculados" onClick={() => ir('estudiantes')} />
-        <Tile icono="check" tono="brand" valor={p ? p.realizadas : '—'} etiqueta="Clases realizadas" nota={p?.restantes != null ? `${p.restantes} restantes` : undefined} onClick={() => ir('calendario')} />
+        <Tile icono="users" tono="brand" valor={cupos ? `${cupos.ocupados}/${cupos.capacidad}` : '…'} etiqueta="Enrolled students" onClick={() => ir('estudiantes')} />
+        <Tile icono="check" tono="brand" valor={p ? p.realizadas : '—'} etiqueta="Classes held" nota={p?.restantes != null ? `${p.restantes} remaining` : undefined} onClick={() => ir('calendario')} />
         <Tile
           icono="flag"
           tono={dias !== null && dias <= 14 ? 'peach' : 'slate'}
-          valor={dias === null ? '—' : dias < 0 ? 'Vencido' : dias === 0 ? 'Hoy' : `${dias} d`}
-          etiqueta="Para el fin estimado"
+          valor={dias === null ? '—' : dias < 0 ? 'Overdue' : dias === 0 ? 'Today' : `${dias} d`}
+          etiqueta="Until estimated end"
         />
         <Tile
           icono="alert"
           tono={alertas.length ? 'peach' : 'slate'}
           valor={alertas.length}
-          etiqueta={alertas.length === 1 ? 'Cosa por atender' : 'Cosas por atender'}
+          etiqueta={alertas.length === 1 ? 'Item to review' : 'Items to review'}
         />
       </div>
 

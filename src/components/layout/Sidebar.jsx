@@ -10,20 +10,20 @@ const navItems = [
   { id: 'tickets', label: 'Task Board', icon: 'list' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
 
-  { id: 'salones', label: 'Salones grupales', icon: 'building', grupo: 'Académico' },
-  { id: 'paquetes', label: 'Paquetes de horas', icon: 'box', grupo: 'Académico' },
-  { id: 'evaluaciones', label: 'Evaluaciones', icon: 'doc', soloAdmin: true, grupo: 'Académico' },
-  { id: 'ejercicios', label: 'Banco de ejercicios', icon: 'pen', soloAdmin: true, grupo: 'Académico' },
-  { id: 'zonas', label: 'Teacher & Student Zone', icon: 'book', soloAdmin: true, grupo: 'Académico' },
-  { id: 'archivo', label: 'Archivo de ciclos', icon: 'copy', soloAdmin: true, grupo: 'Académico' },
+  { id: 'salones', label: 'Group classrooms', icon: 'building', grupo: 'Academic' },
+  { id: 'paquetes', label: 'Hour packages', icon: 'box', grupo: 'Academic' },
+  { id: 'evaluaciones', label: 'Assessments', icon: 'doc', soloAdmin: true, grupo: 'Academic' },
+  { id: 'ejercicios', label: 'Exercise bank', icon: 'pen', soloAdmin: true, grupo: 'Academic' },
+  { id: 'zonas', label: 'Teacher & Student Zone', icon: 'book', soloAdmin: true, grupo: 'Academic' },
+  { id: 'archivo', label: 'Cycle archive', icon: 'copy', soloAdmin: true, grupo: 'Academic' },
 
-  { id: 'estudiantes', label: 'Estudiantes', icon: 'users', grupo: 'Personas' },
-  { id: 'docentes', label: 'Docentes', icon: 'teacher', grupo: 'Personas' },
-  { id: 'registros', label: 'Profesores registrados', icon: 'userplus', soloAdmin: true, grupo: 'Personas' },
+  { id: 'estudiantes', label: 'Students', icon: 'users', grupo: 'People' },
+  { id: 'docentes', label: 'Teachers', icon: 'teacher', grupo: 'People' },
+  { id: 'registros', label: 'Registered teachers', icon: 'userplus', soloAdmin: true, grupo: 'People' },
 
-  { id: 'frecuencias', label: 'Frecuencias', icon: 'clock', soloAdmin: true, grupo: 'Configuración' },
-  { id: 'feriados', label: 'Feriados', icon: 'flag', grupo: 'Configuración' },
-  { id: 'usuarios', label: 'Usuarios del personal', icon: 'key', soloAdmin: true, grupo: 'Configuración' },
+  { id: 'frecuencias', label: 'Frequencies', icon: 'clock', soloAdmin: true, grupo: 'Settings' },
+  { id: 'feriados', label: 'Holidays', icon: 'flag', grupo: 'Settings' },
+  { id: 'usuarios', label: 'Staff users', icon: 'key', soloAdmin: true, grupo: 'Settings' },
 ]
 
 // Secciones plegadas por la persona (se recuerdan en este navegador). La sección de la pantalla actual nunca se oculta.
@@ -48,8 +48,8 @@ function agrupar(visibles) {
   return grupos
 }
 
-const rolLabel = { admin: 'Administrador', comercial: 'Comercial', rrhh: 'Recursos Humanos', docente: 'Docente', estudiante: 'Estudiante', postulante: 'Profesor (registro en revisión)' }
-const vistaLabel = { gestion: 'Administración', docente: 'Portal docente', estudiante: 'Portal estudiante' }
+const rolLabel = { admin: 'Administrator', comercial: 'Sales', rrhh: 'Human Resources', docente: 'Teacher', estudiante: 'Student', postulante: 'Teacher (registration under review)' }
+const vistaLabel = { gestion: 'Administration', docente: 'Teacher portal', estudiante: 'Student portal' }
 
 // Clic normal = navegación interna; con Ctrl/⌘/clic central el enlace se abre en otra pestaña como cualquier URL.
 const clicNormal = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
@@ -92,7 +92,7 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
       <Icon name={item.icon} className="h-5 w-5 shrink-0" />
       <span className={`truncate ${ocultar}`}>{item.label}</span>
       {badges[item.id] > 0 && (
-        <span aria-label={`${badges[item.id]} sin leer`} className={`ml-auto min-w-5 rounded-full bg-peach-500 px-1.5 text-center text-xs font-semibold text-brand-900 ${ocultar}`}>
+        <span aria-label={`${badges[item.id]} unread`} className={`ml-auto min-w-5 rounded-full bg-peach-500 px-1.5 text-center text-xs font-semibold text-brand-900 ${ocultar}`}>
           {badges[item.id]}
         </span>
       )}
@@ -115,7 +115,7 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
         </div>
 
         {/* Las opciones se desplazan si no caben en la altura de la pantalla; cambiar vista y la cuenta quedan siempre a la vista. */}
-        <nav aria-label="Menú principal" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-color:rgba(255,255,255,.25)_transparent] [scrollbar-width:thin]">
+        <nav aria-label="Main menu" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-color:rgba(255,255,255,.25)_transparent] [scrollbar-width:thin]">
           {grupos.map((g, i) => {
             // Sin título = opciones sueltas. Con título = sección plegable; si contiene la pantalla actual siempre se ve abierta.
             if (!g.nombre) return <div key={`suelto-${i}`} className="space-y-1">{g.items.map(enlace)}</div>
@@ -130,7 +130,7 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
                   disabled={contieneActual}
                   aria-expanded={abierta}
                   aria-controls={idLista}
-                  title={contieneActual ? 'Contiene la pantalla actual' : undefined}
+                  title={contieneActual ? 'Contains the current page' : undefined}
                   className={`flex w-full items-center justify-between rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-200 transition-colors hover:text-white disabled:cursor-default disabled:hover:text-brand-200 ${ocultar}`}
                 >
                   {g.nombre}
@@ -148,7 +148,7 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
         {vistas.length > 1 && (
           <div className="shrink-0 border-t border-white/10 px-3 py-3">
             <p className={`mb-1 flex items-center gap-1.5 px-1 text-xs font-medium uppercase text-brand-200 ${ocultar}`}>
-              <Icon name="switch" className="h-3.5 w-3.5" /> Cambiar vista
+              <Icon name="switch" className="h-3.5 w-3.5" /> Switch view
             </p>
             <div className={`space-y-1 ${colapsado ? 'lg:space-y-1' : ''}`}>
               {vistas.map((v) => (
@@ -175,23 +175,23 @@ export default function Sidebar({ base, current, onNavigate, open, onClose, usua
           </div>
           <button
             onClick={onSignOut}
-            title={colapsado ? 'Cerrar sesión' : undefined}
-            aria-label="Cerrar sesión"
+            title={colapsado ? 'Sign out' : undefined}
+            aria-label="Sign out"
             className={`mt-2 flex items-center gap-2 text-xs font-medium text-peach-200 hover:underline ${colapsado ? 'lg:mx-auto lg:mt-0 lg:h-10 lg:w-10 lg:justify-center lg:rounded-full lg:hover:bg-white/10 lg:hover:no-underline' : ''}`}
           >
             {colapsado && <Icon name="logout" className="hidden h-5 w-5 lg:block" />}
-            <span className={ocultar}>Cerrar sesión</span>
+            <span className={ocultar}>Sign out</span>
           </button>
           {onAlternarColapso && (
             <button
               onClick={onAlternarColapso}
-              aria-label={colapsado ? 'Expandir menú' : 'Colapsar menú'}
+              aria-label={colapsado ? 'Expand menu' : 'Collapse menu'}
               aria-expanded={!colapsado}
-              title={colapsado ? 'Expandir menú' : 'Colapsar menú'}
+              title={colapsado ? 'Expand menu' : 'Collapse menu'}
               className={`mt-3 hidden h-10 w-full items-center gap-2 rounded-full text-xs font-medium text-brand-200 transition-colors hover:bg-white/10 hover:text-white lg:flex ${colapsado ? 'justify-center' : 'px-4'}`}
             >
               <Icon name="back" className={`h-5 w-5 shrink-0 transition-transform ${colapsado ? 'rotate-180' : ''}`} />
-              {!colapsado && 'Colapsar menú'}
+              {!colapsado && 'Collapse menu'}
             </button>
           )}
         </div>

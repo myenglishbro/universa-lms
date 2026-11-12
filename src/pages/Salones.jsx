@@ -19,7 +19,7 @@ function Chips({ etiqueta, valor, onCambiar, opciones }) {
   return (
     <div className="flex items-start gap-3">
       <span className="w-14 shrink-0 pt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{etiqueta}</span>
-      <div role="group" aria-label={`Filtrar por ${etiqueta.toLowerCase()}`} className="flex flex-wrap gap-1.5">
+      <div role="group" aria-label={`Filter by ${etiqueta.toLowerCase()}`} className="flex flex-wrap gap-1.5">
         {opciones.map((o) => (
           <button
             key={o.value}
@@ -103,8 +103,8 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                 <Icon name="building" className="h-6 w-6" />
               </span>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Salones grupales</h1>
-                <p className="mt-0.5 text-sm text-slate-500">Avance, docente y pendientes de cada salón</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Group classrooms</h1>
+                <p className="mt-0.5 text-sm text-slate-500">Progress, teacher and pending items for each classroom</p>
               </div>
             </div>
             {puedeEditar && (
@@ -115,7 +115,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                     onClick={() => setAsignando(true)}
                     className="inline-flex min-h-10 items-center gap-2 rounded-full bg-peach-50 px-4 py-2 text-sm font-semibold text-peach-700 ring-1 ring-inset ring-peach-200 transition hover:bg-peach-100"
                   >
-                    <Icon name="teacher" className="h-4 w-4" /> Por asignar
+                    <Icon name="teacher" className="h-4 w-4" /> Unassigned
                     <span className="rounded-full bg-peach-700 px-2 py-0.5 text-xs text-white">{nPorAsignar}</span>
                   </button>
                 )}
@@ -127,11 +127,11 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                     onClick={() => setMenuMas((v) => !v)}
                     className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
                   >
-                    Más acciones <Icon name="down" className="h-4 w-4" />
+                    More actions <Icon name="down" className="h-4 w-4" />
                   </button>
                   {menuMas && (
                     <>
-                      <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-20 cursor-default" onClick={() => setMenuMas(false)} />
+                      <button type="button" aria-label="Close menu" className="fixed inset-0 z-20 cursor-default" onClick={() => setMenuMas(false)} />
                       <div role="menu" className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg">
                         <button
                           role="menuitem"
@@ -140,7 +140,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                           onClick={() => { setMenuMas(false); setImportando(true) }}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50 disabled:opacity-50"
                         >
-                          <Icon name="up" className="h-4 w-4 text-brand-600" /> Importar salones (JSON)
+                          <Icon name="up" className="h-4 w-4 text-brand-600" /> Import classrooms (JSON)
                         </button>
                         {finalizados.length > 0 && (
                           <button
@@ -149,7 +149,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                             onClick={() => { setMenuMas(false); setCerrandoCiclo(true) }}
                             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50"
                           >
-                            <Icon name="box" className="h-4 w-4 text-brand-600" /> Cerrar ciclo
+                            <Icon name="box" className="h-4 w-4 text-brand-600" /> Close cycle
                             <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{finalizados.length}</span>
                           </button>
                         )}
@@ -158,7 +158,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                   )}
                 </div>
                 <Button onClick={() => setForm({ salon: null })} disabled={cargando || Boolean(error)}>
-                  <Icon name="plus" className="h-4 w-4" /> Nuevo salón
+                  <Icon name="plus" className="h-4 w-4" /> New classroom
                 </Button>
               </div>
             )}
@@ -166,10 +166,10 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
 
           {!cargando && !error && salones.length > 0 && (
             <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Tile icono="building" tono="brand" valor={activos} etiqueta="En curso" nota={pendientes > 0 ? `${pendientes} por empezar` : undefined} />
-              <Tile icono="flag" tono={porFinalizar > 0 ? 'peach' : 'slate'} valor={porFinalizar} etiqueta="Por finalizar (14 días)" />
-              <Tile icono="eye" tono={sinRegistrar > 0 ? 'peach' : 'slate'} valor={sinRegistrar} etiqueta="Con asistencia o grabación pendiente" />
-              <Tile icono="info" tono={incompletos > 0 ? 'peach' : 'slate'} valor={incompletos} etiqueta="Sin docente o nivel" />
+              <Tile icono="building" tono="brand" valor={activos} etiqueta="In progress" nota={pendientes > 0 ? `${pendientes} not started` : undefined} />
+              <Tile icono="flag" tono={porFinalizar > 0 ? 'peach' : 'slate'} valor={porFinalizar} etiqueta="Ending soon (14 days)" />
+              <Tile icono="eye" tono={sinRegistrar > 0 ? 'peach' : 'slate'} valor={sinRegistrar} etiqueta="Attendance or recording pending" />
+              <Tile icono="info" tono={incompletos > 0 ? 'peach' : 'slate'} valor={incompletos} etiqueta="Missing teacher or level" />
             </div>
           )}
 
@@ -180,14 +180,14 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                 <input
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por nombre, código o docente"
+                  placeholder="Search by name, code or teacher"
                   className={`${inputClass} pl-9`}
                 />
               </div>
-              <div role="group" aria-label="Forma de ver los salones" className="ml-auto inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
+              <div role="group" aria-label="How to view classrooms" className="ml-auto inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
                 {[
-                  ['tarjetas', 'Tarjetas'],
-                  ['tabla', 'Tabla'],
+                  ['tarjetas', 'Cards'],
+                  ['tabla', 'Table'],
                 ].map(([v, t]) => (
                   <button
                     key={v}
@@ -205,21 +205,21 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             {!cargando && !error && salones.length > 0 && (
               <div className="space-y-2 border-b border-brand-100 px-4 py-3">
                 <Chips
-                  etiqueta="Nivel"
+                  etiqueta="Level"
                   valor={nivel}
                   onCambiar={setNivel}
                   opciones={[
-                    { value: '', label: 'Todos', n: sinNivel.length },
+                    { value: '', label: 'All', n: sinNivel.length },
                     ...niveles.map((n) => ({ value: n.id, label: n.nombre, n: sinNivel.filter((s) => s.nivelId === n.id).length })),
-                    { value: SIN_NIVEL, label: 'Sin nivel', n: sinNivel.filter((s) => !s.nivelId).length },
+                    { value: SIN_NIVEL, label: 'No level', n: sinNivel.filter((s) => !s.nivelId).length },
                   ]}
                 />
                 <Chips
-                  etiqueta="Estado"
+                  etiqueta="Status"
                   valor={estado}
                   onCambiar={setEstado}
                   opciones={[
-                    { value: '', label: 'Todos', n: sinEstado.length },
+                    { value: '', label: 'All', n: sinEstado.length },
                     ...estados.map((e) => ({ value: e.value, label: e.label, n: sinEstado.filter((s) => s.estado === e.value).length })),
                   ]}
                 />
@@ -227,20 +227,20 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             )}
 
             {cargando ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando salones…</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-500">Loading classrooms…</p>
             ) : error ? (
               <div className="px-4 py-10 text-center text-sm">
-                <p className="text-red-600">No se pudieron cargar los salones: {error}</p>
+                <p className="text-red-600">Could not load classrooms: {error}</p>
                 <Button variant="secondary" className="mt-3" onClick={recargar}>
-                  Reintentar
+                  Retry
                 </Button>
               </div>
             ) : salones.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">
-                Aún no hay salones registrados.{puedeEditar && ' Crea el primero con «Nuevo salón».'}
+                No classrooms yet.{puedeEditar && ' Create the first one with “New classroom”.'}
               </p>
             ) : visibles.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Ningún salón coincide con la búsqueda.</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-500">No classroom matches your search.</p>
             ) : (
               (vista === 'tabla' ? (
                 <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
