@@ -4,7 +4,7 @@ import Icon from '../ui/Icon'
 import { incrustarDe, tipoLabel } from '../../lib/recursos'
 import { formatFecha } from '../../lib/salones'
 
-const PROVEEDOR = { youtube: 'YouTube', drive: 'Google Drive', externo: 'sitio externo' }
+const PROVEEDOR = { youtube: 'YouTube', vimeo: 'Vimeo', drive: 'Google Drive', externo: 'sitio externo' }
 
 // Un documento (PDF, Docs, Slides) necesita una ventana alta; un video, formato panorámico.
 const esDocumento = (l) => l.tipo === 'documento' || /docs\.google\.com|\/(document|presentation|spreadsheets)\//.test(l.url)

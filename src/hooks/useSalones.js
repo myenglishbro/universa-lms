@@ -57,6 +57,11 @@ export default function useSalones() {
     await cargar()
   }
 
+  const eliminarSalon = async (id) => {
+    await api.eliminarSalon(id)
+    await cargar()
+  }
+
   const archivarSalones = async (ids, ciclo) => {
     const n = await api.archivarSalones(ids, ciclo)
     await cargar()
@@ -69,5 +74,5 @@ export default function useSalones() {
     return nuevo
   }
 
-  return { salones, archivados, niveles, docentes, catalogo, cargando, error, recargar: cargar, recargarCatalogo: cargarCatalogo, guardarSalon, cambiarEstado, archivarSalones, crearDocente }
+  return { salones, archivados, niveles, docentes, catalogo, cargando, error, recargar: cargar, recargarCatalogo: cargarCatalogo, guardarSalon, cambiarEstado, eliminarSalon, archivarSalones, crearDocente }
 }

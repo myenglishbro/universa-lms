@@ -116,6 +116,11 @@ export async function guardarSalon(id, s) {
   )
 }
 
+// Elimina un salón creado por error (libera horario y docente). La base lo rechaza si ya tiene estudiantes, ejercicios o archivo.
+export async function eliminarSalon(id) {
+  datos(await supabase.rpc('eliminar_salon', { p_id: id }))
+}
+
 // Pasa a «En curso» los salones planificados cuya fecha de inicio ya llegó. No cierra nada: «Finalizado» es siempre manual.
 export async function sincronizarEstados() {
   return datos(await supabase.rpc('sincronizar_estados_salones'))

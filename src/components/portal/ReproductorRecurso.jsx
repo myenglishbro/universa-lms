@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import { incrustarDe, tipoLabel } from '../../lib/recursos'
 import { formatFecha } from '../../lib/salones'
 
-const proveedorNombre = { youtube: 'YouTube', drive: 'Google Drive', externo: 'sitio externo' }
+const proveedorNombre = { youtube: 'YouTube', vimeo: 'Vimeo', drive: 'Google Drive', externo: 'sitio externo' }
 
 // Muestra una lección: video/archivo incrustado cuando es posible y, siempre, un botón para abrirlo en su plataforma.
 export default function ReproductorRecurso({ leccion: l }) {

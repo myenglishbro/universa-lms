@@ -25,8 +25,18 @@ import { portadaDe } from '../../lib/recursos'
 import { diasParaFin, estados, formatHorario } from '../../lib/salones'
 
 // Detalle de un salón para la administración: cabecera con indicadores, avisos «Por atender» y pestañas por tema.
-export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEditar, onVolver, onEditar, onCambiarEstado, onRecargar, onVerEstudiante, onVerDocente }) {
+export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEditar, onVolver, onEditar, onCambiarEstado, onEliminar, onRecargar, onVerEstudiante, onVerDocente }) {
   const [error, setError] = useState('')
+
+  const eliminar = async () => {
+    if (!window.confirm(`¿Eliminar el salón «${salon.nombre}»?\n\nSe borrarán su horario y calendario y el docente quedará libre. Esta acción no se puede deshacer.`)) return
+    setError('')
+    try {
+      await onEliminar(salon.id)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
   const [cambiando, setCambiando] = useState(false)
   const [tab, setTab] = useState('resumen')
 
@@ -119,6 +129,11 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
                   <Icon name="pencil" className="h-4 w-4" /> Editar salón
                 </Button>
                 <BotonCompendio salon={salon} />
+                {onEliminar && (
+                  <Button variant="secondary" onClick={eliminar}>
+                    <Icon name="trash" className="h-4 w-4" /> Eliminar
+                  </Button>
+                )}
               </div>
             )}
           </div>

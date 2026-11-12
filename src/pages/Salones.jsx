@@ -39,7 +39,7 @@ function Chips({ etiqueta, valor, onCambiar, opciones }) {
 }
 
 export default function Salones({ data, estudiantes, puedeEditar, salonInicialId = null, onVerEstudiante, onVerDocente }) {
-  const { salones, niveles, docentes, catalogo, cargando, error, recargar, guardarSalon, cambiarEstado, crearDocente, archivados, archivarSalones } = data
+  const { salones, niveles, docentes, catalogo, cargando, error, recargar, guardarSalon, cambiarEstado, eliminarSalon, crearDocente, archivados, archivarSalones } = data
   const [busqueda, setBusqueda] = useState('')
   const [nivel, setNivel] = useState('')
   const [estado, setEstado] = useState('')
@@ -89,6 +89,10 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
           onVolver={() => setDetalleId(null)}
           onEditar={() => setForm({ salon: detalle })}
           onCambiarEstado={cambiarEstado}
+          onEliminar={async (id) => {
+            await eliminarSalon(id)
+            setDetalleId(null)
+          }}
           onRecargar={recargar}
         />
       ) : (

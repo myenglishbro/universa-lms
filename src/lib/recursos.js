@@ -1,15 +1,16 @@
-// Enlaces de recursos del curso (YouTube y Google Drive). Solo se guardan enlaces: nada se descarga ni se copia.
+// Enlaces de recursos del curso (YouTube, Vimeo y Google Drive). Solo se guardan enlaces: nada se descarga ni se copia.
 // La validación definitiva la hace Supabase (curso_proveedor); aquí se da respuesta inmediata y se calcula el reproductor.
 
 export const tiposRecurso = [
-  { value: 'grabacion', label: 'Grabación de clase', ayuda: 'YouTube o Google Drive' },
-  { value: 'video', label: 'Video', ayuda: 'YouTube o Google Drive' },
+  { value: 'grabacion', label: 'Grabación de clase', ayuda: 'YouTube, Vimeo o Google Drive' },
+  { value: 'video', label: 'Video', ayuda: 'YouTube, Vimeo o Google Drive' },
   { value: 'documento', label: 'Documento / PDF', ayuda: 'Google Drive, Docs o Slides' },
   { value: 'enlace', label: 'Enlace complementario', ayuda: 'Cualquier enlace https' },
 ]
 export const tipoLabel = (v) => tiposRecurso.find((t) => t.value === v)?.label ?? v
 
 const HOSTS_YOUTUBE = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com']
+const HOSTS_VIMEO = ['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']
 const HOSTS_DRIVE = ['drive.google.com', 'docs.google.com']
 const FORMA = /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?([/?#][^\s]*)?$/
 
@@ -17,14 +18,14 @@ export function proveedorDe(url) {
   const t = (url ?? '').trim()
   if (!FORMA.test(t) || t.length > 2000) return null
   const host = t.match(/^https:\/\/([A-Za-z0-9.-]+)/)[1].toLowerCase()
-  return HOSTS_YOUTUBE.includes(host) ? 'youtube' : HOSTS_DRIVE.includes(host) ? 'drive' : 'externo'
+  return HOSTS_YOUTUBE.includes(host) ? 'youtube' : HOSTS_VIMEO.includes(host) ? 'vimeo' : HOSTS_DRIVE.includes(host) ? 'drive' : 'externo'
 }
 
 // Mensaje de error o '' si el enlace es aceptable para ese tipo de recurso.
 export function validarEnlace(url, tipo) {
   const prov = proveedorDe(url)
   if (!prov) return 'El enlace debe comenzar con https:// y no puede tener espacios'
-  if ((tipo === 'grabacion' || tipo === 'video') && prov === 'externo') return 'Los videos y grabaciones deben ser enlaces de YouTube o Google Drive'
+  if ((tipo === 'grabacion' || tipo === 'video') && prov === 'externo') return 'Los videos y grabaciones deben ser enlaces de YouTube, Vimeo o Google Drive'
   if (tipo === 'documento' && prov !== 'drive') return 'Los documentos deben ser enlaces de Google Drive (Drive, Docs o Slides)'
   return ''
 }
@@ -52,6 +53,14 @@ export function incrustarDe({ url, proveedor }) {
     if (id && /^[\w-]{6,20}$/.test(id)) return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
     const lista = u.searchParams.get('list')
     return lista && /^[\w-]+$/.test(lista) ? `https://www.youtube-nocookie.com/embed/videoseries?list=${lista}` : null
+  }
+  if (proveedor === 'vimeo' && HOSTS_VIMEO.includes(u.hostname.toLowerCase())) {
+    // vimeo.com/ID, vimeo.com/ID/HASH (privado), vimeo.com/channels/x/ID o player.vimeo.com/video/ID?h=HASH
+    const partes = u.pathname.split('/').filter(Boolean)
+    const i = partes.findIndex((x) => /^\d{5,}$/.test(x))
+    if (i < 0) return null
+    const hash = [partes[i + 1], u.searchParams.get('h')].find((x) => x && /^[a-f0-9]{6,}$/i.test(x))
+    return `https://player.vimeo.com/video/${partes[i]}${hash ? `?h=${hash}` : ''}`
   }
   if (proveedor === 'drive' && HOSTS_DRIVE.includes(u.hostname.toLowerCase())) {
     const archivo = u.pathname.match(/^\/file\/d\/([\w-]+)/) ?? (u.hostname === 'drive.google.com' && u.pathname === '/open' ? [null, u.searchParams.get('id')] : null)

@@ -58,7 +58,7 @@ export default function LeccionForm({ leccion, sesiones = [], onSave, onClose })
         {v.url.trim() && !errorEnlace && (
           <p className={`rounded-lg px-3 py-2 text-xs ${sePuedeVer ? 'bg-brand-50 text-brand-700' : 'bg-peach-50 text-peach-700'}`}>
             {sePuedeVer
-              ? `✓ Enlace de ${prov === 'drive' ? 'Google Drive' : 'YouTube'} reconocido: el estudiante lo verá dentro de la plataforma.`
+              ? `✓ Enlace de ${prov === 'drive' ? 'Google Drive' : prov === 'vimeo' ? 'Vimeo' : 'YouTube'} reconocido: el estudiante lo verá dentro de la plataforma.`
               : 'Este enlace no se puede mostrar dentro de la plataforma: el estudiante tendrá un botón para abrirlo.'}
           </p>
         )}
