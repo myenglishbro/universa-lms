@@ -18,7 +18,7 @@ import * as servicioReal from '../../services/portal'
 
 // Curso del estudiante en pestañas: Resumen, Contenido (estilo plataforma de aprendizaje), Calendario, Calificaciones y Asistencia.
 // El encabezado es mínimo a propósito: los datos del curso (docente, horario, avance) viven en «Resumen».
-export default function CursoEstudiante({ curso, proximas = [], onVolver, servicio = servicioReal, asistencia = asistenciaReal, evaluaciones = evaluacionesReal }) {
+export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaPrevia = false, servicio = servicioReal, asistencia = asistenciaReal, evaluaciones = evaluacionesReal }) {
   const cargarContenido = useCallback(() => servicio.contenidoDelCurso(curso.salon_id).then(agruparContenido), [servicio, curso.salon_id])
   const cargarProgreso = useCallback(() => asistencia.progresoDelSalon(curso.salon_id), [asistencia, curso.salon_id])
   const cargarHistorial = useCallback(() => asistencia.miAsistencia(curso.salon_id), [asistencia, curso.salon_id])
@@ -67,20 +67,25 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, servic
     window.scrollTo?.({ top: 0, behavior: 'smooth' })
   }
 
+  // En la vista previa de la administración solo van las pestañas iguales para todos los estudiantes: ejercicios, notas y asistencia son personales.
   const tabs = [
     { id: 'resumen', label: 'Resumen' },
     { id: 'contenido', label: 'Contenido', conteo: nLecciones || null },
     { id: 'calendario', label: 'Calendario', conteo: mias.length || null },
-    { id: 'ejercicios', label: 'Ejercicios' },
-    { id: 'notas', label: 'Calificaciones' },
-    { id: 'asistencia', label: 'Asistencia' },
+    ...(vistaPrevia
+      ? []
+      : [
+          { id: 'ejercicios', label: 'Ejercicios' },
+          { id: 'notas', label: 'Calificaciones' },
+          { id: 'asistencia', label: 'Asistencia' },
+        ]),
   ]
 
   return (
     <>
-      <button onClick={onVolver} className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
+      {!vistaPrevia && <button onClick={onVolver} className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
         <Icon name="back" className="h-4 w-4" /> Mis cursos
-      </button>
+      </button>}
 
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{curso.nombre}</h1>

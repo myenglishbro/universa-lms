@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import { inputClass } from '../components/ui/Field'
@@ -7,6 +7,7 @@ import PageHeader from '../components/ui/PageHeader'
 import CerrarCicloModal from '../components/archivo/CerrarCicloModal'
 import AsignacionDocentes, { porAsignar } from '../components/salones/AsignacionDocentes'
 import SalonDetalle from '../components/salones/SalonDetalle'
+import ImportarSalonesModal from '../components/salones/ImportarSalonesModal'
 import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
@@ -48,6 +49,8 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [detalleId, setDetalleId] = useState(salonInicialId)
   const [cerrandoCiclo, setCerrandoCiclo] = useState(false)
   const [asignando, setAsignando] = useState(false)
+  const [importando, setImportando] = useState(false)
+  const todosLosSalones = useMemo(() => [...salones, ...archivados], [salones, archivados])
   const [form, setForm] = useState(null) // null = cerrado, { salon } = abierto (salon null = crear)
 
   const texto = busqueda.trim().toLowerCase()
@@ -107,6 +110,9 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                       <Icon name="box" className="h-4 w-4" /> Cerrar ciclo
                     </Button>
                   )}
+                  <Button variant="secondary" onClick={() => setImportando(true)} disabled={cargando || Boolean(error)}>
+                    <Icon name="up" className="h-4 w-4" /> Importar JSON
+                  </Button>
                   <Button onClick={() => setForm({ salon: null })} disabled={cargando || Boolean(error)}>
                     <Icon name="plus" className="h-4 w-4" /> Nuevo salón
                   </Button>
@@ -232,6 +238,17 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
           docentes={docentes}
           onAsignar={(salon, docenteId) => guardarSalon(salon.id, { ...salon, docenteId })}
           onClose={() => setAsignando(false)}
+        />
+      )}
+
+      {importando && (
+        <ImportarSalonesModal
+          salones={todosLosSalones}
+          niveles={niveles}
+          docentes={docentes}
+          catalogo={catalogo}
+          onTerminar={recargar}
+          onClose={() => setImportando(false)}
         />
       )}
 

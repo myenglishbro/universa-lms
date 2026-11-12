@@ -7,6 +7,8 @@ import Tabs from '../ui/Tabs'
 import Tile from '../ui/Tile'
 import CalendarioSalon from '../calendario/CalendarioSalon'
 import EjerciciosSalon from '../ejercicios/EjerciciosSalon'
+import GestionContenido from '../portal/GestionContenido'
+import VistaEstudianteSalon from './VistaEstudianteSalon'
 import EvaluacionesPanel from '../evaluaciones/EvaluacionesPanel'
 import ModulosAdmin from '../evaluaciones/ModulosAdmin'
 import SeguimientoSalon from '../seguimiento/SeguimientoSalon'
@@ -54,6 +56,8 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
           { id: 'asistencia', label: 'Clases y asistencia', conteo: p?.porRegistrar || null },
           { id: 'evaluaciones', label: 'Evaluaciones' },
           { id: 'ejercicios', label: 'Ejercicios' },
+          { id: 'recursos', label: 'Recursos del curso' },
+          { id: 'vista', label: 'Vista de estudiante' },
         ]
       : []),
   ]
@@ -159,6 +163,10 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
         {tab === 'calendario' && <CalendarioSalon salon={salon} puedeEditar={puedeEditar} onCambio={onRecargar} />}
 
         {tab === 'ejercicios' && puedeEditar && <EjerciciosSalon key={salon.id} salonId={salon.id} esAdmin />}
+
+        {tab === 'vista' && puedeEditar && <VistaEstudianteSalon key={salon.id} salon={salon} />}
+
+        {tab === 'recursos' && puedeEditar && <GestionContenido key={salon.id} salonId={salon.id} />}
 
         {tab === 'asistencia' && puedeEditar && <SeguimientoSalon key={salon.id} salonId={salon.id} />}
 

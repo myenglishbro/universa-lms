@@ -48,6 +48,9 @@ export const guardarEstudiante = (id, a) =>
 
 export const matricularAlumnos = (salonId, alumnoIds) => rpc('matricular_alumnos', { p_salon: salonId, p_alumnos: alumnoIds })
 export const retirarMatricula = (matriculaId, motivo) => rpc('retirar_matricula', { p_matricula: matriculaId, p_motivo: motivo || null })
+// Matrículas retroactivas: lleva la fecha de inicio hacia atrás para poder registrar la asistencia de clases ya dictadas.
+export const corregirFechaMatricula = (matriculaId, fecha) => rpc('corregir_fecha_matricula', { p_matricula: matriculaId, p_fecha: fecha })
+export const corregirFechaMatriculasSalon = (salonId, fecha) => rpc('corregir_fecha_matriculas_salon', { p_salon: salonId, p_fecha: fecha })
 export const cambiarSalonMatricula = (matriculaId, salonId, motivo) =>
   rpc('cambiar_salon_matricula', { p_matricula: matriculaId, p_salon_nuevo: salonId, p_motivo: motivo || null })
 

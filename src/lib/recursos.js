@@ -84,6 +84,12 @@ export function agruparContenido(filas) {
   return [...mapa.values()]
 }
 
+// Contenido tal como lo ve un estudiante: sin secciones ocultas y sin lecciones ocultas (la administración recibe todo para poder gestionarlo).
+export const soloVisibleParaEstudiante = (filas) =>
+  filas
+    .filter((f) => !f.seccion_oculta)
+    .map((f) => (f.leccion_oculta ? { ...f, leccion_id: null } : f))
+
 export const totalLecciones = (secciones) => secciones.reduce((n, s) => n + s.lecciones.length, 0)
 
 // Mover un elemento una posición (devuelve la lista de ids en el nuevo orden, o null si no se puede).

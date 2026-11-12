@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import CambiarSalonModal from '../estudiantes/CambiarSalonModal'
 import EstudianteForm from '../estudiantes/EstudianteForm'
+import FechaMatriculaModal from './FechaMatriculaModal'
 import MotivoModal from '../paquetes/MotivoModal'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
@@ -8,7 +9,7 @@ import Card from '../ui/Card'
 import { inputClass } from '../ui/Field'
 import Icon from '../ui/Icon'
 import { candidatosParaSalon, cuposSalon, matriculasActivas, resumenCandidatos } from '../../lib/matriculas'
-import { formatFecha } from '../../lib/salones'
+import { formatFecha, hoyLima } from '../../lib/salones'
 import * as servicioReal from '../../services/personas'
 
 const MAX_LISTA = 8
@@ -76,6 +77,14 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
         <div className={`h-full ${cupos.lleno ? 'bg-peach-500' : 'bg-brand-500'}`} style={{ width: `${Math.min(100, (cupos.ocupados / Math.max(cupos.capacidad, 1)) * 100)}%` }} />
       </div>
       <p className="mt-2 text-xs text-slate-500">Matricular no es un pago ni un paquete de horas: solo asigna al estudiante a este salón.</p>
+      {puedeEditar && activas.some((m) => m.fecha_inicio > salon.fechaInicio) && salon.fechaInicio <= hoyLima() && (
+        <p className="mt-2 rounded-lg bg-peach-50 px-3 py-2 text-xs text-peach-700">
+          Algunos estudiantes figuran matriculados después del inicio del salón y no aparecen en la asistencia de las clases anteriores.{' '}
+          <button type="button" className="font-medium underline" onClick={() => setModal({ tipo: 'fechas' })}>
+            Matricular desde una fecha pasada
+          </button>
+        </p>
+      )}
 
       {errorCarga && (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -105,6 +114,9 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
                 </div>
                 {puedeEditar && (
                   <div className="flex gap-1">
+                    <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'fecha', m })}>
+                      Cambiar fecha
+                    </Button>
                     <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'cambiar', m })}>
                       Cambiar de salón
                     </Button>
@@ -191,6 +203,26 @@ export default function MatriculasSalon({ salon, salones, data, puedeEditar, onC
           confirmar="Retirar"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.retirarMatricula(modal.m.id, motivo))}
+        />
+      )}
+      {modal?.tipo === 'fecha' && (
+        <FechaMatriculaModal
+          titulo="Fecha de matrícula"
+          texto={`${nombre(modal.m.alumno_id)}: elige desde qué día cuenta en este salón. Para registrar la asistencia de clases pasadas, usa una fecha anterior a esas clases.`}
+          fechaActual={modal.m.fecha_inicio}
+          inicioSalon={salon.fechaInicio}
+          onClose={() => setModal(null)}
+          onConfirm={(fecha) => enModal(() => servicio.corregirFechaMatricula(modal.m.id, fecha))}
+        />
+      )}
+      {modal?.tipo === 'fechas' && (
+        <FechaMatriculaModal
+          titulo="Matricular desde una fecha pasada"
+          texto="Se aplica a todos los estudiantes matriculados que figuran con una fecha posterior. Los que ya empezaron antes no cambian."
+          alcance="todas"
+          inicioSalon={salon.fechaInicio}
+          onClose={() => setModal(null)}
+          onConfirm={(fecha) => enModal(() => servicio.corregirFechaMatriculasSalon(salon.id, fecha))}
         />
       )}
       {modal?.tipo === 'cambiar' && (
