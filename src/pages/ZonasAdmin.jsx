@@ -65,7 +65,7 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
         <Field label="Description (optional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={v.oculto} onChange={(e) => setV({ ...v, oculto: e.target.checked })} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
-          Ocultar por ahora (nadie lo verá hasta que lo muestres)
+          Hide for now (nobody will see it until you show it)
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">

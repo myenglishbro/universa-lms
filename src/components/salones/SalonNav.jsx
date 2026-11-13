@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 
 // Navegación lateral del salón: grupos con icono y contador. En pantallas chicas se vuelve una cuadrícula (sin scroll horizontal).
 // `grupos`: [{ titulo, items: [{ id, label, icono, conteo? }] }]
-export default function SalonNav({ grupos, activa, onCambiar, etiqueta = 'Secciones del salón' }) {
+export default function SalonNav({ grupos, activa, onCambiar, etiqueta = 'Classroom sections' }) {
   const refs = useRef({})
   const todos = grupos.flatMap((g) => g.items)
 

@@ -160,7 +160,7 @@ export default function MiPerfil({ estado = 'docente', onRecargar, servicio = se
             My availability
           </h2>
           <p className="mb-4 text-sm text-slate-500">Mark the hours, from 7 am to 11 pm, when you can teach each week. We will use this to assign you to classrooms.</p>
-          {disp.cargando ? <p className="text-sm text-slate-400">Cargando…</p> : <GrillaDisponibilidad value={franjas} onChange={setSlots} />}
+          {disp.cargando ? <p className="text-sm text-slate-400">Loading…</p> : <GrillaDisponibilidad value={franjas} onChange={setSlots} />}
           {err.disp && <p className="mt-3 text-sm text-red-600">{err.disp}</p>}
           {msg.disp && <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{msg.disp}</p>}
           <Button className="mt-4" onClick={guardarDisp} disabled={guardando === 'disp' || slots === null}>

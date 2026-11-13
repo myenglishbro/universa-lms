@@ -131,7 +131,7 @@ export default function Frecuencias({ catalogo, salones, onCambio }) {
                           title={est === 'pendiente' ? 'Edit it and mark it as confirmed to be able to activate it' : undefined}
                           onClick={() => alternar(f)}
                         >
-                          {f.activa ? 'Desactivar' : 'Activar'}
+                          {f.activa ? 'Deactivate' : 'Activate'}
                         </Button>
                       </td>
                     </tr>

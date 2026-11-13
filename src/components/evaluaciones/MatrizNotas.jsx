@@ -457,7 +457,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
             ))}
           </div>
           <Button variant="ghost" className="px-2 py-1 text-xs" onClick={recargar}>
-            Actualizar
+            Refresh
           </Button>
         </div>
       </div>

@@ -240,7 +240,7 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
                       Count toward Formative
                     </button>
                   )}
-                  <button type="button" onClick={() => quitar(a)} className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label={`Quitar ${a.titulo}`}>
+                  <button type="button" onClick={() => quitar(a)} className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label={`Remove ${a.titulo}`}>
                     <Icon name="trash" className="h-4 w-4" />
                   </button>
                 </div>

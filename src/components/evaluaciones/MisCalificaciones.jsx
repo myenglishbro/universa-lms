@@ -75,7 +75,7 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
           <div className="flex flex-wrap gap-2">
             <ComoMeEvaluan modulos={datos.modulos} />
             <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => descargarInforme(datos)}>
-              Descargar informe (PDF)
+              Download report (PDF)
             </Button>
           </div>
         )}

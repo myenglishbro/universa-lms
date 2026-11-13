@@ -41,7 +41,7 @@ export default function ArchivoCiclos({ archivados }) {
 
   return (
     <>
-      <PageHeader title="Archivo de ciclos" description="Salones de ciclos cerrados, con sus estudiantes y reportes, guardados tal como terminaron" />
+      <PageHeader title="Cycle archive" description="Classrooms of closed cycles, with their students and reports, saved exactly as they ended" />
 
       {informe && (
         <InformeDialogo
@@ -58,31 +58,31 @@ export default function ArchivoCiclos({ archivados }) {
         <div className="border-b border-brand-100 p-4">
           <div className="relative max-w-sm">
             <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar estudiante, salón o docente" className={`${inputClass} pl-9`} />
+            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search student, classroom or teacher" className={`${inputClass} pl-9`} />
           </div>
         </div>
 
         {cargando ? (
-          <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando archivo…</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">Loading archive…</p>
         ) : error ? (
           <div className="px-4 py-10 text-center text-sm">
             <p className="text-red-600">No se pudo cargar el archivo: {error}</p>
             <Button variant="secondary" className="mt-3" onClick={recargar}>
-              Reintentar
+              Retry
             </Button>
           </div>
         ) : archivados.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-slate-500">Aún no hay ciclos archivados. Cuando un ciclo termine, usa «Cerrar ciclo» en Salones grupales.</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">There are no archived cycles yet. When a cycle ends, use “Close cycle” in Group classrooms.</p>
         ) : ciclos.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-slate-500">Nada coincide con la búsqueda.</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">Nothing matches the search.</p>
         ) : (
           <div className="divide-y divide-slate-100">
             {ciclos.map(([ciclo, items]) => (
               <section key={ciclo} className="p-4">
                 <h2 className="mb-2 flex items-center gap-2 text-base font-semibold text-slate-900">
-                  Ciclo {ciclo}
+                  Cycle {ciclo}
                   <Badge color="slate">
-                    {items.length} {items.length === 1 ? 'salón' : 'salones'}
+                    {items.length} {items.length === 1 ? 'classroom' : 'classrooms'}
                   </Badge>
                 </h2>
                 <ul className="space-y-2">
@@ -113,7 +113,7 @@ export default function ArchivoCiclos({ archivados }) {
                         {abre && (
                           <ul className="divide-y divide-slate-100 border-t border-slate-100">
                             {estudiantes.length === 0 ? (
-                              <li className="px-4 py-3 text-sm text-slate-500">Este salón no tenía estudiantes matriculados.</li>
+                              <li className="px-4 py-3 text-sm text-slate-500">This classroom had no students enrolled.</li>
                             ) : (
                               estudiantes.map((a) => (
                                 <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
@@ -121,8 +121,8 @@ export default function ArchivoCiclos({ archivados }) {
                                     <p className="text-sm text-slate-900">{a.alumno_nombre}</p>
                                     <p className="text-xs text-slate-500">
                                       {a.matricula_estado === 'activa'
-                                        ? 'Terminó el ciclo'
-                                        : `Se retiró${a.fecha_fin ? ` el ${formatFecha(a.fecha_fin)}` : ''}${a.motivo_retiro ? ` · ${a.motivo_retiro}` : ''}`}
+                                        ? 'Finished the cycle'
+                                        : `Withdrew${a.fecha_fin ? ` on ${formatFecha(a.fecha_fin)}` : ''}${a.motivo_retiro ? ` · ${a.motivo_retiro}` : ''}`}
                                     </p>
                                   </div>
                                   {a.informe ? (

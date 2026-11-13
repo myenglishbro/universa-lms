@@ -17,7 +17,7 @@ function Resultados({ salonId, servicio }) {
   return (
     <div className="space-y-3">
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        Solo cuentan las notas publicadas. Lo que aún no tiene nota no se toma como cero.{' '}
+        Only published grades count. Anything without a grade yet is not treated as zero.{' '}
         {consolidacion.metodo === 'sin_definir'
           ? 'The final level grade is pending confirmation from Coordination.'
           : `Level grade: ${metodoLabel(consolidacion.metodo)}${consolidacion.confirmada ? '' : ' (preview, unconfirmed)'}.`}
@@ -115,14 +115,14 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
         <Resultados key={refresco} salonId={salonId} servicio={servicio} />
       ) : !modulo.version_id ? (
         <Card className="p-6 text-center">
-          <p className="text-sm text-slate-500">«{modulo.nombre}» todavía no tiene plantilla de evaluación. Pide a administración que la asigne.</p>
+          <p className="text-sm text-slate-500">“{modulo.nombre}” has no assessment template yet. Ask administration to assign one.</p>
         </Card>
       ) : (
         <Card>
           <div className="border-b border-slate-200 px-4 py-3">
             <h2 className="text-base font-semibold text-slate-900">{modulo.nombre}</h2>
             <p className="text-xs text-slate-500">
-              {modulo.plantilla} · versión {modulo.version}
+              {modulo.plantilla} · version {modulo.version}
               {modulo.ciclo != null && ` · cycle ${modulo.ciclo}`}
             </p>
           </div>

@@ -47,7 +47,7 @@ function RubricaForm({ rubrica, onClose, onSave }) {
               <input aria-label={`Criterion ${i + 1}`} className={inputClass} placeholder="Criterion" value={c.nombre} onChange={(e) => setC(i, { nombre: e.target.value })} required />
               <input aria-label={`Maximum of criterion ${i + 1}`} type="number" min="0.5" step="0.5" className={`${inputClass} text-right`} placeholder="Max." value={c.max_puntaje} onChange={(e) => setC(i, { max_puntaje: e.target.value })} required />
               <Button type="button" variant="ghost" className="px-2 py-1 text-xs" onClick={() => setV((p) => ({ ...p, criterios: p.criterios.filter((_, j) => j !== i) }))}>
-                Quitar
+                Remove
               </Button>
             </li>
           ))}

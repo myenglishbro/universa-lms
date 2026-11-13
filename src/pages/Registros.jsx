@@ -264,7 +264,7 @@ export default function Registros({ onCambio, servicio = servicioReal, puedeEdit
                   </Button>
                   {puedeEditar && !r.docente_id && (
                     <Button className="px-4 py-1.5" disabled={activando === r.user_id} onClick={() => activar(r)}>
-                      {activando === r.user_id ? 'Activando…' : 'Activar'}
+                      {activando === r.user_id ? 'Activating…' : 'Activate'}
                     </Button>
                   )}
                 </div>

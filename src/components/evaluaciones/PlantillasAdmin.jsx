@@ -104,7 +104,7 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
                 ))}
               </select>
               <Button type="button" variant="ghost" className="px-2 py-1 text-xs sm:order-7" onClick={() => setComps((l) => l.filter((_, j) => j !== i))}>
-                Quitar
+                Remove
               </Button>
               {c.tipo === 'formative' && (
                 <label className="col-span-full flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-900 sm:order-8">
@@ -276,7 +276,7 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
                         Edit
                       </Button>
                       <Button className="px-3 py-1" onClick={() => ejecutar(() => servicio.activarVersion(v.id), 'Version activated: it can now be assigned to modules.')}>
-                        Activar
+                        Activate
                       </Button>
                     </span>
                   )}

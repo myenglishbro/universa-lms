@@ -162,7 +162,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
         <div className="py-10 text-center text-sm">
           <p className="text-red-600">Could not load the bank: {error}</p>
           <Button variant="secondary" className="mt-3" onClick={recargar}>
-            Reintentar
+            Retry
           </Button>
         </div>
       ) : lista.length === 0 ? (
