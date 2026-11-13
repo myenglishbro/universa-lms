@@ -63,7 +63,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
     if (criterios.length) {
       const algun = criterios.some((c) => x.valores[c.id] !== '' && x.valores[c.id] != null)
       if (!algun) return { alumnoId, unidad: u, puntaje: '', comentario: x.comentario }
-      if (notaRubrica(criterios, x.valores) == null) throw new Error('Completa todos los criterios de la rúbrica')
+      if (notaRubrica(criterios, x.valores) == null) throw new Error('Complete all rubric criteria')
       return { alumnoId, unidad: u, comentario: x.comentario, detalle: criterios.map((c) => ({ criterio_id: c.id, puntaje: Number(x.valores[c.id]) })) }
     }
     return { alumnoId, unidad: u, puntaje: x.puntaje, comentario: x.comentario }
@@ -103,10 +103,10 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   }
   const corregir = () =>
     ejecutar(async () => {
-      if (ed.motivo.trim().length < 3) throw new Error('Indica el motivo de la corrección')
+      if (ed.motivo.trim().length < 3) throw new Error('Enter the reason for the correction')
       const p = payload(unidad)
       await servicio.corregirCalificacion(evaluacion.id, { alumnoId, unidad, puntaje: p.puntaje, comentario: p.comentario, detalle: p.detalle, motivo: ed.motivo })
-    }, 'Corrección guardada. Queda en el historial.')
+    }, 'Correction saved. It is kept in the history.')
   const verHistorial = async () => {
     try {
       const h = await servicio.historialEvaluacion(evaluacion.id)
@@ -119,11 +119,11 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {evaluacion.modulo} · {evaluacion.componente} · peso {fmtNota(evaluacion.peso)} puntos. El estudiante solo ve lo publicado.
+        {evaluacion.modulo} · {evaluacion.componente} · weight {fmtNota(evaluacion.peso)} points. The student only sees what is published.
       </p>
 
       {unidades.length > 0 && (
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Unidades">
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Units">
           {unidades.map((u) => (
             <button
               key={u}
@@ -175,7 +175,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
             max={100}
             step="0.01"
             disabled={!editable}
-            aria-label="Nota obtenida"
+            aria-label="Grade obtained"
             value={ed.puntaje}
             onChange={(e) => cambiar(unidad, { puntaje: e.target.value })}
             className={`${inputClass} w-28 text-right`}
@@ -187,23 +187,23 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status">
         {criterios.length > 0 && (
           <p>
-            {esFormative ? `Total de ${unidad || 'la unidad'}` : 'Total de la rúbrica'}:{' '}
-            <strong>{notaActual == null ? `sin completar (${fmtNota(total.suma)} de ${fmtNota(total.max)} hasta ahora)` : `${fmtNota(total.suma)} de ${fmtNota(total.max)}${total.max === 100 ? '' : ` (${fmtNota(notaActual)}/100)`}`}</strong>
+            {esFormative ? `Total for ${unidad || 'the unit'}` : 'Rubric total'}:{' '}
+            <strong>{notaActual == null ? `incomplete (${fmtNota(total.suma)} of ${fmtNota(total.max)} so far)` : `${fmtNota(total.suma)} of ${fmtNota(total.max)}${total.max === 100 ? '' : ` (${fmtNota(notaActual)}/100)`}`}</strong>
           </p>
         )}
         {esFormative ? (
           <p>
-            Promedio de las unidades con nota: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} de {lista.length} unidades. La nota del Formative combina este promedio con la participación por clase.
+            Average of the graded units: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} of {lista.length} units. The Formative grade combines this average with class participation.
           </p>
         ) : (
           <p>
-            Aporte al módulo: <strong>{notaActual == null ? '—' : `${fmtNota(aporte(evaluacion.peso, notaActual))} de ${fmtNota(evaluacion.peso)} puntos`}</strong>
-            {unidades.length > 0 && <span className="text-xs"> (con esta unidad sola)</span>}
+            Contribution to the module: <strong>{notaActual == null ? '—' : `${fmtNota(aporte(evaluacion.peso, notaActual))} of ${fmtNota(evaluacion.peso)} points`}</strong>
+            {unidades.length > 0 && <span className="text-xs"> (with this unit alone)</span>}
           </p>
         )}
         {!esFormative && unidades.length > 1 && (
           <p>
-            Resultado acumulado del componente: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} de {lista.length} unidades con nota
+            Accumulated component result: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} of {lista.length} graded units
             {completa && promedio != null && <> · aporte {fmtNota(aporte(evaluacion.peso, promedio))} de {fmtNota(evaluacion.peso)}</>}
           </p>
         )}
@@ -212,29 +212,29 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       {editable ? (
         <input
           className={inputClass}
-          aria-label="Comentario para el estudiante"
-          placeholder="Comentario para el estudiante (opcional)"
+          aria-label="Comment for the student"
+          placeholder="Comment for the student (optional)"
           maxLength={2000}
           value={ed.comentario}
           onChange={(e) => cambiar(unidad, { comentario: e.target.value })}
         />
       ) : (
-        fila?.comentario && <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">Comentario: {fila.comentario}</p>
+        fila?.comentario && <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">Comment: {fila.comentario}</p>
       )}
 
       {fila && (
         <p className="text-xs text-slate-500">
-          Estado: <Badge color={publicada ? 'brand' : 'peach'}>{publicada ? (fila.corregida ? 'Corregida' : 'Publicada') : 'Borrador'}</Badge>
+          Status: <Badge color={publicada ? 'brand' : 'peach'}>{publicada ? (fila.corregida ? 'Corrected' : 'Published') : 'Draft'}</Badge>
           {fila.corregida && (
             <button type="button" className="ml-2 underline" onClick={verHistorial}>
-              Ver historial de correcciones
+              View correction history
             </button>
           )}
         </p>
       )}
       {historial && (
         <ul className="rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
-          {historial.length === 0 && <li>Sin correcciones.</li>}
+          {historial.length === 0 && <li>No corrections.</li>}
           {historial.map((h, i) => (
             <li key={i}>
               {h.unidad ? `${h.unidad}: ` : ''}
@@ -246,13 +246,13 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
 
       {ed.corrigiendo && (
         <div className="space-y-2 rounded-lg bg-peach-50 p-3">
-          <input className={inputClass} aria-label="Motivo de la corrección" placeholder="Motivo de la corrección (obligatorio)" value={ed.motivo} onChange={(e) => cambiar(unidad, { motivo: e.target.value })} />
+          <input className={inputClass} aria-label="Reason for the correction" placeholder="Reason for the correction (required)" value={ed.motivo} onChange={(e) => cambiar(unidad, { motivo: e.target.value })} />
           <div className="flex gap-2">
             <Button type="button" disabled={ocupado} onClick={corregir}>
-              Guardar corrección
+              Save correction
             </Button>
             <Button type="button" variant="ghost" onClick={() => cambiar(unidad, { corrigiendo: false, motivo: '' })}>
-              Cancelar
+              Cancel
             </Button>
           </div>
         </div>
@@ -263,17 +263,17 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
 
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>
-          Cerrar
+          Close
         </Button>
         {publicada && !ed.corrigiendo ? (
           <Button variant="secondary" onClick={() => cambiar(unidad, { corrigiendo: true })}>
-            Corregir
+            Correct
           </Button>
         ) : (
           !publicada && (
             <>
-              <Button variant="secondary" disabled={ocupado} onClick={() => ejecutar(async () => { await guardar() }, 'Borrador guardado. El estudiante aún no lo ve.')}>
-                Guardar borrador
+              <Button variant="secondary" disabled={ocupado} onClick={() => ejecutar(async () => { await guardar() }, 'Draft saved. The student cannot see it yet.')}>
+                Save draft
               </Button>
               <Button
                 disabled={ocupado}
@@ -281,11 +281,11 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
                   ejecutar(async () => {
                     await guardar()
                     await servicio.publicarEvaluacion(evaluacion.id, [alumnoId])
-                    return 'Nota publicada: ya la ve el estudiante.'
+                    return 'Grade published: the student can now see it.'
                   }, '')
                 }
               >
-                Publicar
+                Publish
               </Button>
             </>
           )
@@ -306,9 +306,9 @@ export function ContenidoCelda({ evaluacionId, alumnoId, servicio = servicioReal
     setVersion((v) => v + 1)
     await onCambio?.()
   }
-  if (detalle.error) return <p className="text-sm text-red-600">No se pudo abrir la evaluación: {detalle.error}</p>
-  if (detalle.cargando || !detalle.datos) return <p className="py-4 text-sm text-slate-400">Cargando…</p>
-  if (!detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId)) return <p className="text-sm text-slate-500">Este estudiante ya no figura en el salón.</p>
+  if (detalle.error) return <p className="text-sm text-red-600">Could not open the assessment: {detalle.error}</p>
+  if (detalle.cargando || !detalle.datos) return <p className="py-4 text-sm text-slate-400">Loading…</p>
+  if (!detalle.datos.alumnos.some((a) => a.alumno_id === alumnoId)) return <p className="text-sm text-slate-500">This student is no longer in the classroom.</p>
   return <Formulario key={version} detalle={detalle.datos} alumnoId={alumnoId} servicio={servicio} onCambio={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
 }
 

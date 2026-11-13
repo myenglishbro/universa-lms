@@ -9,9 +9,9 @@ export default function Evaluaciones({ niveles = [], onVerSalon }) {
   const [pestana, setPestana] = useState('plantillas')
   return (
     <>
-      <PageHeader title="Evaluaciones" description="Grade Chart con sus ponderaciones y rúbricas. Cada grupo lo recibe solo al crearse." />
+      <PageHeader title="Assessments" description="Grade Chart with its weightings and rubrics. Each group receives it automatically when created." />
       <div className="mb-4 flex gap-1 border-b border-slate-200" role="tablist">
-        {[['plantillas', 'Plantillas'], ['rubricas', 'Rúbricas'], ['pendientes', 'Pendientes de docentes']].map(([id, texto]) => (
+        {[['plantillas', 'Templates'], ['rubricas', 'Rubrics'], ['pendientes', 'Teacher pending items']].map(([id, texto]) => (
           <button key={id} role="tab" aria-selected={pestana === id} onClick={() => setPestana(id)} className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${pestana === id ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             {texto}
           </button>

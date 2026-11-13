@@ -2,23 +2,23 @@ export const TIPOS_COMPONENTE = [
   { value: 'test', label: 'Test' },
   { value: 'writing', label: 'Writing' },
   { value: 'project', label: 'Project' },
-  { value: 'formative', label: 'Formative (3 unidades × 5 criterios + participación)' },
-  { value: 'participacion', label: 'Participación por clase (solo, anterior)' },
+  { value: 'formative', label: 'Formative (3 units × 5 criteria + participation)' },
+  { value: 'participacion', label: 'Participation per class (standalone, legacy)' },
   { value: 'spark', label: 'SPARK' },
   { value: 'speaking', label: 'Speaking' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'otro', label: 'Other' },
 ]
 export const TIPOS_RUBRICA = [
   { value: 'speaking', label: 'Speaking' },
   { value: 'writing', label: 'Writing' },
   { value: 'project', label: 'Project' },
   { value: 'formative', label: 'Formative' },
-  { value: 'otra', label: 'Otra' },
+  { value: 'otra', label: 'Other' },
 ]
 export const METODOS_CONSOLIDACION = [
-  { value: 'sin_definir', label: 'Sin definir (pendiente de Coordinación)' },
-  { value: 'suma_puntos', label: 'Suma de puntos de los módulos' },
-  { value: 'promedio_modulos', label: 'Promedio ponderado de las notas de módulo' },
+  { value: 'sin_definir', label: 'Not defined (pending Coordination)' },
+  { value: 'suma_puntos', label: 'Sum of module points' },
+  { value: 'promedio_modulos', label: 'Weighted average of module grades' },
 ]
 export const metodoLabel = (v) => METODOS_CONSOLIDACION.find((m) => m.value === v)?.label ?? v
 
@@ -31,7 +31,7 @@ export const sumaPesos = (componentes) => Math.round(componentes.reduce((s, c) =
 // Texto de lo que falta en un resultado parcial: «Writing, Formative Assessment (2 de 4 partes)».
 export function textoFaltan(faltan = []) {
   return faltan
-    .map((f) => (f.estado === 'incompleto' ? `${f.nombre} (${f.unidades_publicadas} de ${f.unidades_total} partes)` : f.nombre))
+    .map((f) => (f.estado === 'incompleto' ? `${f.nombre} (${f.unidades_publicadas} of ${f.unidades_total} parts)` : f.nombre))
     .join(', ')
 }
 
@@ -71,13 +71,13 @@ export const notaSobreEvaluado = (r) => (r && Number(r.escala_evaluada) > 0 ? Ma
 
 // Qué mostrar en una celda de la matriz según su estado.
 export const ESTADOS_CELDA = {
-  publicada: { texto: 'Publicada', clase: 'bg-brand-100 text-brand-800' },
-  borrador: { texto: 'Borrador', clase: 'bg-peach-50 text-peach-700' },
-  listo: { texto: 'Lista para publicar', clase: 'bg-peach-50 text-peach-700' },
-  parcial: { texto: 'Unidades incompletas', clase: 'bg-amber-50 text-amber-700' },
-  en_curso: { texto: 'En curso', clase: 'bg-amber-50 text-amber-700' },
-  sin_nota: { texto: 'Sin registrar', clase: 'bg-white text-slate-400' },
-  sin_clases: { texto: 'Sin clases asignadas', clase: 'bg-slate-50 text-slate-400' },
+  publicada: { texto: 'Published', clase: 'bg-brand-100 text-brand-800' },
+  borrador: { texto: 'Draft', clase: 'bg-peach-50 text-peach-700' },
+  listo: { texto: 'Ready to publish', clase: 'bg-peach-50 text-peach-700' },
+  parcial: { texto: 'Incomplete units', clase: 'bg-amber-50 text-amber-700' },
+  en_curso: { texto: 'In progress', clase: 'bg-amber-50 text-amber-700' },
+  sin_nota: { texto: 'Not recorded', clase: 'bg-white text-slate-400' },
+  sin_clases: { texto: 'No classes assigned', clase: 'bg-slate-50 text-slate-400' },
 }
 
 // Nota de una unidad del Formative a partir de sus criterios: suma de los 5 criterios y su máximo (p. ej. 85 de 100).
@@ -95,7 +95,7 @@ export function totalCriterios(criterios, valores) {
 }
 
 // Etiqueta de la fila de unidad vacía: en el Formative es la participación por clase.
-export const etiquetaUnidad = (unidad, tipo) => unidad || (tipo === 'formative' ? 'Participación' : '')
+export const etiquetaUnidad = (unidad, tipo) => unidad || (tipo === 'formative' ? 'Participation' : '')
 
 // Texto corto de lo que contiene una celda: «80», «5/10 clases», «—».
 export function textoCelda(c) {

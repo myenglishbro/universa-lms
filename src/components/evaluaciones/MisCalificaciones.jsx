@@ -16,13 +16,13 @@ function Nota({ n, tipo }) {
     <div className="mt-0.5 text-xs text-slate-600">
       {unidad ? `${unidad}: ` : ''}
       <strong className="text-slate-900">{fmtNota(n.puntaje)}</strong>
-      {n.participacion && <span className="ml-1">({n.participacion.cumplidas} de {n.participacion.total} clases con participación)</span>}
+      {n.participacion && <span className="ml-1">({n.participacion.cumplidas} of {n.participacion.total} classes with participation)</span>}
       {Array.isArray(n.criterios) && n.criterios.length > 0 && (
         <span className="ml-1 text-slate-500">
           ({n.criterios.map((c) => `${c.criterio} ${fmtNota(c.puntaje)}/${fmtNota(c.max)}`).join(' · ')})
         </span>
       )}
-      {n.corregida && <span className="ml-1 text-slate-400">(corregida)</span>}
+      {n.corregida && <span className="ml-1 text-slate-400">(corrected)</span>}
       {n.fecha && <span className="ml-1 text-slate-400">· {formatFecha(String(n.fecha).slice(0, 10))}</span>}
       {n.comentario && <p className="mt-0.5 rounded bg-slate-50 px-2 py-1 text-slate-700">{n.comentario}</p>}
     </div>
@@ -35,20 +35,20 @@ function ResultadoCiclo({ c }) {
   return (
     <li className="px-3 py-2.5 text-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="font-medium text-slate-800">{c.ciclo != null ? `Ciclo ${c.ciclo}` : 'Módulos sin ciclo'}</span>
+        <span className="font-medium text-slate-800">{c.ciclo != null ? `Cycle ${c.ciclo}` : 'Modules without a cycle'}</span>
         {evaluado ? (
           <span className="text-slate-600">
-            Nota del ciclo: <strong className="text-slate-900">{fmtNota(c.puntos)}</strong> / 100 {c.parcial && <Badge color="peach">Parcial</Badge>}{' '}
-            {c.remedial && <Badge color="rose">Incluye remedial</Badge>}
+            Cycle grade: <strong className="text-slate-900">{fmtNota(c.puntos)}</strong> / 100 {c.parcial && <Badge color="peach">Partial</Badge>}{' '}
+            {c.remedial && <Badge color="rose">Includes remedial</Badge>}
           </span>
         ) : (
-          <span className="text-slate-400">Aún sin notas publicadas</span>
+          <span className="text-slate-400">No published grades yet</span>
         )}
       </div>
       {evaluado && (
         <div
           role="progressbar"
-          aria-label={`Nota del ciclo ${c.ciclo ?? ''}`}
+          aria-label={`Cycle grade ${c.ciclo ?? ''}`}
           aria-valuenow={Math.round(Number(c.puntos))}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -70,7 +70,7 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
   return (
     <Card className="p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-slate-900">Mis calificaciones</h2>
+        <h2 className="text-base font-semibold text-slate-900">My grades</h2>
         {datos && datos.modulos.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <ComoMeEvaluan modulos={datos.modulos} />
@@ -81,24 +81,24 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
         )}
       </div>
       {error ? (
-        <p className="text-sm text-red-600">No se pudieron cargar tus calificaciones: {error}</p>
+        <p className="text-sm text-red-600">Could not load your grades: {error}</p>
       ) : cargando || !datos ? (
-        <p className="text-sm text-slate-400">Cargando…</p>
+        <p className="text-sm text-slate-400">Loading…</p>
       ) : datos.modulos.length === 0 ? (
-        <p className="text-sm text-slate-400">Aún no hay evaluaciones configuradas para este curso.</p>
+        <p className="text-sm text-slate-400">There are no assessments configured for this course yet.</p>
       ) : (
         <div className="space-y-5">
           {datos.nivel?.definido && datos.nivel.confirmada && (
             <div className="rounded-xl bg-brand-50 px-4 py-3">
-              <p className="text-xs uppercase text-brand-700">Nota final del nivel</p>
+              <p className="text-xs uppercase text-brand-700">Final level grade</p>
               <p className="text-2xl font-semibold text-brand-800">
-                {fmtNota(datos.nivel.nota)} {datos.nivel.parcial && <Badge color="peach">Parcial</Badge>}
+                {fmtNota(datos.nivel.nota)} {datos.nivel.parcial && <Badge color="peach">Partial</Badge>}
               </p>
             </div>
           )}
           {ciclos.length > 0 && (
             <section>
-              <h3 className="text-sm font-semibold text-slate-900">Resultado por ciclo</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Result per cycle</h3>
               <ul className="mt-1 divide-y divide-slate-100 rounded-lg border border-slate-200">
                 {ciclos.map((c) => (
                   <ResultadoCiclo key={c.ciclo ?? 'sin'} c={c} />
@@ -106,7 +106,7 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
               </ul>
               {acumulado && Number(acumulado.escala_evaluada) > 0 && (
                 <p className="mt-1 text-xs text-slate-500">
-                  Promedio publicado hasta ahora: {fmtNota(acumulado.puntos)} / 100. No es todavía la nota final del nivel.
+                  Average published so far: {fmtNota(acumulado.puntos)} / 100. This is not yet the final level grade.
                 </p>
               )}
             </section>
@@ -117,36 +117,36 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
                 <h3 className="text-sm font-semibold text-slate-900">{m.nombre}</h3>
                 {!m.sin_plantilla && (
                   <p className="text-sm text-slate-600">
-                    Nota del módulo: <strong className="text-slate-900">{fmtNota(m.nota)}</strong> {m.parcial && <Badge color="peach">Parcial</Badge>}{' '}
+                    Module grade: <strong className="text-slate-900">{fmtNota(m.nota)}</strong> {m.parcial && <Badge color="peach">Partial</Badge>}{' '}
                     {m.remedial && <Badge color="rose">Remedial</Badge>}
                   </p>
                 )}
               </div>
               {m.remedial && (
                 <p className="mt-1 rounded bg-rose-50 px-2 py-1 text-xs text-rose-700">
-                  Este resultado se obtuvo mediante examen remedial{m.remedial_ambito === 'ciclo' ? ' (aplicado al ciclo)' : ''}: nota {fmtNota(m.remedial_nota)}. Tu resultado anterior era {m.nota_original == null ? 'sin nota' : fmtNota(m.nota_original)}.
+                  This result was obtained through a remedial exam{m.remedial_ambito === 'ciclo' ? ' (applied to the cycle)' : ''}: grade {fmtNota(m.remedial_nota)}. Your previous result was {m.nota_original == null ? 'no grade' : fmtNota(m.nota_original)}.
                 </p>
               )}
               {m.sin_plantilla ? (
-                <p className="mt-1 text-xs text-slate-400">Este módulo aún no tiene evaluaciones.</p>
+                <p className="mt-1 text-xs text-slate-400">This module has no assessments yet.</p>
               ) : (
                 <>
                   {m.parcial && (
                     <p className="mt-1 text-xs text-slate-500">
-                      {m.peso_evaluado > 0 ? 'Resultado parcial: ' : 'Sin notas publicadas todavía. '}
-                      {m.faltan.length > 0 && `aún falta ${textoFaltan(m.faltan)}.`}
+                      {m.peso_evaluado > 0 ? 'Partial result: ' : 'No published grades yet. '}
+                      {m.faltan.length > 0 && `still missing ${textoFaltan(m.faltan)}.`}
                     </p>
                   )}
                   <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
                     {m.evaluaciones.map((e) => (
                       <li key={e.nombre} className="px-3 py-2">
                         <p className="text-sm font-medium text-slate-900">
-                          {e.nombre} <span className="text-xs font-normal text-slate-500">peso {fmtNota(e.peso)}</span>
+                          {e.nombre} <span className="text-xs font-normal text-slate-500">weight {fmtNota(e.peso)}</span>
                         </p>
                         {e.tipo === 'formative' && Number(e.peso_participacion) > 0 && (
-                          <p className="text-[11px] text-slate-400">Promedio de 3 unidades + {fmtNota(e.peso_participacion)} % de participación por clase.</p>
+                          <p className="text-[11px] text-slate-400">Average of 3 units + {fmtNota(e.peso_participacion)} % class participation.</p>
                         )}
-                        {e.notas.length === 0 ? <p className="text-xs text-slate-400">Sin nota publicada.</p> : e.notas.map((n) => <Nota key={n.unidad} n={n} tipo={e.tipo} />)}
+                        {e.notas.length === 0 ? <p className="text-xs text-slate-400">No published grade.</p> : e.notas.map((n) => <Nota key={n.unidad} n={n} tipo={e.tipo} />)}
                       </li>
                     ))}
                   </ul>

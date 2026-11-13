@@ -11,7 +11,7 @@ export default function PendientesAdmin({ servicio = servicioReal, onVerSalon })
   const cargar = useCallback(() => servicio.pendientes(), [servicio])
   const { datos, cargando, error, recargar } = useCarga(cargar, null)
   if (error) return <p className="text-sm text-red-600">No se pudieron cargar los pendientes: {error}</p>
-  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
 
   const porDocente = new Map()
   for (const p of datos) {
@@ -24,14 +24,14 @@ export default function PendientesAdmin({ servicio = servicioReal, onVerSalon })
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="max-w-2xl text-sm text-slate-500">Evaluaciones con notas por registrar o por publicar en salones en curso. «Por publicar» son borradores (o participaciones completas) que el estudiante aún no ve.</p>
+        <p className="max-w-2xl text-sm text-slate-500">Assessments with grades to enter or publish in classrooms in progress. “To publish” items are drafts (or completed participations) that the student cannot see yet.</p>
         <Button variant="secondary" onClick={recargar}>
-          Actualizar
+          Refresh
         </Button>
       </div>
       {datos.length === 0 ? (
         <Card className="p-6 text-center">
-          <p className="text-sm text-slate-500">No hay evaluaciones pendientes en módulos en marcha.</p>
+          <p className="text-sm text-slate-500">There are no pending assessments in modules in progress.</p>
         </Card>
       ) : (
         [...porDocente.entries()].map(([docente, salones]) => (
@@ -43,7 +43,7 @@ export default function PendientesAdmin({ servicio = servicioReal, onVerSalon })
                   {s.nombre}{' '}
                   {onVerSalon && (
                     <button type="button" className="text-xs text-brand-700 underline" onClick={() => onVerSalon(id)}>
-                      Abrir salón
+                      Open classroom
                     </button>
                   )}
                 </p>

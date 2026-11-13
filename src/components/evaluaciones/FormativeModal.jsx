@@ -14,35 +14,35 @@ export function ResumenFormative({ celda }) {
   const part = celda.participacion
   const pp = Number(celda.peso_participacion) || 0
   return (
-    <div className="space-y-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status" aria-label="Resumen del Formative">
+    <div className="space-y-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status" aria-label="Formative summary">
       <ul className="grid gap-2 sm:grid-cols-3">
         {celda.unidades.map((u) => (
           <li key={u.unidad} className="rounded-lg bg-white/70 px-3 py-2">
             <p className="text-xs text-brand-700">{u.unidad}</p>
             <p className="font-semibold">
-              {u.puntaje == null ? '—' : fmtNota(u.puntaje)} <span className="text-[10px] font-normal text-slate-500">{u.estado === 'publicada' ? 'publicada' : u.estado === 'borrador' ? 'borrador' : 'sin nota'}</span>
+              {u.puntaje == null ? '—' : fmtNota(u.puntaje)} <span className="text-[10px] font-normal text-slate-500">{u.estado === 'publicada' ? 'published' : u.estado === 'borrador' ? 'draft' : 'no grade'}</span>
             </p>
           </li>
         ))}
       </ul>
       <p>
-        Promedio de unidades: <strong>{celda.promedio_unidades == null ? '—' : fmtNota(celda.promedio_unidades)}</strong>
+        Unit average: <strong>{celda.promedio_unidades == null ? '—' : fmtNota(celda.promedio_unidades)}</strong>
         {part?.aplica && (
           <>
             {' '}
-            · Participación ({fmtNota(pp)} %): <strong>{part.puntaje == null ? '—' : fmtNota(part.puntaje)}</strong>{' '}
+            · Participation ({fmtNota(pp)} %): <strong>{part.puntaje == null ? '—' : fmtNota(part.puntaje)}</strong>{' '}
             <span className="text-xs">
-              ({part.cumplidas} cumplidas de {part.registradas} registradas · {part.total} clases en el módulo{part.publicada ? ' · publicada' : ''})
+              ({part.cumplidas} met of {part.registradas} recorded · {part.total} classes in the module{part.publicada ? ' · published' : ''})
             </span>
           </>
         )}
       </p>
       <p>
-        {celda.provisional ? 'Avance provisional del Formative' : 'Nota del Formative'}: <strong>{celda.puntaje == null ? '—' : `${fmtNota(celda.puntaje)}/100`}</strong>
-        {celda.aporte != null && <> · aporta {fmtNota(celda.aporte)} puntos al módulo</>}
-        {celda.provisional && <Badge color="peach">Aún no suma al módulo</Badge>}
+        {celda.provisional ? 'Provisional Formative progress' : 'Formative grade'}: <strong>{celda.puntaje == null ? '—' : `${fmtNota(celda.puntaje)}/100`}</strong>
+        {celda.aporte != null && <> · contributes {fmtNota(celda.aporte)} points to the module</>}
+        {celda.provisional && <Badge color="peach">Does not count toward the module yet</Badge>}
       </p>
-      {celda.provisional && <p className="text-xs text-brand-800">Cuenta para el módulo cuando estén publicadas las 3 unidades{part?.aplica ? ' y la participación' : ''}. Lo que falta no se cuenta como cero.</p>}
+      {celda.provisional && <p className="text-xs text-brand-800">Counts toward the module once the 3 units are published{part?.aplica ? ' and the participation' : ''}. What is missing is not counted as zero.</p>}
     </div>
   )
 }
@@ -57,9 +57,9 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
   const [ocupado, setOcupado] = useState(false)
   const [falla, setFalla] = useState('')
   const [aviso, setAviso] = useState('')
-  if (error) return <p className="text-sm text-red-600">No se pudo cargar el Formative: {error}</p>
-  if (cargando && !datos) return <p className="text-sm text-slate-500">Cargando…</p>
-  if (!datos || datos.length === 0) return <p className="text-sm text-slate-500">Este módulo no tiene unidades de Formative para este estudiante.</p>
+  if (error) return <p className="text-sm text-red-600">Could not load the Formative: {error}</p>
+  if (cargando && !datos) return <p className="text-sm text-slate-500">Loading…</p>
+  if (!datos || datos.length === 0) return <p className="text-sm text-slate-500">This module has no Formative units for this student.</p>
   const actual = datos.find((u) => u.unidad === unidad) ?? datos[0]
   const claves = Object.keys(editado)
 
@@ -70,14 +70,14 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
     for (const k of claves) {
       const [u, elemento] = k.split('|')
       const v = leerSpark(editado[k], 5)
-      if (v === undefined) return setFalla('Las notas deben estar entre 0 y 5')
+      if (v === undefined) return setFalla('Grades must be between 0 and 5')
       filas.push({ alumno_id: alumnoId, unidad: u, elemento, puntaje: v })
     }
     setOcupado(true)
     try {
       await guardarFormativeManual(evaluacionId, filas)
       setEditado({})
-      setAviso('Guardado. Si la unidad tiene los 5 elementos, ya se publicó sola.')
+      setAviso('Saved. If the unit has all 5 elements, it was published automatically.')
       await recargar()
       onCambio?.()
     } catch (e) {
@@ -89,7 +89,7 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Unidades">
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Units">
         {datos.map((u) => (
           <button
             key={u.unidad}
@@ -106,7 +106,7 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
         const el = actual.elementos?.[h.id]
         const k = `${actual.unidad}|${h.id}`
         const valor = k in editado ? editado[k] : el?.valor == null ? '' : String(Number(Number(el.valor).toFixed(2)))
-        const origen = k in editado ? 'sin guardar' : el?.valor == null ? 'pendiente' : el.es_manual ? 'manual' : 'automático'
+        const origen = k in editado ? 'unsaved' : el?.valor == null ? 'pending' : el.es_manual ? 'manual' : 'automatic'
         return (
           <label key={h.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
             <span className="font-medium text-slate-800">
@@ -118,7 +118,7 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
                 min="0"
                 max="5"
                 step="any"
-                aria-label={`${h.label} de ${actual.unidad}`}
+                aria-label={`${h.label} for ${actual.unidad}`}
                 className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm"
                 value={valor}
                 onChange={(ev) => setEditado((e) => ({ ...e, [k]: ev.target.value }))}
@@ -130,11 +130,11 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
       })}
       <p className="text-sm text-slate-700">
         {actual.valor != null ? (
-          <>Nota de {actual.unidad}: <strong>{nota2(actual.valor)}</strong> / 100</>
+          <>Grade for {actual.unidad}: <strong>{nota2(actual.valor)}</strong> / 100</>
         ) : actual.provisional != null ? (
-          <>Avance de {actual.unidad}: <strong>{nota2(actual.provisional)}</strong> / 100 · {actual.completos} de 5 elementos. Aún no se publica; lo que falta no cuenta como cero.</>
+          <>Progress for {actual.unidad}: <strong>{nota2(actual.provisional)}</strong> / 100 · {actual.completos} of 5 elements. Not published yet; what is missing does not count as zero.</>
         ) : (
-          'Sin notas todavía en esta unidad.'
+          'No grades yet in this unit.'
         )}
       </p>
       {falla && <p role="alert" className="text-sm text-rose-700">{falla}</p>}
@@ -146,7 +146,7 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
           disabled={ocupado || claves.length === 0}
           className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {ocupado ? 'Guardando…' : `Guardar (${claves.length})`}
+          {ocupado ? 'Saving…' : `Save (${claves.length})`}
         </button>
       </div>
     </div>
@@ -162,8 +162,8 @@ export default function FormativeModal({ evaluacionId, alumnoId, titulo, celda, 
       <div className="space-y-4">
         <ResumenFormative celda={celda} />
         {conParticipacion && (
-          <div className="flex gap-1" role="tablist" aria-label="Partes del Formative">
-            {[['unidades', 'Unidades (5 elementos)'], ['participacion', 'Participación por clase']].map(([id, t]) => (
+          <div className="flex gap-1" role="tablist" aria-label="Formative parts">
+            {[['unidades', 'Units (5 elements)'], ['participacion', 'Participation per class']].map(([id, t]) => (
               <button
                 key={id}
                 role="tab"

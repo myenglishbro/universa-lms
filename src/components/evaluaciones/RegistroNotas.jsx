@@ -21,7 +21,7 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
   const corrigiendo = edicion.corrigiendo
   const editable = !publicada || corrigiendo
   const total = criterios.length ? notaRubrica(criterios, edicion.valores) : null
-  const estado = !fila ? null : publicada ? (fila.corregida ? 'Corregida' : 'Publicada') : 'Borrador'
+  const estado = !fila ? null : publicada ? (fila.corregida ? 'Corrected' : 'Published') : 'Draft'
 
   return (
     <li className="px-3 py-3">
@@ -32,7 +32,7 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
         <div className="flex items-center gap-2">
           {criterios.length > 0 ? (
             <button type="button" aria-expanded={abierta} onClick={() => setAbierta((a) => !a)} className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50">
-              Rúbrica · {total == null ? 'sin completar' : `${fmtNota(total)}/100`}
+              Rubric · {total == null ? 'incomplete' : `${fmtNota(total)}/100`}
             </button>
           ) : editable ? (
             <input
@@ -41,7 +41,7 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
               min={0}
               max={100}
               step="0.01"
-              aria-label={`Nota de ${alumno.nombre}`}
+              aria-label={`Grade for ${alumno.nombre}`}
               value={edicion.puntaje}
               onChange={(e) => onCambiar({ puntaje: e.target.value })}
               className={`${inputClass} w-24 text-right`}
@@ -52,7 +52,7 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
           )}
           {publicada && !corrigiendo && (
             <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onCambiar({ corrigiendo: true })}>
-              Corregir
+              Correct
             </Button>
           )}
         </div>
@@ -69,7 +69,7 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
                 max={c.max_puntaje}
                 step="0.5"
                 disabled={!editable}
-                aria-label={`${c.nombre} de ${alumno.nombre}`}
+                aria-label={`${c.nombre} for ${alumno.nombre}`}
                 value={edicion.valores[c.id] ?? ''}
                 onChange={(e) => onCambiar({ valores: { ...edicion.valores, [c.id]: e.target.value } })}
                 className={`${inputClass} w-20 text-right`}
@@ -83,30 +83,30 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
       {editable ? (
         <input
           className={`${inputClass} mt-2`}
-          aria-label={`Comentario para ${alumno.nombre}`}
-          placeholder="Comentario para el estudiante (opcional)"
+          aria-label={`Comment for ${alumno.nombre}`}
+          placeholder="Comment for the student (optional)"
           maxLength={2000}
           value={edicion.comentario}
           onChange={(e) => onCambiar({ comentario: e.target.value })}
         />
       ) : (
-        fila?.comentario && <p className="mt-1 text-xs text-slate-600">Comentario: {fila.comentario}</p>
+        fila?.comentario && <p className="mt-1 text-xs text-slate-600">Comment: {fila.comentario}</p>
       )}
 
       {corrigiendo && (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-peach-50 p-2">
           <input
             className={`${inputClass} min-w-48 flex-1`}
-            aria-label={`Motivo de la corrección de ${alumno.nombre}`}
-            placeholder="Motivo de la corrección (obligatorio)"
+            aria-label={`Reason for correcting ${alumno.nombre}'s grade`}
+            placeholder="Reason for the correction (required)"
             value={edicion.motivo}
             onChange={(e) => onCambiar({ motivo: e.target.value })}
           />
           <Button type="button" className="px-3 py-1.5" onClick={onCorregir}>
-            Guardar corrección
+            Save correction
           </Button>
           <Button type="button" variant="ghost" className="px-2 py-1" onClick={() => onCambiar({ corrigiendo: false, motivo: '' })}>
-            Cancelar
+            Cancel
           </Button>
         </div>
       )}
@@ -142,7 +142,7 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
     if (criterios.length) {
       const algun = criterios.some((c) => ed.valores[c.id] !== '' && ed.valores[c.id] != null)
       if (!algun) return { alumnoId: alumno.alumno_id, unidad: u, puntaje: '', comentario: ed.comentario }
-      if (notaRubrica(criterios, ed.valores) == null) throw new Error(`Completa todos los criterios de la rúbrica de ${alumno.nombre}`)
+      if (notaRubrica(criterios, ed.valores) == null) throw new Error(`Complete all rubric criteria for ${alumno.nombre}`)
       return { alumnoId: alumno.alumno_id, unidad: u, comentario: ed.comentario, detalle: criterios.map((c) => ({ criterio_id: c.id, puntaje: Number(ed.valores[c.id]) })) }
     }
     return { alumnoId: alumno.alumno_id, unidad: u, puntaje: ed.puntaje, comentario: ed.comentario }
@@ -190,27 +190,27 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
     return ejecutar(async () => {
       const p = payload(alumno, unidad)
       await servicio.corregirCalificacion(evaluacion.id, { alumnoId: alumno.alumno_id, unidad, puntaje: p.puntaje, comentario: p.comentario, detalle: p.detalle, motivo: ed.motivo })
-    }, 'Corrección guardada. Queda en el historial.')
+    }, 'Correction saved. It is kept in the history.')
   }
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        {evaluacion.modulo} · {evaluacion.componente} · peso {evaluacion.peso}. El estudiante solo ve las notas publicadas.
+        {evaluacion.modulo} · {evaluacion.componente} · weight {evaluacion.peso}. The student only sees published grades.
       </p>
 
       <details className="rounded-lg border border-slate-200 px-3 py-2">
-        <summary className="cursor-pointer text-sm font-medium text-slate-700">Unidades de esta evaluación ({unidades.length || 'una sola nota'})</summary>
+        <summary className="cursor-pointer text-sm font-medium text-slate-700">Units of this assessment ({unidades.length || 'a single grade'})</summary>
         <div className="mt-2 flex flex-wrap gap-2">
-          <input className={`${inputClass} min-w-48 flex-1`} aria-label="Unidades" value={textoUnidades} onChange={(e) => setTextoUnidades(e.target.value)} placeholder="Ej.: Unit 1, Unit 2, Unit 3 (vacío = una sola nota)" />
+          <input className={`${inputClass} min-w-48 flex-1`} aria-label="Units" value={textoUnidades} onChange={(e) => setTextoUnidades(e.target.value)} placeholder="E.g.: Unit 1, Unit 2, Unit 3 (empty = a single grade)" />
           <Button type="button" variant="secondary" disabled={ocupado} onClick={() => ejecutar(() => servicio.configurarUnidades(evaluacion.id, textoUnidades.split(',').map((x) => x.trim()).filter(Boolean)), 'Unidades guardadas.')}>
-            Guardar unidades
+            Save units
           </Button>
         </div>
       </details>
 
       {unidades.length > 0 && (
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Unidades">
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Units">
           {unidades.map((u) => (
             <button
               key={u}
@@ -229,7 +229,7 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
       )}
 
       {alumnos.length === 0 ? (
-        <p className="rounded-lg bg-slate-50 px-3 py-4 text-sm text-slate-500">Este salón no tiene estudiantes matriculados.</p>
+        <p className="rounded-lg bg-slate-50 px-3 py-4 text-sm text-slate-500">This classroom has no students enrolled.</p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
           {alumnos.map((a) => (
@@ -250,10 +250,10 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>
-          Cerrar
+          Close
         </Button>
-        <Button variant="secondary" disabled={ocupado || alumnos.length === 0} onClick={() => ejecutar(async () => { await guardar() }, 'Borrador guardado. Los estudiantes aún no lo ven.')}>
-          Guardar borrador
+        <Button variant="secondary" disabled={ocupado || alumnos.length === 0} onClick={() => ejecutar(async () => { await guardar() }, 'Draft saved. Students cannot see it yet.')}>
+          Save draft
         </Button>
         <Button
           disabled={ocupado || alumnos.length === 0}
@@ -261,11 +261,11 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
             ejecutar(async () => {
               await guardar()
               const n = await servicio.publicarEvaluacion(evaluacion.id)
-              return `${n} ${n === 1 ? 'nota publicada' : 'notas publicadas'}: ya las ven los estudiantes.`
+              return `${n} ${n === 1 ? 'grade published' : 'grades published'}: students can now see them.`
             }, '')
           }
         >
-          Publicar notas
+          Publish grades
         </Button>
       </div>
     </div>
@@ -287,9 +287,9 @@ export default function RegistroNotas({ evaluacionId, titulo, onClose, onCambio,
   return (
     <Modal title={titulo} onClose={onClose} wide>
       {detalle.error ? (
-        <p className="text-sm text-red-600">No se pudo abrir la evaluación: {detalle.error}</p>
+        <p className="text-sm text-red-600">Could not open the assessment: {detalle.error}</p>
       ) : !detalle.datos ? (
-        <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+        <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
       ) : (
         <Cuerpo key={version} detalle={detalle.datos} unidadInicial={unidad} onUnidad={setUnidad} servicio={servicio} onRefrescar={refrescar} onClose={onClose} mensaje={mensaje} setMensaje={setMensaje} />
       )}

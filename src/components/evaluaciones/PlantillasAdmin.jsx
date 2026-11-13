@@ -14,7 +14,7 @@ function PlantillaForm({ niveles, onClose, onSave }) {
   const [v, setV] = useState({ nombre: '', descripcion: '', nivelId: '' })
   const [error, setError] = useState('')
   return (
-    <Modal title="Nueva plantilla" onClose={onClose}>
+    <Modal title="New template" onClose={onClose}>
       <form
         className="space-y-3"
         onSubmit={async (e) => {
@@ -26,15 +26,15 @@ function PlantillaForm({ niveles, onClose, onSave }) {
           }
         }}
       >
-        <Field label="Nombre" value={v.nombre} onChange={(e) => setV({ ...v, nombre: e.target.value })} required />
-        <Field label="Descripción (opcional)" value={v.descripcion} onChange={(e) => setV({ ...v, descripcion: e.target.value })} />
-        <Field label="Nivel de referencia (opcional)" options={[{ value: '', label: 'Ninguno' }, ...niveles.map((n) => ({ value: n.id, label: n.nombre }))]} value={v.nivelId} onChange={(e) => setV({ ...v, nivelId: e.target.value })} hint="Solo identifica la plantilla; no se aplica sola a ningún salón." />
+        <Field label="Name" value={v.nombre} onChange={(e) => setV({ ...v, nombre: e.target.value })} required />
+        <Field label="Description (optional)" value={v.descripcion} onChange={(e) => setV({ ...v, descripcion: e.target.value })} />
+        <Field label="Reference level (optional)" options={[{ value: '', label: 'None' }, ...niveles.map((n) => ({ value: n.id, label: n.nombre }))]} value={v.nivelId} onChange={(e) => setV({ ...v, nivelId: e.target.value })} hint="Only identifies the template; it is not applied to any classroom automatically." />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
-          <Button type="submit">Crear</Button>
+          <Button type="submit">Create</Button>
         </div>
       </form>
     </Modal>
@@ -54,7 +54,7 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
   const okFinal = !conFinal || sumaFinal === Number(escala)
   const set = (i, parche) => setComps((l) => l.map((c, j) => (j === i ? { ...c, ...parche } : c)))
   return (
-    <Modal title={`${plantilla.nombre} · versión ${version.version}`} onClose={onClose} wide>
+    <Modal title={`${plantilla.nombre} · version ${version.version}`} onClose={onClose} wide>
       <form
         className="space-y-4"
         onSubmit={async (e) => {
@@ -74,15 +74,15 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
         }}
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Escala de puntos del módulo" type="number" min="1" step="0.01" value={escala} onChange={(e) => setEscala(e.target.value)} hint="Los pesos deben sumar esta cifra (p. ej. 100, o 25 si cada módulo aporta 25 puntos)." required />
-          <Field label="Notas (opcional)" value={notas} onChange={(e) => setNotas(e.target.value)} />
+          <Field label="Module point scale" type="number" min="1" step="0.01" value={escala} onChange={(e) => setEscala(e.target.value)} hint="Weights must add up to this figure (e.g. 100, or 25 if each module contributes 25 points)." required />
+          <Field label="Notes (optional)" value={notas} onChange={(e) => setNotas(e.target.value)} />
         </div>
         <ul className="space-y-2">
           {comps.map((c, i) => (
             <li key={i} className={`grid grid-cols-[1fr_6rem] gap-2 ${conFinal ? 'sm:grid-cols-[1fr_9rem_6rem_6rem_9rem_10rem_auto]' : 'sm:grid-cols-[1fr_9rem_6rem_10rem_auto]'}`}>
-              <input aria-label={`Nombre del componente ${i + 1}`} className={inputClass} placeholder="Componente" value={c.nombre} onChange={(e) => set(i, { nombre: e.target.value })} required />
-              <input aria-label={`Peso del componente ${i + 1}`} type="number" min="0" step="0.01" className={`${inputClass} text-right sm:order-3`} placeholder="Peso" value={c.peso} onChange={(e) => set(i, { peso: e.target.value })} required />
-              <select aria-label={`Tipo del componente ${i + 1}`} className={`${inputClass} sm:order-2`} value={c.tipo} onChange={(e) => set(i, { tipo: e.target.value })}>
+              <input aria-label={`Name of component ${i + 1}`} className={inputClass} placeholder="Component" value={c.nombre} onChange={(e) => set(i, { nombre: e.target.value })} required />
+              <input aria-label={`Weight of component ${i + 1}`} type="number" min="0" step="0.01" className={`${inputClass} text-right sm:order-3`} placeholder="Weight" value={c.peso} onChange={(e) => set(i, { peso: e.target.value })} required />
+              <select aria-label={`Type of component ${i + 1}`} className={`${inputClass} sm:order-2`} value={c.tipo} onChange={(e) => set(i, { tipo: e.target.value })}>
                 {TIPOS_COMPONENTE.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -91,12 +91,12 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
               </select>
               {conFinal && (
                 <>
-                  <input aria-label={`Peso en el módulo final del componente ${i + 1}`} type="number" min="0" step="0.01" className={`${inputClass} text-right sm:order-4`} placeholder="Peso final" value={c.peso_final} onChange={(e) => set(i, { peso_final: e.target.value })} />
-                  <input aria-label={`Nombre en el módulo final del componente ${i + 1}`} className={`${inputClass} sm:order-5`} placeholder={c.nombre || 'Nombre en el final'} value={c.nombre_final} onChange={(e) => set(i, { nombre_final: e.target.value })} />
+                  <input aria-label={`Weight in the final module of component ${i + 1}`} type="number" min="0" step="0.01" className={`${inputClass} text-right sm:order-4`} placeholder="Final weight" value={c.peso_final} onChange={(e) => set(i, { peso_final: e.target.value })} />
+                  <input aria-label={`Name in the final module of component ${i + 1}`} className={`${inputClass} sm:order-5`} placeholder={c.nombre || 'Name in the final'} value={c.nombre_final} onChange={(e) => set(i, { nombre_final: e.target.value })} />
                 </>
               )}
-              <select aria-label={`Rúbrica del componente ${i + 1}`} className={`${inputClass} sm:order-6`} value={c.rubrica_id} onChange={(e) => set(i, { rubrica_id: e.target.value })}>
-                <option value="">Sin rúbrica</option>
+              <select aria-label={`Rubric of component ${i + 1}`} className={`${inputClass} sm:order-6`} value={c.rubrica_id} onChange={(e) => set(i, { rubrica_id: e.target.value })}>
+                <option value="">No rubric</option>
                 {rubricas.filter((r) => r.activa).map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.nombre}
@@ -108,8 +108,8 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
               </Button>
               {c.tipo === 'formative' && (
                 <label className="col-span-full flex flex-wrap items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-900 sm:order-8">
-                  Participación por clase dentro del Formative:
-                  <input aria-label={`Porcentaje de participación del componente ${i + 1}`} type="number" min="0" max="100" step="1" className={`${inputClass} w-20 text-right`} value={c.peso_participacion} onChange={(e) => set(i, { peso_participacion: e.target.value })} />
+                  Participation per class within the Formative:
+                  <input aria-label={`Participation percentage of component ${i + 1}`} type="number" min="0" max="100" step="1" className={`${inputClass} w-20 text-right`} value={c.peso_participacion} onChange={(e) => set(i, { peso_participacion: e.target.value })} />
                   % · el {100 - (Number(c.peso_participacion) || 0)} % restante es el promedio de las 3 unidades (5 criterios cada una). Usa la rúbrica «Formative Assessment».
                 </label>
               )}
@@ -121,23 +121,23 @@ function VersionForm({ plantilla, version, rubricas, onClose, onSave }) {
           El módulo final (último módulo del nivel) usa pesos y nombres distintos
         </label>
         <Button type="button" variant="secondary" onClick={() => setComps((l) => [...l, { nombre: '', tipo: 'otro', peso: '', rubrica_id: '', peso_final: '', nombre_final: '', peso_participacion: '20' }])}>
-          Agregar componente
+          Add component
         </Button>
         <p className={`text-sm ${ok ? 'text-brand-700' : 'text-peach-700'}`} role="status">
-          Módulos 1 a 3: los pesos suman {fmtNota(suma)} de {fmtNota(escala)} {ok ? '· listo' : '· deben sumar la escala'}
+          Modules 1 to 3: weights add up to {fmtNota(suma)} of {fmtNota(escala)} {ok ? '· ready' : '· must add up to the scale'}
         </p>
         {conFinal && (
           <p className={`text-sm ${okFinal ? 'text-brand-700' : 'text-peach-700'}`} role="status">
-            Módulo final: los pesos suman {fmtNota(sumaFinal)} de {fmtNota(escala)} {okFinal ? '· listo' : '· deben sumar la escala'}
+            Final module: weights add up to {fmtNota(sumaFinal)} of {fmtNota(escala)} {okFinal ? '· ready' : '· must add up to the scale'}
           </p>
         )}
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            Guardar borrador
+            Save draft
           </Button>
         </div>
       </form>
@@ -150,20 +150,20 @@ function VersionVista({ plantilla, version, rubricas, onClose }) {
   const tipo = (v) => TIPOS_COMPONENTE.find((t) => t.value === v)?.label ?? v
   const rubrica = (id) => rubricas.find((x) => x.id === id)?.nombre ?? '—'
   return (
-    <Modal title={`${plantilla.nombre} · versión ${version.version}`} onClose={onClose} wide>
+    <Modal title={`${plantilla.nombre} · version ${version.version}`} onClose={onClose} wide>
       <div className="space-y-3">
         <p className="text-sm text-slate-600">
-          <Badge color={estadoColor[version.estado]}>{version.estado}</Badge> Escala {fmtNota(version.escala_puntos)} puntos por módulo. Solo lectura.
+          <Badge color={estadoColor[version.estado]}>{version.estado}</Badge> Scale {fmtNota(version.escala_puntos)} points per module. Read-only.
         </p>
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs text-slate-600">
               <tr>
                 <th className="px-3 py-2">Componente</th>
-                <th className="px-3 py-2">Tipo</th>
-                <th className="px-3 py-2 text-right">Módulos 1 a 3</th>
-                {conFinal && <th className="px-3 py-2 text-right">Módulo final</th>}
-                <th className="px-3 py-2">Rúbrica</th>
+                <th className="px-3 py-2">Type</th>
+                <th className="px-3 py-2 text-right">Modules 1 to 3</th>
+                {conFinal && <th className="px-3 py-2 text-right">Final module</th>}
+                <th className="px-3 py-2">Rubric</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -178,8 +178,8 @@ function VersionVista({ plantilla, version, rubricas, onClose }) {
                       {c.nombre_final && c.nombre_final !== c.nombre && <span className="ml-1 text-xs text-slate-400">({c.nombre_final})</span>}
                     </td>
                   )}
-                  <td className="px-3 py-2 text-slate-600">{c.rubrica_id ? rubrica(c.rubrica_id) : c.tipo === 'participacion' ? 'Participación por clase' : '—'}
-                    {c.tipo === 'formative' && <span className="block text-xs text-slate-400">3 unidades + {fmtNota(c.peso_participacion ?? 0)} % participación</span>}
+                  <td className="px-3 py-2 text-slate-600">{c.rubrica_id ? rubrica(c.rubrica_id) : c.tipo === 'participacion' ? 'Participation per class' : '—'}
+                    {c.tipo === 'formative' && <span className="block text-xs text-slate-400">3 units + {fmtNota(c.peso_participacion ?? 0)} % participation</span>}
                   </td>
                 </tr>
               ))}
@@ -197,7 +197,7 @@ function VersionVista({ plantilla, version, rubricas, onClose }) {
         {version.notas && <p className="text-xs text-slate-500">{version.notas}</p>}
         <div className="flex justify-end">
           <Button variant="secondary" onClick={onClose}>
-            Cerrar
+            Close
           </Button>
         </div>
       </div>
@@ -234,16 +234,16 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
     }
   }
 
-  if (error) return <p className="text-sm text-red-600">No se pudieron cargar las plantillas: {error}</p>
-  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+  if (error) return <p className="text-sm text-red-600">Could not load the templates: {error}</p>
+  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="max-w-2xl text-sm text-slate-500">
-          Una plantilla define los componentes de un módulo y su peso. El Grade Chart Universa se asigna solo al crear un grupo: el último módulo del último ciclo usa los pesos del módulo final y los demás los de los módulos 1 a 3. Para cambiar pesos, crea una versión nueva: los módulos que ya existen conservan la anterior.
+          A template defines a module's components and their weights. The Universa Grade Chart is assigned automatically when a group is created: the last module of the last cycle uses the final-module weights and the others use those of modules 1 to 3. To change weights, create a new version: modules that already exist keep the previous one.
         </p>
-        <Button onClick={() => setModal({ tipo: 'plantilla' })}>Nueva plantilla</Button>
+        <Button onClick={() => setModal({ tipo: 'plantilla' })}>New template</Button>
       </div>
       {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
       {fallo && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
@@ -255,8 +255,8 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
               {p.descripcion && <p className="text-xs text-slate-500">{p.descripcion}</p>}
             </div>
             {!p.versiones.some((v) => v.estado === 'borrador') && (
-              <Button variant="secondary" className="px-3 py-1.5" onClick={() => ejecutar(() => servicio.nuevaVersion(p.id), 'Versión nueva creada en borrador.')}>
-                Nueva versión
+              <Button variant="secondary" className="px-3 py-1.5" onClick={() => ejecutar(() => servicio.nuevaVersion(p.id), 'New version created as a draft.')}>
+                New version
               </Button>
             )}
           </div>
@@ -265,28 +265,28 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
               <li key={v.id} className="rounded-lg border border-slate-200 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-medium text-slate-900">
-                    Versión {v.version} <Badge color={estadoColor[v.estado]}>{{ vigente: 'vigente · la usan los grupos nuevos', borrador: 'nueva · en borrador', archivada: 'anterior' }[v.estado] ?? v.estado}</Badge> <span className="text-xs font-normal text-slate-500">escala {fmtNota(v.escala_puntos)}</span>
+                    Version {v.version} <Badge color={estadoColor[v.estado]}>{{ vigente: 'current · used by new groups', borrador: 'new · draft', archivada: 'previous' }[v.estado] ?? v.estado}</Badge> <span className="text-xs font-normal text-slate-500">scale {fmtNota(v.escala_puntos)}</span>
                   </p>
-                  <Button variant="ghost" className="px-3 py-1" aria-label={`Ver versión ${v.version} de ${p.nombre}`} onClick={() => setModal({ tipo: 'ver', plantilla: p, version: v })}>
-                    Ver
+                  <Button variant="ghost" className="px-3 py-1" aria-label={`View version ${v.version} of ${p.nombre}`} onClick={() => setModal({ tipo: 'ver', plantilla: p, version: v })}>
+                    View
                   </Button>
                   {v.estado === 'borrador' && (
                     <span className="flex gap-1">
                       <Button variant="secondary" className="px-3 py-1" onClick={() => setModal({ tipo: 'version', plantilla: p, version: v })}>
-                        Editar
+                        Edit
                       </Button>
-                      <Button className="px-3 py-1" onClick={() => ejecutar(() => servicio.activarVersion(v.id), 'Versión activada: ya se puede asignar a módulos.')}>
+                      <Button className="px-3 py-1" onClick={() => ejecutar(() => servicio.activarVersion(v.id), 'Version activated: it can now be assigned to modules.')}>
                         Activar
                       </Button>
                     </span>
                   )}
                 </div>
                 <p className="mt-1 text-xs text-slate-600">
-                  {v.componentes.length === 0 ? 'Sin componentes.' : v.componentes.map((c) => `${c.nombre} ${fmtNota(c.peso)}`).join(' · ')}
+                  {v.componentes.length === 0 ? 'No components.' : v.componentes.map((c) => `${c.nombre} ${fmtNota(c.peso)}`).join(' · ')}
                   {v.componentes.length > 0 && ` · suma ${fmtNota(sumaPesos(v.componentes))}`}
                 </p>
                 <p className="text-xs text-slate-600">
-                  {v.componentes.some((c) => c.peso_final != null) && `Módulo final: ${v.componentes.map((c) => `${c.nombre_final || c.nombre} ${fmtNota(c.peso_final)}`).join(' · ')} · suma ${fmtNota(v.componentes.reduce((s, c) => s + Number(c.peso_final || 0), 0))}`}
+                  {v.componentes.some((c) => c.peso_final != null) && `Final module: ${v.componentes.map((c) => `${c.nombre_final || c.nombre} ${fmtNota(c.peso_final)}`).join(' · ')} · total ${fmtNota(v.componentes.reduce((s, c) => s + Number(c.peso_final || 0), 0))}`}
                 </p>
                 {v.notas && <p className="mt-0.5 text-xs text-slate-400">{v.notas}</p>}
               </li>
@@ -294,7 +294,7 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
           </ul>
           {p.versiones.some((v) => v.estado === 'archivada') && (
             <button type="button" className="mt-2 text-xs text-brand-700 underline" aria-expanded={!!verAntiguas[p.id]} onClick={() => setVerAntiguas((x) => ({ ...x, [p.id]: !x[p.id] }))}>
-              {verAntiguas[p.id] ? 'Ocultar versiones anteriores' : `Ver versiones anteriores (${p.versiones.filter((v) => v.estado === 'archivada').length})`}
+              {verAntiguas[p.id] ? 'Hide previous versions' : `View previous versions (${p.versiones.filter((v) => v.estado === 'archivada').length})`}
             </button>
           )}
         </Card>
@@ -321,7 +321,7 @@ export default function PlantillasAdmin({ niveles = [], servicio = servicioReal 
           onSave={async (v) => {
             await servicio.guardarVersion(modal.version.id, v)
             setModal(null)
-            setAviso('Borrador guardado.')
+            setAviso('Draft saved.')
             await recargar()
           }}
         />

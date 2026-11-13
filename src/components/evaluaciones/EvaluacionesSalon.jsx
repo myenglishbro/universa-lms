@@ -12,18 +12,18 @@ function Resultados({ salonId, servicio }) {
   const cargar = useCallback(() => servicio.resultadosSalon(salonId), [servicio, salonId])
   const { datos, cargando, error } = useCarga(cargar, null)
   if (error) return <p className="text-sm text-red-600">No se pudieron cargar los resultados: {error}</p>
-  if (cargando || !datos) return <p className="text-sm text-slate-400">Cargando…</p>
+  if (cargando || !datos) return <p className="text-sm text-slate-400">Loading…</p>
   const { consolidacion, alumnos } = datos
   return (
     <div className="space-y-3">
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Solo cuentan las notas publicadas. Lo que aún no tiene nota no se toma como cero.{' '}
         {consolidacion.metodo === 'sin_definir'
-          ? 'La nota final del nivel está pendiente de confirmación de Coordinación.'
-          : `Nota del nivel: ${metodoLabel(consolidacion.metodo)}${consolidacion.confirmada ? '' : ' (vista previa, sin confirmar)'}.`}
+          ? 'The final level grade is pending confirmation from Coordination.'
+          : `Level grade: ${metodoLabel(consolidacion.metodo)}${consolidacion.confirmada ? '' : ' (preview, unconfirmed)'}.`}
       </p>
       {alumnos.length === 0 ? (
-        <p className="text-sm text-slate-400">No hay estudiantes en este salón.</p>
+        <p className="text-sm text-slate-400">There are no students in this classroom.</p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
           {alumnos.map((a) => (
@@ -32,24 +32,24 @@ function Resultados({ salonId, servicio }) {
                 {a.nombre}
                 {a.nivel?.definido && (
                   <span className="ml-2 text-xs font-normal text-slate-500">
-                    Nivel: <strong className="text-slate-900">{fmtNota(a.nivel.nota)}</strong> {a.nivel.parcial && <Badge color="peach">Parcial</Badge>}
+                    Nivel: <strong className="text-slate-900">{fmtNota(a.nivel.nota)}</strong> {a.nivel.parcial && <Badge color="peach">Partial</Badge>}
                   </span>
                 )}
               </p>
               <ul className="mt-1 space-y-0.5">
-                {a.modulos.length === 0 && <li className="text-xs text-slate-400">Sin módulos.</li>}
+                {a.modulos.length === 0 && <li className="text-xs text-slate-400">No modules.</li>}
                 {a.modulos.map((m) => (
                   <li key={m.modulo_id} className="text-xs text-slate-600">
                     {m.nombre}:{' '}
                     {m.sin_plantilla ? (
-                      <span className="text-slate-400">sin plantilla asignada</span>
+                      <span className="text-slate-400">no template assigned</span>
                     ) : (
                       <>
                         <strong className="text-slate-900">{fmtNota(m.nota)}</strong>
                         {m.parcial && (
                           <>
                             {' '}
-                            <Badge color="peach">Parcial</Badge> {m.peso_evaluado > 0 ? `evaluado ${fmtNota(m.peso_evaluado)} de ${fmtNota(m.peso_total)}` : 'sin notas publicadas'}
+                            <Badge color="peach">Partial</Badge> {m.peso_evaluado > 0 ? `assessed ${fmtNota(m.peso_evaluado)} of ${fmtNota(m.peso_total)}` : 'no published grades'}
                             {m.faltan.length > 0 && ` · falta: ${textoFaltan(m.faltan)}`}
                           </>
                         )}
@@ -76,12 +76,12 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
   const [refresco, setRefresco] = useState(0)
 
   if (error) return <p className="text-sm text-red-600">No se pudieron cargar las evaluaciones: {error}</p>
-  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+  if (cargando || !datos) return <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
   const { modulos } = datos
   if (modulos.length === 0)
     return (
       <Card className="p-6 text-center">
-        <p className="text-sm text-slate-500">Este salón aún no tiene módulos de evaluación. Administración los configura y les asigna una plantilla.</p>
+        <p className="text-sm text-slate-500">This classroom has no assessment modules yet. Administration sets them up and assigns a template.</p>
       </Card>
     )
   const modulo = modulos.find((m) => m.id === moduloId) ?? modulos[0]
@@ -89,7 +89,7 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Módulos">
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Modules">
           {modulos.map((m) => (
             <button
               key={m.id}
@@ -103,7 +103,7 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
           ))}
         </div>
         <div className="flex gap-1 text-sm" role="group" aria-label="Vista">
-          {[['notas', 'Registrar notas'], ['resultados', 'Resultados']].map(([id, texto]) => (
+          {[['notas', 'Enter grades'], ['resultados', 'Results']].map(([id, texto]) => (
             <button key={id} aria-pressed={vista === id} onClick={() => setVista(id)} className={`rounded-lg px-3 py-1.5 font-medium ${vista === id ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100'}`}>
               {texto}
             </button>
@@ -123,7 +123,7 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
             <h2 className="text-base font-semibold text-slate-900">{modulo.nombre}</h2>
             <p className="text-xs text-slate-500">
               {modulo.plantilla} · versión {modulo.version}
-              {modulo.ciclo != null && ` · ciclo ${modulo.ciclo}`}
+              {modulo.ciclo != null && ` · cycle ${modulo.ciclo}`}
             </p>
           </div>
           <ul className="divide-y divide-slate-100">
@@ -135,13 +135,13 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     {e.publicadas} publicadas
-                    {e.borradores > 0 && ` · ${e.borradores} en borrador`}
-                    {e.unidades.length > 0 && ` · ${e.unidades.length} unidades`}
-                    {e.con_rubrica && ' · con rúbrica'}
+                    {e.borradores > 0 && ` · ${e.borradores} in draft`}
+                    {e.unidades.length > 0 && ` · ${e.unidades.length} units`}
+                    {e.con_rubrica && ' · with rubric'}
                   </p>
                 </div>
                 <Button variant={e.publicadas === 0 && e.borradores === 0 ? 'primary' : 'secondary'} className="px-3 py-1.5" onClick={() => setAbierta(e)}>
-                  Registrar notas
+                  Enter grades
                 </Button>
               </li>
             ))}

@@ -5,17 +5,17 @@ import { fmtNota, sumaPesos } from '../../lib/evaluaciones'
 
 // Qué mide cada tipo de componente, en palabras para el estudiante.
 const QUE_MIDE = {
-  test: 'Examen del módulo.',
-  writing: 'Producción escrita, calificada con una rúbrica de 5 criterios.',
-  project: 'Proyecto del módulo, calificado con una rúbrica de criterios.',
-  spark: 'Tareas de la plataforma SPARK.',
-  speaking: 'Expresión oral, calificada con una rúbrica.',
-  participacion: 'Participación en las clases del módulo.',
-  formative: 'Seguimiento continuo: 3 unidades con 5 habilidades cada una, más tu participación en clase.',
+  test: 'Module exam.',
+  writing: 'Written production, graded with a 5-criteria rubric.',
+  project: 'Module project, graded with a criteria rubric.',
+  spark: 'SPARK platform tasks.',
+  speaking: 'Oral expression, graded with a rubric.',
+  participacion: 'Participation in the module classes.',
+  formative: 'Continuous follow-up: 3 units with 5 skills each, plus your class participation.',
   otro: '',
 }
 
-const nombreModulos = (ms) => (ms.length === 1 ? ms[0].nombre : `${ms.slice(0, -1).map((m) => m.nombre).join(', ')} y ${ms[ms.length - 1].nombre}`)
+const nombreModulos = (ms) => (ms.length === 1 ? ms[0].nombre : `${ms.slice(0, -1).map((m) => m.nombre).join(', ')} and ${ms[ms.length - 1].nombre}`)
 
 // Módulos con la misma distribución de pesos se explican juntos (p. ej. «Módulos 1, 2 y 3» frente al módulo final).
 function gruposDePesos(modulos) {
@@ -42,9 +42,9 @@ function TablaPesos({ g }) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs text-slate-600">
             <tr>
-              <th className="px-3 py-2">Componente</th>
-              <th className="px-3 py-2 text-right">Vale</th>
-              <th className="px-3 py-2">Qué se evalúa</th>
+              <th className="px-3 py-2">Component</th>
+              <th className="px-3 py-2 text-right">Worth</th>
+              <th className="px-3 py-2">What is assessed</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -58,7 +58,7 @@ function TablaPesos({ g }) {
           </tbody>
           <tfoot className="bg-slate-50 text-sm font-semibold text-slate-900">
             <tr>
-              <td className="px-3 py-2">Total del módulo</td>
+              <td className="px-3 py-2">Module total</td>
               <td className="px-3 py-2 text-right">{fmtNota(total)} {total === 100 ? '%' : 'pts'}</td>
               <td />
             </tr>
@@ -73,20 +73,20 @@ function Formative({ pp }) {
   const part = Number(pp) || 0
   return (
     <section className="space-y-2 rounded-xl bg-brand-50 p-4 text-sm text-brand-900">
-      <h3 className="font-semibold">Cómo se calcula el Formative Assessment</h3>
+      <h3 className="font-semibold">How the Formative Assessment is calculated</h3>
       <ol className="list-decimal space-y-1 pl-5">
         <li>
-          En cada una de las <strong>3 unidades</strong> tu docente evalúa <strong>5 elementos con el mismo valor</strong> (los de la rúbrica del Formative de tu curso), así que cada unidad vale hasta 100.
+          In each of the <strong>3 units</strong> your teacher assesses <strong>5 elements of equal value</strong> (those in your course's Formative rubric), so each unit is worth up to 100.
         </li>
-        <li>Se promedian las 3 unidades.</li>
+        <li>The 3 units are averaged.</li>
         {part > 0 && (
           <li>
-            Tu <strong>participación en clase</strong> (clases en las que cumpliste ÷ clases del módulo × 100) pesa el <strong>{fmtNota(part)} %</strong> del Formative.
+            Your <strong>class participation</strong> (classes you met ÷ module classes × 100) weighs <strong>{fmtNota(part)} %</strong> of the Formative.
           </li>
         )}
       </ol>
       <p className="rounded-lg bg-white/70 px-3 py-2 font-medium">
-        Formative = {part > 0 ? `${fmtNota(100 - part)} % × promedio de las unidades + ${fmtNota(part)} % × participación` : 'promedio de las 3 unidades'}
+        Formative = {part > 0 ? `${fmtNota(100 - part)} % × unit average + ${fmtNota(part)} % × participation` : 'average of the 3 units'}
       </p>
       {part > 0 && (
         <p className="text-xs">
@@ -102,31 +102,31 @@ export function ExplicacionContenido({ modulos }) {
   const grupos = gruposDePesos(modulos)
   const pp = modulos.flatMap((m) => m.evaluaciones ?? []).find((e) => e.tipo === 'formative' && Number(e.peso_participacion) > 0)?.peso_participacion
   const hayFormative = modulos.some((m) => (m.evaluaciones ?? []).some((e) => e.tipo === 'formative'))
-  if (grupos.length === 0) return <p className="text-sm text-slate-500">Tu curso aún no tiene componentes de evaluación configurados.</p>
+  if (grupos.length === 0) return <p className="text-sm text-slate-500">Your course has no assessment components configured yet.</p>
   return (
     <div className="space-y-4 text-sm text-slate-700">
       <section className="space-y-1">
-        <h3 className="font-semibold text-slate-900">1. Tu nota de cada módulo</h3>
+        <h3 className="font-semibold text-slate-900">1. Your grade for each module</h3>
         <p>
-          Cada componente se califica de 0 a 100 y <strong>aporta según su peso</strong>: aporte = peso × nota ÷ 100. La suma de los aportes es la nota de tu módulo.
+          Each component is graded from 0 to 100 and <strong>contributes according to its weight</strong>: contribution = weight × grade ÷ 100. The sum of the contributions is your module grade.
         </p>
-        <p className="text-xs text-slate-500">Ejemplo: un componente que vale 28 % y en el que sacas 75 aporta 28 × 75 ÷ 100 = 21 puntos.</p>
+        <p className="text-xs text-slate-500">Example: a component worth 28 % in which you score 75 contributes 28 × 75 ÷ 100 = 21 points.</p>
       </section>
       {grupos.map((g) => (
         <TablaPesos key={g.firma} g={g} />
       ))}
       {hayFormative && <Formative pp={pp} />}
       <section className="space-y-1">
-        <h3 className="font-semibold text-slate-900">2. Resultado por ciclo</h3>
-        <p>La nota del ciclo reúne los puntos de sus módulos y se expresa sobre 100.</p>
+        <h3 className="font-semibold text-slate-900">2. Result per cycle</h3>
+        <p>The cycle grade gathers the points of its modules and is expressed out of 100.</p>
       </section>
       <section className="space-y-1">
-        <h3 className="font-semibold text-slate-900">3. Lo que todavía no se evalúa no cuenta como cero</h3>
+        <h3 className="font-semibold text-slate-900">3. What has not been assessed yet does not count as zero</h3>
         <ul className="list-disc space-y-1 pl-5">
-          <li>Solo ves notas <strong>publicadas</strong> por tu docente. Hasta entonces el componente aparece como pendiente.</li>
-          <li>Un componente cuenta cuando está completo (por ejemplo, el Formative necesita sus 3 unidades{Number(pp) > 0 ? ' y tu participación' : ''}). Mientras tanto tu resultado se marca como <strong>parcial</strong> y se calcula solo sobre lo ya evaluado.</li>
-          <li>Tu asistencia se registra aparte y no entra en la nota.</li>
-          <li>Si una nota se corrige, queda registrado el motivo.</li>
+          <li>You only see grades <strong>published</strong> by your teacher. Until then the component shows as pending.</li>
+          <li>A component counts once it is complete (for example, the Formative needs its 3 units{Number(pp) > 0 ? ' and your participation' : ''}). Meanwhile your result is marked <strong>partial</strong> and calculated only on what has been assessed.</li>
+          <li>Your attendance is recorded separately and does not count toward the grade.</li>
+          <li>If a grade is corrected, the reason is recorded.</li>
         </ul>
       </section>
     </div>
@@ -138,14 +138,14 @@ export default function ComoMeEvaluan({ modulos, className = '' }) {
   return (
     <>
       <Button variant="secondary" className={`px-3 py-1 text-xs ${className}`} onClick={() => setAbierto(true)} aria-haspopup="dialog">
-        ¿Cómo me evalúan?
+        How am I assessed?
       </Button>
       {abierto && (
-        <Modal title="¿Cómo se calcula mi nota?" onClose={() => setAbierto(false)} wide>
+        <Modal title="How is my grade calculated?" onClose={() => setAbierto(false)} wide>
           <ExplicacionContenido modulos={modulos} />
           <div className="mt-4 flex justify-end">
             <Button variant="secondary" onClick={() => setAbierto(false)}>
-              Entendido
+              Got it
             </Button>
           </div>
         </Modal>
