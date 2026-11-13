@@ -11,7 +11,7 @@ const fecha = (f) => {
 
 // Nombre de archivo seguro: «Informe de notas - Ana Pérez - Salón Uno».
 export const nombreInforme = (d) =>
-  `Informe de notas - ${d.estudiante ?? 'Estudiante'} - ${d.salon ?? 'Salón'}`.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim()
+  `Grade report - ${d.estudiante ?? 'Student'} - ${d.salon ?? 'Classroom'}`.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim()
 
 const vacio = '<span class="mut">—</span>'
 const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v))
@@ -74,7 +74,7 @@ function matriz(cols) {
   const promM = okm.length ? okm.reduce((a, b) => a + b, 0) / okm.length : null
   const subC = ev.map((v, i) => `<td class="n">${v == null ? vacio : `${fmtNota(v)}${cols[i].parcial ? ' <small>Partial</small>' : ''}`}</td>`).join('')
   const sub = `<tr class="sub"><td>Module score</td><td></td>${subC}<td class="n">${promM == null ? vacio : fmtNota(promM)}</td></tr>`
-  const vacioMsg = `<tr><td colspan="${cols.length + 3}" class="mut">Este ciclo aún no tiene evaluaciones.</td></tr>`
+  const vacioMsg = `<tr><td colspan="${cols.length + 3}" class="mut">This cycle has no assessments yet.</td></tr>`
   return `<table><thead><tr><th>Component</th><th class="n">Weight</th>${cab}<th class="n">Average</th></tr></thead><tbody>${filas || vacioMsg}${sub}</tbody></table>`
 }
 
@@ -151,7 +151,7 @@ function hojaCiclo(d, h, extra) {
 
   const remed = h.mods
     .filter((m) => m.remedial)
-    .map((m) => `<p class="aviso">${esc(m.nombre)}: resultado obtenido mediante examen remedial (nota ${fmtNota(m.remedial_nota)}). Resultado anterior: ${m.nota_original == null ? 'sin nota' : fmtNota(m.nota_original)}.</p>`)
+    .map((m) => `<p class="aviso">${esc(m.nombre)}: result obtained through a remedial exam (grade ${fmtNota(m.remedial_nota)}). Previous result: ${m.nota_original == null ? 'no grade' : fmtNota(m.nota_original)}.</p>`)
     .join('')
   const titulo = h.ciclo != null ? `CYCLE ${String(h.ciclo).padStart(2, '0')}` : 'GRADES'
   const comentarios = [extra.comentario, extra.siguiente ? `Next step: ${extra.siguiente}` : ''].filter(Boolean).map(esc).join('\n')
@@ -185,7 +185,7 @@ ${matriz(h.mods)}${remed}
 <div class="escala">Scale (/100): 0–59 Beginning · 60–69 Developing · 70–85 Achieved · 86–100 Outstanding</div>
 </div>
 <div class="firmas"><div>${d.docente ? esc(d.docente) : 'Teacher'}<span>Teacher's signature</span></div><div>Academic Coordination<span>Signature and stamp</span></div></div>
-<p class="pie">Solo incluye notas publicadas. Un componente sin nota publicada no se cuenta como cero.</p>
+<p class="pie">Only published grades are included. A component without a published grade is not counted as zero.</p>
 </div>`
 }
 
@@ -304,7 +304,7 @@ export function htmlInforme(d, manual = {}) {
   const extra = conAuto(d, manual)
   const h = ciclosDelInforme(d).find((x) => String(x.ciclo) === String(extra.ciclo)) ?? ciclosDelInforme(d)[0]
   const hojas = hojaCiclo(d, h, extra) + hojaFormative(d, h)
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(nombreInforme(d))}</title><style>${CSS}</style></head><body>${hojas}</body></html>`
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(nombreInforme(d))}</title><style>${CSS}</style></head><body>${hojas}</body></html>`
 }
 
 // Abre el informe en otra pestaña listo para «Guardar como PDF». Si el navegador bloquea la ventana, descarga el archivo HTML.

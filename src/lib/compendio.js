@@ -80,25 +80,25 @@ const notaFinal = (inf) => (inf?.acumulado && Number(inf.acumulado.escala_evalua
 // ---------------------------------------------------------------------------
 function hojaFicha(wb, logoId, d) {
   const { salon, alumnos } = d
-  const ws = wb.addWorksheet('FICHA DE CURSO')
+  const ws = wb.addWorksheet('COURSE SHEET')
   ws.columns = [{ width: 26 }, { width: 44 }, { width: 16 }, { width: 22 }, { width: 16 }]
-  let f = cabecera(wb, ws, logoId, 'Ficha de curso', `${salon.nombre} · ${salon.codigo}`, 5)
+  let f = cabecera(wb, ws, logoId, 'Course sheet', `${salon.nombre} · ${salon.codigo}`, 5)
 
   const inf = primeraConModulos(alumnos)
   const filas = [
     ['Programa', 'UNIVERSA'],
-    ['Salón', salon.nombre],
-    ['Código', salon.codigo],
-    ['Nivel', [salon.nivel, inf?.mcer && `(${inf.mcer})`].filter(Boolean).join(' ') || '—'],
+    ['Classroom', salon.nombre],
+    ['Code', salon.codigo],
+    ['Level', [salon.nivel, inf?.mcer && `(${inf.mcer})`].filter(Boolean).join(' ') || '—'],
     ['Modalidad', salon.plan?.modalidad || inf?.modalidad || 'Grupal'],
-    ['Ciclos', salon.cicloDesde ? `${salon.cicloDesde}${salon.cicloHasta && salon.cicloHasta !== salon.cicloDesde ? ` a ${salon.cicloHasta}` : ''}` : '—'],
+    ['Cycles', salon.cicloDesde ? `${salon.cicloDesde}${salon.cicloHasta && salon.cicloHasta !== salon.cicloDesde ? ` to ${salon.cicloHasta}` : ''}` : '—'],
     ['Horario', formatHorario(salon.horarios)],
-    ['Docente', salon.docente || '—'],
-    ['Inicio de clases', formatFecha(salon.fechaInicio)],
-    ['Fin de clases', formatFecha(salon.fechaFin)],
-    ['Estado', salon.cicloArchivo ? `Archivado · ciclo ${salon.cicloArchivo}` : salon.estado === 'finalizado' ? 'Finalizado' : salon.estado === 'en_curso' ? 'En curso' : 'Planificado'],
-    ['Estudiantes', `${alumnos.length}${salon.capacidad ? ` de ${salon.capacidad}` : ''}`],
-    ['Archivo generado', formatFecha(new Date().toISOString().slice(0, 10))],
+    ['Teacher', salon.docente || '—'],
+    ['Class start', formatFecha(salon.fechaInicio)],
+    ['Class end', formatFecha(salon.fechaFin)],
+    ['Status', salon.cicloArchivo ? `Archived · cycle ${salon.cicloArchivo}` : salon.estado === 'finalizado' ? 'Finished' : salon.estado === 'en_curso' ? 'Ongoing' : 'Planned'],
+    ['Students', `${alumnos.length}${salon.capacidad ? ` of ${salon.capacidad}` : ''}`],
+    ['File generated', formatFecha(new Date().toISOString().slice(0, 10))],
   ]
   for (const [k, v] of filas) {
     celda(ws.getCell(f, 1), k, { negrita: true, fondo: MARCA.lila })
@@ -109,10 +109,10 @@ function hojaFicha(wb, logoId, d) {
   }
 
   f += 1
-  ws.getCell(f, 1).value = 'ESTUDIANTES'
+  ws.getCell(f, 1).value = 'STUDENTS'
   ws.getCell(f, 1).font = { name: FUENTE, size: 12, bold: true, color: { argb: MARCA.morado } }
   f += 1
-  ;['N°', 'Estudiante', 'Nota final', 'Desempeño', 'Asistencia'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
+  ;['No.', 'Student', 'Final grade', 'Performance', 'Attendance'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
   ws.getRow(f).height = 22
   f += 1
   alumnos.forEach((a, i) => {
@@ -127,7 +127,7 @@ function hojaFicha(wb, logoId, d) {
     f++
   })
   if (alumnos.some((a) => a.informe?.acumulado?.parcial)) {
-    ws.getCell(f + 1, 1).value = 'Nota final parcial: hay evaluaciones del ciclo que aún no se publican.'
+    ws.getCell(f + 1, 1).value = 'Partial final grade: some assessments of the cycle are not published yet.'
     ws.getCell(f + 1, 1).font = { name: FUENTE, size: 9, italic: true, color: { argb: MARCA.gris } }
   }
 }
@@ -188,11 +188,11 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
   const inf = a.informe
   const ws = wb.addWorksheet(nombreHoja(a.nombre, i, usados))
   ws.columns = [{ width: 11 }, { width: 26 }, { width: 32 }, { width: 9 }, { width: 12 }, { width: 16 }, { width: 3 }]
-  let f = cabecera(wb, ws, logoId, a.nombre, `${salon.nombre} · Grades chart y notas por módulo`, 6)
+  let f = cabecera(wb, ws, logoId, a.nombre, `${salon.nombre} · Grades chart and grades by module`, 6)
   ws.properties.tabColor = { argb: MARCA.durazno }
 
   if (!inf?.modulos?.length) {
-    ws.getCell(f, 1).value = 'Este estudiante aún no tiene módulos con evaluaciones.'
+    ws.getCell(f, 1).value = 'This student has no modules with assessments yet.'
     ws.getCell(f, 1).font = { name: FUENTE, size: 10, italic: true, color: { argb: MARCA.gris } }
     return
   }
@@ -202,11 +202,11 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
   const as = inf.asistencia
   const pctAsis = as && Number(as.programadas) > 0 ? (Number(as.presentes) + Number(as.tardanzas) * 0.5 + Number(as.justificadas)) / Number(as.programadas) : null
   const resumen = [
-    ['Nivel', [salon.nivel, inf.mcer && `(${inf.mcer})`].filter(Boolean).join(' ') || '—', null],
-    ['Nota acumulada (0–100)', nota, '0.0'],
-    ['Desempeño', nivelDesempeno(nota) ?? '—', null],
-    ['Asistencia', pctAsis, '0%'],
-    ['Estado de la nota', inf.acumulado?.parcial ? 'Parcial' : 'Completa', null],
+    ['Level', [salon.nivel, inf.mcer && `(${inf.mcer})`].filter(Boolean).join(' ') || '—', null],
+    ['Accumulated grade (0–100)', nota, '0.0'],
+    ['Performance', nivelDesempeno(nota) ?? '—', null],
+    ['Attendance', pctAsis, '0%'],
+    ['Grade status', inf.acumulado?.parcial ? 'Partial' : 'Complete', null],
   ]
   for (const [k, v, fmt] of resumen) {
     ws.mergeCells(f, 1, f, 2)
@@ -223,7 +223,7 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
   ws.getCell(f, 1).value = 'GRADES CHART'
   ws.getCell(f, 1).font = { name: FUENTE, size: 12, bold: true, color: { argb: MARCA.morado } }
   f++
-  ;['CICLO', 'MÓDULO', 'COMPONENTE', 'PESO', 'PUNTAJE', 'NOTA PONDERADA'].forEach((t, k) => celdaTitulo(ws.getCell(f, k + 1), t, k === 5 ? { fondo: MARCA.durazno, color: MARCA.moradoOscuro } : undefined))
+  ;['CYCLE', 'MODULE', 'COMPONENT', 'WEIGHT', 'SCORE', 'WEIGHTED GRADE'].forEach((t, k) => celdaTitulo(ws.getCell(f, k + 1), t, k === 5 ? { fondo: MARCA.durazno, color: MARCA.moradoOscuro } : undefined))
   ws.getRow(f).height = 24
   f++
   const subtotales = []
@@ -252,17 +252,17 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
   })
   f++
   ws.mergeCells(f, 1, f, 5)
-  celdaTitulo(ws.getCell(f, 1), 'FINAL SCORE (suma de los módulos)', { alinear: 'right' })
+  celdaTitulo(ws.getCell(f, 1), 'FINAL SCORE (sum of the modules)', { alinear: 'right' })
   for (let c = 2; c <= 5; c++) ws.getCell(f, c).border = bordes
   celda(ws.getCell(f, 6), { formula: subtotales.map((r) => `F${r}`).join('+') || '0', result: r2(inf.modulos.reduce((s, m) => s + (num(m.puntos) ?? 0), 0)) }, { negrita: true, alinear: 'center', fondo: MARCA.durazno, formato: '0.00', color: MARCA.moradoOscuro })
   ws.getRow(f).height = 24
   f += 2
 
   // NOTAS POR MÓDULO (con el promedio del salón para comparar)
-  ws.getCell(f, 1).value = 'NOTAS POR MÓDULO'
+  ws.getCell(f, 1).value = 'GRADES BY MODULE'
   ws.getCell(f, 1).font = { name: FUENTE, size: 12, bold: true, color: { argb: MARCA.morado } }
   f++
-  ;['CICLO', 'MÓDULO', 'AVANCE DE EVALUACIÓN', 'NOTA 0–100', 'PROMEDIO SALÓN', 'DIFERENCIA'].forEach((t, k) => celdaTitulo(ws.getCell(f, k + 1), t, k >= 3 ? { fondo: MARCA.moradoOscuro } : undefined))
+  ;['CYCLE', 'MODULE', 'ASSESSMENT PROGRESS', 'GRADE 0–100', 'CLASSROOM AVERAGE', 'DIFFERENCE'].forEach((t, k) => celdaTitulo(ws.getCell(f, k + 1), t, k >= 3 ? { fondo: MARCA.moradoOscuro } : undefined))
   ws.getRow(f).height = 30
   f++
   const ini = f
@@ -272,7 +272,7 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
   inf.modulos.forEach((m, mi) => {
     const n = notaModulo(m)
     const prom = est.porModulo[mi]?.promedio ?? null
-    const avance = Number(m.peso_evaluado) > 0 ? `${r2(Number(m.peso_evaluado))}% evaluado` : 'Sin evaluar'
+    const avance = Number(m.peso_evaluado) > 0 ? `${r2(Number(m.peso_evaluado))}% assessed` : 'Not assessed'
     celda(ws.getCell(f, 1), m.ciclo != null ? `CYCLE ${m.ciclo}` : '', { alinear: 'center', fondo: MARCA.lilaSuave })
     celda(ws.getCell(f, 2), m.nombre, { negrita: true, fondo: MARCA.lilaSuave })
     celda(ws.getCell(f, 3), avance, { alinear: 'center' })
@@ -303,11 +303,11 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
 
   // Gráfico: el estudiante frente al promedio del salón, módulo por módulo (a la derecha de las tablas)
   const grafico = await graficoBarras({
-    titulo: 'Notas por módulo: estudiante vs. promedio del salón',
+    titulo: 'Grades by module: student vs. classroom average',
     etiquetas,
     series: [
-      { nombre: 'Estudiante', valores: suyas, color: PALETA.morado },
-      { nombre: 'Promedio salón', valores: delSalon, color: PALETA.durazno },
+      { nombre: 'Student', valores: suyas, color: PALETA.morado },
+      { nombre: 'Classroom average', valores: delSalon, color: PALETA.durazno },
     ],
     linea: { valor: 70, etiqueta: 'Achieved 70' },
     ancho: 600,
@@ -322,18 +322,18 @@ async function hojaRendimiento(wb, logoId, d, est) {
   const { salon, alumnos } = d
   const { mods, porModulo, finales } = est
   const ciclos = est.base?.ciclos ?? []
-  const ws = wb.addWorksheet('RENDIMIENTO DEL SALÓN')
+  const ws = wb.addWorksheet('CLASSROOM PERFORMANCE')
   const nCols = 2 + mods.length + ciclos.length + 3
   ws.columns = [{ width: 6 }, { width: 34 }, ...mods.map(() => ({ width: 14 })), ...ciclos.map(() => ({ width: 13 })), { width: 15 }, { width: 16 }, { width: 14 }]
-  let f = cabecera(wb, ws, logoId, 'Rendimiento del salón', `${salon.nombre} · notas de 0 a 100 por módulo y comparación entre módulos`, Math.max(nCols, 10))
+  let f = cabecera(wb, ws, logoId, 'Classroom performance', `${salon.nombre} · grades from 0 to 100 per module and comparison between modules`, Math.max(nCols, 10))
   ws.properties.tabColor = { argb: MARCA.durazno }
   if (!mods.length || !alumnos.length) {
-    ws.getCell(f, 1).value = 'Aún no hay módulos con evaluaciones para este salón.'
+    ws.getCell(f, 1).value = 'There are no modules with assessments for this classroom yet.'
     ws.getCell(f, 1).font = { name: FUENTE, size: 10, italic: true, color: { argb: MARCA.gris } }
     return
   }
 
-  const cab = ['N°', 'Estudiante', ...mods.map((m) => m.nombre), ...ciclos.map((c) => (c.ciclo != null ? `Ciclo ${c.ciclo}` : 'Sin ciclo')), 'NOTA ACUMULADA', 'Desempeño', 'Estado']
+  const cab = ['No.', 'Student', ...mods.map((m) => m.nombre), ...ciclos.map((c) => (c.ciclo != null ? `Cycle ${c.ciclo}` : 'No cycle')), 'ACCUMULATED GRADE', 'Performance', 'Status']
   const filaCab = f
   cab.forEach((t, k) => celdaTitulo(ws.getCell(f, k + 1), t, k >= cab.length - 3 ? { fondo: MARCA.moradoOscuro } : undefined))
   ws.getRow(f).height = 30
@@ -352,7 +352,7 @@ async function hojaRendimiento(wb, logoId, d, est) {
     })
     celda(ws.getCell(f, c++), finales[i], { alinear: 'center', formato: '0.0', negrita: true, fondo: MARCA.duraznoSuave })
     celda(ws.getCell(f, c++), nivelDesempeno(finales[i]) ?? '—', { alinear: 'center' })
-    celda(ws.getCell(f, c++), !inf ? 'Sin informe' : inf.acumulado?.parcial ? 'Parcial' : 'Completa', { alinear: 'center' })
+    celda(ws.getCell(f, c++), !inf ? 'No report' : inf.acumulado?.parcial ? 'Partial' : 'Complete', { alinear: 'center' })
     f++
   })
   const fin = f - 1
@@ -360,9 +360,9 @@ async function hojaRendimiento(wb, logoId, d, est) {
 
   // Resumen del salón (fórmulas vivas sobre la matriz)
   const resumen = [
-    ['PROMEDIO DEL SALÓN', 'AVERAGE', 'AVERAGE'],
-    ['NOTA MÁXIMA', 'MAX', 'MAX'],
-    ['NOTA MÍNIMA', 'MIN', 'MIN'],
+    ['CLASSROOM AVERAGE', 'AVERAGE', 'AVERAGE'],
+    ['MAXIMUM GRADE', 'MAX', 'MAX'],
+    ['MINIMUM GRADE', 'MIN', 'MIN'],
   ]
   const datosCol = (c) => {
     const k = c - 3
@@ -387,7 +387,7 @@ async function hojaRendimiento(wb, logoId, d, est) {
     f++
   }
   ws.mergeCells(f, 1, f, 2)
-  celdaTitulo(ws.getCell(f, 1), '% DE ALUMNOS CON 70 O MÁS (Achieved)', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
+  celdaTitulo(ws.getCell(f, 1), '% OF STUDENTS WITH 70 OR MORE (Achieved)', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
   ws.getCell(f, 2).border = bordes
   for (let c = 3; c <= colNota; c++) {
     const v = datosCol(c).filter((x) => x != null)
@@ -408,13 +408,13 @@ async function hojaRendimiento(wb, logoId, d, est) {
 
   // Distribución por nivel de desempeño
   f += 1
-  ws.getCell(f, 1).value = 'DISTRIBUCIÓN POR NIVEL DE DESEMPEÑO'
+  ws.getCell(f, 1).value = 'DISTRIBUTION BY PERFORMANCE LEVEL'
   ws.getCell(f, 1).font = { name: FUENTE, size: 12, bold: true, color: { argb: MARCA.morado } }
   f++
   ws.mergeCells(f, 1, f, 2)
-  celdaTitulo(ws.getCell(f, 1), 'Nivel', {})
+  celdaTitulo(ws.getCell(f, 1), 'Level', {})
   ws.getCell(f, 2).border = bordes
-  celdaTitulo(ws.getCell(f, 3), 'Alumnos')
+  celdaTitulo(ws.getCell(f, 3), 'Students')
   celdaTitulo(ws.getCell(f, 4), '%')
   f++
   const rangoDesemp = `${col(colNota + 1)}${ini}:${col(colNota + 1)}${fin}`
@@ -431,36 +431,36 @@ async function hojaRendimiento(wb, logoId, d, est) {
   f += 1
 
   // GRÁFICOS
-  ws.getCell(f, 1).value = 'GRÁFICOS DE RENDIMIENTO'
+  ws.getCell(f, 1).value = 'PERFORMANCE CHARTS'
   ws.getCell(f, 1).font = { name: FUENTE, size: 12, bold: true, color: { argb: MARCA.morado } }
   f++
   const alto = 320
   const g1 = await graficoBarras({
-    titulo: 'Promedio del salón por módulo',
+    titulo: 'Classroom average by module',
     etiquetas: porModulo.map((m) => m.nombre),
-    series: [{ nombre: 'Promedio', valores: porModulo.map((m) => m.promedio), color: PALETA.morado }],
+    series: [{ nombre: 'Average', valores: porModulo.map((m) => m.promedio), color: PALETA.morado }],
     linea: { valor: 70, etiqueta: 'Achieved 70' },
     ancho: 620,
     alto,
   })
   const g2 = await graficoBarras({
-    titulo: 'Nota acumulada por estudiante',
+    titulo: 'Accumulated grade by student',
     etiquetas: alumnos.map((a) => a.nombre),
-    series: [{ nombre: 'Nota acumulada', valores: finales.map((x) => (x == null ? null : r2(x))), color: PALETA.durazno }],
+    series: [{ nombre: 'Accumulated grade', valores: finales.map((x) => (x == null ? null : r2(x))), color: PALETA.durazno }],
     linea: { valor: 70, etiqueta: 'Achieved 70' },
     ancho: 620,
     alto,
   })
   const g3 = await graficoBarras({
-    titulo: 'Estudiantes por nivel de desempeño',
+    titulo: 'Students by performance level',
     etiquetas: NIVELES,
-    series: [{ nombre: 'Alumnos', valores: conteos, color: PALETA.morado }],
+    series: [{ nombre: 'Students', valores: conteos, color: PALETA.morado }],
     max: Math.max(5, Math.ceil(Math.max(...conteos) / 5) * 5),
     ancho: 620,
     alto,
   })
   const g4 = await graficoBarras({
-    titulo: '% de alumnos con 70 o más por módulo',
+    titulo: '% of students with 70 or more by module',
     etiquetas: porModulo.map((m) => m.nombre),
     series: [
       {
@@ -485,22 +485,22 @@ async function hojaRendimiento(wb, logoId, d, est) {
 
 
 // ---------------------------------------------------------------------------
-const CODIGO_ASIS = { presente: 'A', tardanza: 'T', ausente: 'F', justificado: 'J' }
+const CODIGO_ASIS = { presente: 'P', tardanza: 'L', ausente: 'A', justificado: 'E' }
 function hojaAsistencia(wb, logoId, d) {
   const { salon, alumnos, clases, asistencia } = d
   const ws = wb.addWorksheet('ATTENDANCE')
   const FIJAS = 12
   const nClases = clases.length
   ws.columns = [{ width: 5 }, { width: 32 }, { width: 11 }, { width: 11 }, { width: 11 }, { width: 10 }, { width: 11 }, { width: 8 }, { width: 11 }, { width: 10 }, { width: 9 }, { width: 14 }, ...clases.map(() => ({ width: 8 }))]
-  let f = cabecera(wb, ws, logoId, "Student's attendance", `${salon.nombre} · A = asistió · T = tardanza · F = faltó · J = justificada · 2 tardanzas = 1 falta`, FIJAS + nClases)
+  let f = cabecera(wb, ws, logoId, "Student's attendance", `${salon.nombre} · P = present · L = late · A = absent · E = excused · 2 lates = 1 absence`, FIJAS + nClases)
   const filaNum = f
   const filaFecha = f + 1
   // Filas de encabezado de clases
-  ws.getCell(filaNum, FIJAS).value = '# CLASE'
-  ws.getCell(filaFecha, FIJAS).value = 'FECHA'
+  ws.getCell(filaNum, FIJAS).value = '# CLASS'
+  ws.getCell(filaFecha, FIJAS).value = 'DATE'
   for (const c of [FIJAS]) {
-    celdaTitulo(ws.getCell(filaNum, c), '# CLASE', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
-    celdaTitulo(ws.getCell(filaFecha, c), 'FECHA', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
+    celdaTitulo(ws.getCell(filaNum, c), '# CLASS', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
+    celdaTitulo(ws.getCell(filaFecha, c), 'DATE', { fondo: MARCA.lila, color: MARCA.moradoOscuro, alinear: 'right' })
   }
   clases.forEach((c, i) => {
     const cc = FIJAS + 1 + i
@@ -510,7 +510,7 @@ function hojaAsistencia(wb, logoId, d) {
   })
   ws.getRow(filaFecha).height = 36
   const filaCab = f + 2
-  ;['N°', 'Estudiante', 'Total clases asignadas', 'Clases dictadas', 'Asistencias', 'Tardanzas', 'Faltas x tardanza (2T = 1F)', 'Faltas', 'Justificadas', 'Faltas totales', '% de falta', 'Estado'].forEach((t, i) =>
+  ;['No.', 'Student', 'Total classes assigned', 'Classes held', 'Attended', 'Lates', 'Absences from lates (2L = 1A)', 'Absences', 'Excused', 'Total absences', '% absent', 'Status'].forEach((t, i) =>
     celdaTitulo(ws.getCell(filaCab, i + 1), t, i >= 9 ? { fondo: MARCA.moradoOscuro } : undefined),
   )
   ws.getRow(filaCab).height = 44
@@ -521,22 +521,22 @@ function hojaAsistencia(wb, logoId, d) {
     const marcas = clases.map((c) => CODIGO_ASIS[asistencia.get(c.sesion_id)?.get(a.id)] ?? '')
     const rng = nClases ? `${col(FIJAS + 1)}${f}:${ultima}${f}` : null
     const cuenta = (l) => marcas.filter((x) => x === l).length
-    const tard = cuenta('T')
-    const faltas = cuenta('F')
+    const tard = cuenta('L')
+    const faltas = cuenta('A')
     const total = nClases
     celda(ws.getCell(f, 1), i + 1, { alinear: 'center' })
     celda(ws.getCell(f, 2), a.nombre, { negrita: true })
     celda(ws.getCell(f, 3), total, { alinear: 'center' })
     celda(ws.getCell(f, 4), rng ? { formula: `COUNTA(${rng})`, result: marcas.filter(Boolean).length } : 0, { alinear: 'center' })
-    celda(ws.getCell(f, 5), rng ? { formula: `COUNTIF(${rng},"A")`, result: cuenta('A') } : 0, { alinear: 'center' })
-    celda(ws.getCell(f, 6), rng ? { formula: `COUNTIF(${rng},"T")`, result: tard } : 0, { alinear: 'center' })
+    celda(ws.getCell(f, 5), rng ? { formula: `COUNTIF(${rng},"P")`, result: cuenta('P') } : 0, { alinear: 'center' })
+    celda(ws.getCell(f, 6), rng ? { formula: `COUNTIF(${rng},"L")`, result: tard } : 0, { alinear: 'center' })
     celda(ws.getCell(f, 7), { formula: `F${f}/2`, result: tard / 2 }, { alinear: 'center', formato: '0.0' })
-    celda(ws.getCell(f, 8), rng ? { formula: `COUNTIF(${rng},"F")`, result: faltas } : 0, { alinear: 'center' })
-    celda(ws.getCell(f, 9), rng ? { formula: `COUNTIF(${rng},"J")`, result: cuenta('J') } : 0, { alinear: 'center' })
+    celda(ws.getCell(f, 8), rng ? { formula: `COUNTIF(${rng},"A")`, result: faltas } : 0, { alinear: 'center' })
+    celda(ws.getCell(f, 9), rng ? { formula: `COUNTIF(${rng},"E")`, result: cuenta('E') } : 0, { alinear: 'center' })
     celda(ws.getCell(f, 10), { formula: `G${f}+H${f}`, result: tard / 2 + faltas }, { alinear: 'center', formato: '0.0' })
     const pct = total ? (tard / 2 + faltas) / total : 0
     celda(ws.getCell(f, 11), { formula: `IF(C${f}=0,0,J${f}/C${f})`, result: pct }, { alinear: 'center', formato: '0.0%' })
-    celda(ws.getCell(f, 12), { formula: `IF(K${f}>0.2,"DESAPROBADO",IF(K${f}>=0.1,"EN ALERTA","EXCELENTE"))`, result: pct > 0.2 ? 'DESAPROBADO' : pct >= 0.1 ? 'EN ALERTA' : 'EXCELENTE' }, { alinear: 'center', negrita: true })
+    celda(ws.getCell(f, 12), { formula: `IF(K${f}>0.2,"FAILED",IF(K${f}>=0.1,"AT RISK","EXCELLENT"))`, result: pct > 0.2 ? 'FAILED' : pct >= 0.1 ? 'AT RISK' : 'EXCELLENT' }, { alinear: 'center', negrita: true })
     marcas.forEach((m, k) => celda(ws.getCell(f, FIJAS + 1 + k), m, { alinear: 'center' }))
     f++
   })
@@ -553,14 +553,14 @@ function hojaAsistencia(wb, logoId, d) {
       ws.addConditionalFormatting({
         ref: `${col(FIJAS + 1)}${filaCab + 1}:${ultima}${f - 1}`,
         rules: [
-          { type: 'cellIs', operator: 'equal', formulae: ['"F"'], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: MARCA.rojo } } } },
-          { type: 'cellIs', operator: 'equal', formulae: ['"T"'], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: MARCA.ambar } } } },
+          { type: 'cellIs', operator: 'equal', formulae: ['"A"'], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: MARCA.rojo } } } },
+          { type: 'cellIs', operator: 'equal', formulae: ['"L"'], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: MARCA.ambar } } } },
         ],
       })
     }
   }
   if (!nClases) {
-    ws.getCell(f + 1, 1).value = 'Este salón todavía no tiene clases en el calendario.'
+    ws.getCell(f + 1, 1).value = 'This classroom has no classes in the calendar yet.'
     ws.getCell(f + 1, 1).font = { name: FUENTE, size: 10, italic: true, color: { argb: MARCA.gris } }
   }
 }
@@ -568,11 +568,11 @@ function hojaAsistencia(wb, logoId, d) {
 // ---------------------------------------------------------------------------
 function hojaDetalle(wb, logoId, d) {
   const { salon, alumnos } = d
-  const ws = wb.addWorksheet('DETALLE DE NOTAS')
+  const ws = wb.addWorksheet('GRADE DETAILS')
   ws.columns = [{ width: 32 }, { width: 9 }, { width: 14 }, { width: 26 }, { width: 14 }, { width: 14 }, { width: 9 }, { width: 12 }, { width: 70 }]
-  let f = cabecera(wb, ws, logoId, 'Detalle de notas', `${salon.nombre} · cada nota publicada, por unidad, con su fecha y comentario del docente`, 9)
+  let f = cabecera(wb, ws, logoId, 'Grade details', `${salon.nombre} · every published grade, by unit, with its date and the teacher's comment`, 9)
   const ini = f
-  ;['Estudiante', 'Ciclo', 'Módulo', 'Componente', 'Tipo', 'Unidad / clase', 'Nota', 'Fecha', 'Comentario del docente'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
+  ;['Student', 'Cycle', 'Module', 'Component', 'Type', 'Unit / class', 'Grade', 'Date', 'Teacher comment'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
   ws.getRow(f).height = 24
   ws.views = [{ showGridLines: false, state: 'frozen', xSplit: 1, ySplit: f }]
   f++
@@ -595,7 +595,7 @@ function hojaDetalle(wb, logoId, d) {
     }
   }
   if (f === ini + 1) {
-    ws.getCell(f, 1).value = 'Todavía no hay notas publicadas.'
+    ws.getCell(f, 1).value = 'There are no published grades yet.'
     ws.getCell(f, 1).font = { name: FUENTE, size: 10, italic: true, color: { argb: MARCA.gris } }
   } else {
     ws.autoFilter = { from: { row: ini, column: 1 }, to: { row: f - 1, column: 9 } }
@@ -605,10 +605,10 @@ function hojaDetalle(wb, logoId, d) {
 // ---------------------------------------------------------------------------
 function hojaRubricas(wb, logoId, d) {
   if (!d.rubricas?.length) return
-  const ws = wb.addWorksheet('RÚBRICAS')
+  const ws = wb.addWorksheet('RUBRICS')
   ws.columns = [{ width: 28 }, { width: 14 }, { width: 28 }, { width: 70 }, { width: 12 }]
-  let f = cabecera(wb, ws, logoId, 'Rúbricas', 'Criterios de evaluación vigentes al generar este archivo', 5)
-  ;['Rúbrica', 'Tipo', 'Criterio', 'Descripción', 'Puntaje máx.'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
+  let f = cabecera(wb, ws, logoId, 'Rubrics', 'Assessment criteria in force when this file was generated', 5)
+  ;['Rubric', 'Type', 'Criterion', 'Description', 'Max. score'].forEach((t, i) => celdaTitulo(ws.getCell(f, i + 1), t))
   f++
   for (const r of d.rubricas.filter((x) => x.activa !== false)) {
     r.criterios.forEach((c, i) => {
@@ -642,7 +642,7 @@ export async function construirCompendio(datos) {
   hojaFicha(wb, logoId, datos)
   const est = estadisticas(datos.alumnos)
   await hojaRendimiento(wb, logoId, datos, est)
-  const usados = new Set(['ficha de curso', 'rendimiento del salón', 'attendance', 'detalle de notas', 'rúbricas'])
+  const usados = new Set(['course sheet', 'classroom performance', 'attendance', 'grade details', 'rubrics'])
   for (const [i, a] of datos.alumnos.entries()) await hojaAlumno(wb, logoId, datos, a, i, est, usados)
   hojaAsistencia(wb, logoId, datos)
   hojaDetalle(wb, logoId, datos)
