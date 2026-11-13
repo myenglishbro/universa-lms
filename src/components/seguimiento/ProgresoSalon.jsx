@@ -17,24 +17,24 @@ export default function ProgresoSalon({ progreso }) {
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-medium text-slate-900">
-          {total ? `${realizadas} de ${total} sesiones realizadas` : `${realizadas} sesiones realizadas`}
+          {total ? `${realizadas} of ${total} sessions held` : `${realizadas} sessions held`}
           {pct !== null && <span className="ml-2 text-brand-700">{pct}%</span>}
         </p>
         <p className="text-xs text-slate-500">
           {programadas} {programadas === 1 ? 'programada' : 'programadas'}
-          {porRegistrar > 0 && ` · ${porRegistrar} por registrar`}
+          {porRegistrar > 0 && ` · ${porRegistrar} to record`}
         </p>
       </div>
-      {total ? <div className="mt-2"><Barra valor={realizadas} total={total} etiqueta="Avance del salón" /></div> : <p className="mt-1 text-xs text-slate-400">Este salón aún no tiene un total de sesiones definido.</p>}
+      {total ? <div className="mt-2"><Barra valor={realizadas} total={total} etiqueta="Classroom progress" /></div> : <p className="mt-1 text-xs text-slate-400">This classroom has no total number of sessions defined yet.</p>}
       {ciclos.length > 0 && (
         <ul className="mt-3 space-y-2">
           {ciclos.map((c) => (
             <li key={c.ciclo}>
               <p className="flex justify-between text-xs text-slate-600">
-                <span>Ciclo {c.ciclo}</span>
+                <span>Cycle {c.ciclo}</span>
                 <span>{c.realizadas} de {c.sesiones} sesiones</span>
               </p>
-              <Barra valor={c.realizadas} total={c.sesiones} etiqueta={`Avance del ciclo ${c.ciclo}`} />
+              <Barra valor={c.realizadas} total={c.sesiones} etiqueta={`Progress of cycle ${c.ciclo}`} />
             </li>
           ))}
         </ul>

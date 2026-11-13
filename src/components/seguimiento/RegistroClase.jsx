@@ -55,26 +55,26 @@ function Formulario({ detalle, lecciones, onGuardar, onClose }) {
     <form onSubmit={enviar} className="space-y-5">
       {sesion.futura && (
         <p className="rounded-lg bg-peach-50 px-3 py-2 text-sm text-peach-700">
-          Esta clase es del {formatFecha(sesion.fecha)}: la estás registrando por adelantado. Seguirá como programada hasta que llegue su fecha.
+          This class is on {formatFecha(sesion.fecha)}: you are recording it in advance. It will stay as scheduled until its date arrives.
         </p>
       )}
       <section>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Asistencia</h3>
+          <h3 className="text-sm font-semibold text-slate-900">Attendance</h3>
           {detalle.alumnos.length > 0 && (
             <Button type="button" variant="ghost" className="px-2 py-1 text-xs" onClick={marcarTodos}>
-              Marcar todos presentes
+              Mark all present
             </Button>
           )}
         </div>
         {detalle.alumnos.length === 0 ? (
-          <p className="rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">No hay estudiantes matriculados en este salón para la fecha de la clase.</p>
+          <p className="rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">There are no students enrolled in this classroom for the date of the class.</p>
         ) : (
           <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
             {detalle.alumnos.map((a) => (
               <li key={a.alumno_id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                 <span className="text-sm font-medium text-slate-900">{a.nombre}</span>
-                <div className="flex gap-1" role="group" aria-label={`Asistencia de ${a.nombre}`}>
+                <div className="flex gap-1" role="group" aria-label={`Attendance of ${a.nombre}`}>
                   {ESTADOS_ASISTENCIA.map((o) => {
                     const activo = estados[a.alumno_id] === o.value
                     return (
@@ -100,10 +100,10 @@ function Formulario({ detalle, lecciones, onGuardar, onClose }) {
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-slate-900">Desarrollo de la clase</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Class development</h3>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700">Tema desarrollado</span>
-          <input className={inputClass} value={tema} maxLength={300} onChange={(e) => setTema(e.target.value)} placeholder="Ej.: Present simple, rutinas diarias" />
+          <span className="mb-1 block text-sm font-medium text-slate-700">Topic covered</span>
+          <input className={inputClass} value={tema} maxLength={300} onChange={(e) => setTema(e.target.value)} placeholder="E.g.: Present simple, daily routines" />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-slate-700">Observaciones (solo las ven docentes y administración)</span>
@@ -112,9 +112,9 @@ function Formulario({ detalle, lecciones, onGuardar, onClose }) {
       </section>
 
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-slate-900">Grabaciones y materiales de esta clase</h3>
+        <h3 className="mb-1 text-sm font-semibold text-slate-900">Recordings and materials for this class</h3>
         {lecciones.length === 0 ? (
-          <p className="text-xs text-slate-500">Aún no hay recursos publicados en el curso. Publícalos en «Recursos del curso» y vincúlalos aquí.</p>
+          <p className="text-xs text-slate-500">There are no resources published in the course yet. Publish them in “Course resources” and link them here.</p>
         ) : (
           <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
             {lecciones.map((l) => (
@@ -133,10 +133,10 @@ function Formulario({ detalle, lecciones, onGuardar, onClose }) {
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="secondary" onClick={onClose}>
-          Cancelar
+          Cancel
         </Button>
         <Button type="submit" disabled={guardando}>
-          {guardando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Guardar registro'}
+          {guardando ? 'Saving…' : editando ? 'Save changes' : 'Save record'}
         </Button>
       </div>
     </form>
@@ -155,12 +155,12 @@ export default function RegistroClase({ sesionId, salonId, titulo, onClose, onGu
   return (
     <Modal title={titulo} onClose={onClose} wide>
       {detalle.error ? (
-        <p className="text-sm text-red-600">No se pudo abrir la clase: {detalle.error}</p>
+        <p className="text-sm text-red-600">Could not open the class: {detalle.error}</p>
       ) : !listo ? (
-        <p className="py-6 text-center text-sm text-slate-500">Cargando…</p>
+        <p className="py-6 text-center text-sm text-slate-500">Loading…</p>
       ) : (
         <>
-          {contenido.error && <p className="mb-3 text-xs text-red-600">No se pudieron cargar los materiales: {contenido.error}</p>}
+          {contenido.error && <p className="mb-3 text-xs text-red-600">Could not load the materials: {contenido.error}</p>}
           <Formulario
             detalle={detalle.datos}
             lecciones={lecciones}

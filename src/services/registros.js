@@ -8,7 +8,7 @@ const rpc = async (nombre, args) => datos(await supabase.rpc(nombre, args))
 export async function registrarProfesor(v) {
   const { error } = await supabase.functions.invoke('registro-docente', { body: v })
   if (!error) return
-  if (error.context?.status === 404) throw new Error('El registro todavía no está disponible. Avisa a administración.')
+  if (error.context?.status === 404) throw new Error('Registration is not available yet. Let administration know.')
   let mensaje = ''
   if (typeof error.context?.json === 'function') {
     try {
@@ -17,7 +17,7 @@ export async function registrarProfesor(v) {
       /* respuesta sin cuerpo legible */
     }
   }
-  throw new Error(mensaje || 'No se pudo completar el registro. Revisa tu conexión e inténtalo de nuevo.')
+  throw new Error(mensaje || 'Could not complete the registration. Check your connection and try again.')
 }
 
 // ---- El propio profesor ----

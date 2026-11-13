@@ -3,10 +3,10 @@ export const CLAVE_MIN = 8
 
 // Devuelve el mensaje de error o '' si la contraseña es aceptable.
 export function validarClaveNueva(clave, correo = '') {
-  if (!clave || clave.length < CLAVE_MIN) return `Debe tener al menos ${CLAVE_MIN} caracteres`
-  if (clave.length > 72) return 'Es demasiado larga (máximo 72 caracteres)'
-  if (correo && clave.toLowerCase() === correo.toLowerCase()) return 'No puede ser igual al correo'
-  if (!/[A-Za-z]/.test(clave) || !/[0-9]/.test(clave)) return 'Debe combinar letras y números'
+  if (!clave || clave.length < CLAVE_MIN) return `Must be at least ${CLAVE_MIN} characters long`
+  if (clave.length > 72) return 'It is too long (maximum 72 characters)'
+  if (correo && clave.toLowerCase() === correo.toLowerCase()) return 'It cannot be the same as the email'
+  if (!/[A-Za-z]/.test(clave) || !/[0-9]/.test(clave)) return 'It must combine letters and numbers'
   return ''
 }
 

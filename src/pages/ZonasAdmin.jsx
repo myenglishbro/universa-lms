@@ -13,8 +13,8 @@ import { validarEnlace } from '../lib/recursos'
 import * as servicioReal from '../services/zonas'
 
 const ZONAS = [
-  { id: 'docentes', label: 'Teacher Zone', para: 'los docentes' },
-  { id: 'estudiantes', label: 'Student Zone', para: 'los estudiantes' },
+  { id: 'docentes', label: 'Teacher Zone', para: 'teachers' },
+  { id: 'estudiantes', label: 'Student Zone', para: 'students' },
 ]
 const CATEGORIAS = ['Reglamentos', 'Lineamientos', 'Formatos', 'Guías', 'Comunicados']
 
@@ -26,8 +26,8 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!v.titulo.trim()) return setError('Escribe el título')
-    const err = validarEnlace(v.url.trim(), 'enlace')
+    if (!v.titulo.trim()) return setError('Enter the title')
+    const err = validarEnlace(v.url.trim(), 'link')
     if (err) return setError(err)
     setGuardando(true)
     setError('')
@@ -40,11 +40,11 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
   }
 
   return (
-    <Modal title={doc ? 'Editar documento' : 'Agregar documento'} onClose={onClose}>
+    <Modal title={doc ? 'Edit document' : 'Add document'} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
-        <Field label="Título" name="titulo" value={v.titulo} onChange={cambiar} placeholder="Ej.: Reglamento interno 2027" autoFocus required />
+        <Field label="Title" name="titulo" value={v.titulo} onChange={cambiar} placeholder="E.g.: Internal regulations 2027" autoFocus required />
         <div>
-          <Field label="Categoría" name="categoria" value={v.categoria} onChange={cambiar} list="categorias-zona" placeholder="Ej.: Reglamentos" />
+          <Field label="Category" name="categoria" value={v.categoria} onChange={cambiar} list="categorias-zona" placeholder="E.g.: Regulations" />
           <datalist id="categorias-zona">
             {[...new Set([...CATEGORIAS, ...categorias])].map((c) => (
               <option key={c} value={c} />
@@ -52,17 +52,17 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
           </datalist>
         </div>
         <Field
-          label="Enlace del documento"
+          label="Document link"
           name="url"
           type="url"
           inputMode="url"
           value={v.url}
           onChange={cambiar}
           placeholder="https://drive.google.com/file/d/…"
-          hint="En Drive: clic derecho en el PDF → Compartir → «Cualquier persona con el enlace» → Copiar enlace."
+          hint="In Drive: right-click the PDF → Share → “Anyone with the link” → Copy link."
           required
         />
-        <Field label="Descripción (opcional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
+        <Field label="Description (optional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={v.oculto} onChange={(e) => setV({ ...v, oculto: e.target.checked })} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
           Ocultar por ahora (nadie lo verá hasta que lo muestres)
@@ -70,10 +70,10 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : doc ? 'Guardar cambios' : 'Publicar'}
+            {guardando ? 'Saving…' : doc ? 'Save changes' : 'Publish'}
           </Button>
         </div>
       </form>
@@ -114,20 +114,20 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
     <>
       <PageHeader
         title="Teacher & Student Zone"
-        description="Los documentos que publicas aquí aparecen en el portal de docentes y de estudiantes"
+        description="The documents you publish here appear in the teacher and student portals"
         action={
           <Button onClick={() => setForm({ doc: null })}>
-            <Icon name="plus" className="h-4 w-4" /> Agregar documento
+            <Icon name="plus" className="h-4 w-4" /> Add document
           </Button>
         }
       />
 
-      <Ayuda id="zonas" titulo="¿Cómo funciona?">
+      <Ayuda id="zonas" titulo="How does it work?">
         <p>
-          Sube tus PDF a <strong>Google Drive</strong>, compártelos con «Cualquier persona con el enlace» y pega el enlace aquí. Cada persona los lee dentro de la plataforma, ordenados por categoría.
+          Upload your PDFs to <strong>Google Drive</strong>, share them with “Anyone with the link” and paste the link here. Each person reads them inside the platform, sorted by category.
         </p>
         <p className="text-slate-600">
-          <strong>Teacher Zone</strong> la ven solo los docentes; <strong>Student Zone</strong>, solo los estudiantes. Si no quieres que un documento se vea todavía, márcalo como oculto.
+          <strong>Teacher Zone</strong> is seen only by teachers; <strong>Student Zone</strong>, only by students. If you do not want a document to be visible yet, mark it as hidden.
         </p>
       </Ayuda>
 
@@ -136,16 +136,16 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
       <div className="pt-6">
         {fallo && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
         {cargando ? (
-          <p className="py-10 text-center text-sm text-slate-500">Cargando…</p>
+          <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
         ) : error ? (
-          <p className="py-10 text-center text-sm text-red-600">No se pudieron cargar los documentos: {error}</p>
+          <p className="py-10 text-center text-sm text-red-600">Could not load the documents: {error}</p>
         ) : datos.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-12 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
               <Icon name="doc" className="h-6 w-6" />
             </span>
-            <p className="mt-3 font-medium text-slate-900">Aún no hay documentos para {info.para}</p>
-            <p className="mt-1 text-sm text-slate-500">Agrega el primero con «Agregar documento».</p>
+            <p className="mt-3 font-medium text-slate-900">There are no documents for {info.para} yet</p>
+            <p className="mt-1 text-sm text-slate-500">Add the first one with “Add document”.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -166,17 +166,17 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
                       </div>
                       <div className="flex flex-wrap items-center gap-1">
                         <a href={d.url} target="_blank" rel="noopener noreferrer" className="rounded-full px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50">
-                          Abrir
+                          Open
                         </a>
                         <Button variant="ghost" className="px-3 py-1" onClick={() => accion(() => servicio.guardarDocumento(d.id, { ...d, descripcion: d.descripcion ?? '', oculto: !d.oculto }))}>
-                          {d.oculto ? 'Mostrar' : 'Ocultar'}
+                          {d.oculto ? 'Show' : 'Hide'}
                         </Button>
                         <Button variant="ghost" className="px-3 py-1" onClick={() => setForm({ doc: d })}>
-                          Editar
+                          Edit
                         </Button>
                         {borrando === d.id ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-sm text-rose-700">
-                            ¿Eliminar?
+                            Delete?
                             <button type="button" className="rounded px-2 font-semibold hover:bg-rose-100" onClick={() => (setBorrando(null), accion(() => servicio.eliminarDocumento(d.id)))}>
                               Sí
                             </button>
@@ -185,7 +185,7 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
                             </button>
                           </span>
                         ) : (
-                          <button type="button" aria-label={`Eliminar ${d.titulo}`} onClick={() => setBorrando(d.id)} className="rounded-full p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+                          <button type="button" aria-label={`Delete ${d.titulo}`} onClick={() => setBorrando(d.id)} className="rounded-full p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600">
                             <Icon name="trash" className="h-4 w-4" />
                           </button>
                         )}

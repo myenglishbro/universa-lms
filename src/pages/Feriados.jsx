@@ -67,26 +67,26 @@ export default function Feriados({ puedeEditar, onCambio }) {
 
   return (
     <>
-      <PageHeader title="Feriados" description="Días no laborables que el calendario académico omite al programar sesiones" />
+      <PageHeader title="Holidays" description="Non-working days the academic calendar skips when scheduling sessions" />
 
       {puedeEditar && (
         <Card className="mb-6 p-4">
           <form onSubmit={agregar} className="flex flex-wrap items-end gap-3">
-            <Field label="Fecha" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
-            <Field label="Nombre" className="min-w-56 flex-1" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+            <Field label="Date" type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required />
+            <Field label="Name" className="min-w-56 flex-1" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
             <Button type="submit" disabled={guardando}>
-              {guardando ? 'Guardando…' : 'Agregar feriado'}
+              {guardando ? 'Saving…' : 'Add holiday'}
             </Button>
           </form>
           <p className="mt-3 text-xs text-slate-500">
-            Al agregar o quitar un feriado se recalculan las sesiones futuras regulares de los calendarios existentes.
+            Adding or removing a holiday recalculates the future regular sessions of existing calendars.
           </p>
         </Card>
       )}
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       {cargando ? (
-        <p className="text-sm text-slate-500">Cargando feriados…</p>
+        <p className="text-sm text-slate-500">Loading holidays…</p>
       ) : (
         porAnio.map(([anio, lista]) => (
           <Card key={anio} className="mb-4">
@@ -103,7 +103,7 @@ export default function Feriados({ puedeEditar, onCambio }) {
                     (confirmar === f.fecha ? (
                       <span className="flex gap-1">
                         <Button variant="ghost" className="px-2 py-1" onClick={() => quitar(f.fecha)} disabled={guardando}>
-                          Confirmar
+                          Confirm
                         </Button>
                         <Button variant="ghost" className="px-2 py-1 !text-slate-500" onClick={() => setConfirmar(null)}>
                           No
@@ -111,7 +111,7 @@ export default function Feriados({ puedeEditar, onCambio }) {
                       </span>
                     ) : (
                       <Button variant="ghost" className="px-2 py-1" onClick={() => setConfirmar(f.fecha)}>
-                        Quitar
+                        Remove
                       </Button>
                     ))}
                 </li>
@@ -120,7 +120,7 @@ export default function Feriados({ puedeEditar, onCambio }) {
           </Card>
         ))
       )}
-      {!cargando && feriados.length === 0 && <p className="text-sm text-slate-500">No hay feriados registrados.</p>}
+      {!cargando && feriados.length === 0 && <p className="text-sm text-slate-500">No holidays registered.</p>}
     </>
   )
 }

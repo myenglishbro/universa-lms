@@ -3,12 +3,12 @@
 export function fallo(error) {
   let mensaje = error.message
   if (error.code === '23505') {
-    if (mensaje.includes('salones_codigo_unico')) mensaje = 'Ya existe un salón con este código'
-    else if (mensaje.includes('docentes')) mensaje = 'Ya existe un docente con ese nombre'
-    else if (mensaje.includes('frecuencias_nombre_unico')) mensaje = 'Ya existe una frecuencia con ese nombre en este formato'
-    else mensaje = 'Ya existe un registro con esos datos'
+    if (mensaje.includes('salones_codigo_unico')) mensaje = 'A classroom with this code already exists'
+    else if (mensaje.includes('docentes')) mensaje = 'A teacher with that name already exists'
+    else if (mensaje.includes('frecuencias_nombre_unico')) mensaje = 'A frequency with that name already exists in this format'
+    else mensaje = 'A record with those details already exists'
   } else if (error.code === '42501') {
-    mensaje = 'No tienes permisos para realizar esta acción'
+    mensaje = 'You do not have permission to perform this action'
   }
   return Object.assign(new Error(mensaje), { code: error.code })
 }

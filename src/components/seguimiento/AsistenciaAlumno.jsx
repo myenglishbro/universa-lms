@@ -10,13 +10,13 @@ export default function AsistenciaAlumno({ alumnoId, servicio = asistenciaReal }
   const { datos, cargando, error } = useCarga(cargar, [])
   return (
     <Card className="mt-6 p-6">
-      <h2 className="mb-3 text-base font-semibold text-slate-900">Asistencia</h2>
+      <h2 className="mb-3 text-base font-semibold text-slate-900">Attendance</h2>
       {error ? (
-        <p className="text-sm text-red-600">No se pudo cargar la asistencia: {error}</p>
+        <p className="text-sm text-red-600">Could not load attendance: {error}</p>
       ) : cargando ? (
-        <p className="text-sm text-slate-400">Cargando…</p>
+        <p className="text-sm text-slate-400">Loading…</p>
       ) : datos.length === 0 ? (
-        <p className="text-sm text-slate-400">Sin salones grupales: no hay asistencia que mostrar.</p>
+        <p className="text-sm text-slate-400">No group classrooms: there is no attendance to show.</p>
       ) : (
         <ul className="divide-y divide-slate-100">
           {datos.map((s) => (

@@ -2,10 +2,10 @@
 // La validación definitiva la hace Supabase (curso_proveedor); aquí se da respuesta inmediata y se calcula el reproductor.
 
 export const tiposRecurso = [
-  { value: 'grabacion', label: 'Grabación de clase', ayuda: 'YouTube, Vimeo o Google Drive' },
+  { value: 'grabacion', label: 'Class recording', ayuda: 'YouTube, Vimeo o Google Drive' },
   { value: 'video', label: 'Video', ayuda: 'YouTube, Vimeo o Google Drive' },
-  { value: 'documento', label: 'Documento / PDF', ayuda: 'Google Drive, Docs o Slides' },
-  { value: 'enlace', label: 'Enlace complementario', ayuda: 'Cualquier enlace https' },
+  { value: 'documento', label: 'Documento / PDF', ayuda: 'Google Drive, Docs or Slides' },
+  { value: 'enlace', label: 'Supplementary link', ayuda: 'Any https link' },
 ]
 export const tipoLabel = (v) => tiposRecurso.find((t) => t.value === v)?.label ?? v
 
@@ -24,9 +24,9 @@ export function proveedorDe(url) {
 // Mensaje de error o '' si el enlace es aceptable para ese tipo de recurso.
 export function validarEnlace(url, tipo) {
   const prov = proveedorDe(url)
-  if (!prov) return 'El enlace debe comenzar con https:// y no puede tener espacios'
-  if ((tipo === 'grabacion' || tipo === 'video') && prov === 'externo') return 'Los videos y grabaciones deben ser enlaces de YouTube, Vimeo o Google Drive'
-  if (tipo === 'documento' && prov !== 'drive') return 'Los documentos deben ser enlaces de Google Drive (Drive, Docs o Slides)'
+  if (!prov) return 'The link must start with https:// and cannot contain spaces'
+  if ((tipo === 'grabacion' || tipo === 'video') && prov === 'externo') return 'Videos and recordings must be YouTube, Vimeo or Google Drive links'
+  if (tipo === 'documento' && prov !== 'drive') return 'Documents must be Google Drive links (Drive, Docs or Slides)'
   return ''
 }
 
@@ -113,7 +113,7 @@ export function moverId(ids, id, delta) {
 
 const DIAS = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 export const horariosTexto = (horarios) =>
-  (horarios ?? []).map((h) => `${DIAS[h.dia]} ${h.hora_inicio.slice(0, 5)}–${h.hora_fin.slice(0, 5)}`).join(' · ') || 'Horario por definir'
+  (horarios ?? []).map((h) => `${DIAS[h.dia]} ${h.hora_inicio.slice(0, 5)}–${h.hora_fin.slice(0, 5)}`).join(' · ') || 'Schedule to be defined'
 
 // Color estable para la portada de cada curso (mismo salón, mismo color).
 const PORTADAS = ['from-brand-600 to-brand-800', 'from-brand-500 to-peach-500', 'from-peach-500 to-brand-700', 'from-brand-700 to-slate-800', 'from-teal-600 to-brand-700']

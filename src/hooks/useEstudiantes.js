@@ -18,8 +18,8 @@ export default function useEstudiantes(api = apiReal, activo = true) {
           if (e.status === 'fulfilled') setEstudiantes(e.value)
           if (m.status === 'fulfilled') setMatriculas(m.value)
           const fallos = []
-          if (e.status === 'rejected') fallos.push(`estudiantes: ${e.reason?.message ?? e.reason}`)
-          if (m.status === 'rejected') fallos.push(`matrículas: ${m.reason?.message ?? m.reason}`)
+          if (e.status === 'rejected') fallos.push(`students: ${e.reason?.message ?? e.reason}`)
+          if (m.status === 'rejected') fallos.push(`enrollments: ${m.reason?.message ?? m.reason}`)
           setError(fallos.join(' · '))
         })
         .finally(() => setCargando(false))

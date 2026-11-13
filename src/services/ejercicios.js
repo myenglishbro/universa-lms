@@ -69,11 +69,11 @@ export const entregarEjercicio = (asignacionId, respuestas, audioPath = null) =>
 export async function subirAudio(asignacionId, blob) {
   const { data } = await supabase.auth.getUser()
   const uid = data?.user?.id
-  if (!uid) throw new Error('Tu sesión expiró; vuelve a ingresar')
+  if (!uid) throw new Error('Your session expired; sign in again')
   const ext = blob.type.includes('mp4') ? 'm4a' : blob.type.includes('ogg') ? 'ogg' : 'webm'
   const ruta = `${asignacionId}/${uid}/${Date.now()}.${ext}`
   const { error } = await supabase.storage.from(BUCKET).upload(ruta, blob, { contentType: blob.type || 'audio/webm', upsert: false })
-  if (error) throw new Error(`No se pudo subir tu grabación: ${error.message}`)
+  if (error) throw new Error(`Could not upload your recording: ${error.message}`)
   return ruta
 }
 export async function urlAudio(ruta) {

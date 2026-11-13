@@ -9,7 +9,7 @@ import PageHeader from '../components/ui/PageHeader'
 import { estadoFrecuencia, estructuraTexto, formatoLabel, formatos, horasSemanaTexto, textoDuracion } from '../lib/frecuencias'
 import { activarFrecuencia, guardarFrecuencia } from '../services/frecuencias'
 
-const estadoBadge = { activa: ['brand', 'Activa'], inactiva: ['slate', 'Inactiva'], pendiente: ['peach', 'Pendiente'] }
+const estadoBadge = { activa: ['brand', 'Active'], inactiva: ['slate', 'Inactive'], pendiente: ['peach', 'Pending'] }
 
 // Administración de frecuencias de clase (solo administradores): listar, agregar, editar, activar y desactivar.
 // Usa el catálogo ya cargado por la aplicación; tras cada cambio lo recarga para que «Nuevo salón» lo vea.
@@ -48,29 +48,29 @@ export default function Frecuencias({ catalogo, salones, onCambio }) {
     <>
       <PageHeader
         title="Frecuencias"
-        description="Clases por semana y duración de cada clase, según Coordinación Académica"
+        description="Classes per week and length of each class, per Academic Coordination"
         action={
           <Button onClick={() => setForm({ frecuencia: null })} disabled={cargando || Boolean(errorFrecuencias)}>
-            <Icon name="plus" className="h-4 w-4" /> Nueva frecuencia
+            <Icon name="plus" className="h-4 w-4" /> New frequency
           </Button>
         }
       />
 
       <Card>
         <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
-          <select value={formato} onChange={(e) => setFormato(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar por formato">
-            <option value="">Todos los formatos</option>
+          <select value={formato} onChange={(e) => setFormato(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter by format">
+            <option value="">All formats</option>
             {formatos.map((f) => (
               <option key={f.value} value={f.value}>
                 {f.label}
               </option>
             ))}
           </select>
-          <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar por estado">
-            <option value="">Todos los estados</option>
-            <option value="activa">Activas</option>
-            <option value="inactiva">Inactivas</option>
-            <option value="pendiente">Pendientes</option>
+          <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="activa">Active</option>
+            <option value="inactiva">Inactive</option>
+            <option value="pendiente">Pending</option>
           </select>
           <p className="text-xs text-slate-500">
             Los salones usan frecuencias grupales activas. La duración teórica (horas del nivel ÷ horas por semana) no es una fecha de finalización.
@@ -79,11 +79,11 @@ export default function Frecuencias({ catalogo, salones, onCambio }) {
         {error && <p className="px-4 pt-3 text-sm text-red-600">{error}</p>}
 
         {cargando ? (
-          <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando frecuencias…</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">Loading frequencies…</p>
         ) : errorFrecuencias ? (
-          <p className="px-4 py-10 text-center text-sm text-red-600">No se pudieron cargar las frecuencias: {errorFrecuencias}</p>
+          <p className="px-4 py-10 text-center text-sm text-red-600">Could not load the frequencies: {errorFrecuencias}</p>
         ) : visibles.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-slate-500">Ninguna frecuencia coincide con los filtros.</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">No frequency matches the filters.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -91,9 +91,9 @@ export default function Frecuencias({ catalogo, salones, onCambio }) {
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Frecuencia</th>
                   <th className="px-4 py-2.5 font-medium">Formato</th>
-                  <th className="px-4 py-2.5 font-medium">Clases</th>
-                  <th className="px-4 py-2.5 font-medium">Duración teórica</th>
-                  <th className="px-4 py-2.5 font-medium">Salones</th>
+                  <th className="px-4 py-2.5 font-medium">Classes</th>
+                  <th className="px-4 py-2.5 font-medium">Theoretical duration</th>
+                  <th className="px-4 py-2.5 font-medium">Classrooms</th>
                   <th className="px-4 py-2.5 font-medium">Estado</th>
                   <th className="px-4 py-2.5" />
                 </tr>
@@ -122,13 +122,13 @@ export default function Frecuencias({ catalogo, salones, onCambio }) {
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-right">
                         <Button variant="ghost" className="px-2 py-1" onClick={() => setForm({ frecuencia: f })}>
-                          Editar
+                          Edit
                         </Button>
                         <Button
                           variant="ghost"
                           className="px-2 py-1"
                           disabled={ocupada === f.id || (est === 'pendiente')}
-                          title={est === 'pendiente' ? 'Edítala y márcala como confirmada para poder activarla' : undefined}
+                          title={est === 'pendiente' ? 'Edit it and mark it as confirmed to be able to activate it' : undefined}
                           onClick={() => alternar(f)}
                         >
                           {f.activa ? 'Desactivar' : 'Activar'}

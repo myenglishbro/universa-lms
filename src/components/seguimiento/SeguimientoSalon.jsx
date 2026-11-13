@@ -35,30 +35,30 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
   return (
     <div className="space-y-6">
       <Card className="p-5">
-        <h2 className="mb-3 text-base font-semibold text-slate-900">Avance del salón</h2>
+        <h2 className="mb-3 text-base font-semibold text-slate-900">Classroom progress</h2>
         {progreso.error ? (
-          <p className="text-sm text-red-600">No se pudo cargar el avance: {progreso.error}</p>
+          <p className="text-sm text-red-600">Could not load progress: {progreso.error}</p>
         ) : progreso.datos ? (
           <ProgresoSalon progreso={progreso.datos} />
         ) : (
-          <p className="text-sm text-slate-400">Cargando…</p>
+          <p className="text-sm text-slate-400">Loading…</p>
         )}
       </Card>
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">Clases</h2>
+          <h2 className="text-base font-semibold text-slate-900">Classes</h2>
           <div className="flex flex-wrap gap-1.5">
-            {pendientes > 0 && <Badge color="peach">{pendientes} sin asistencia</Badge>}
-            {clases.datos.filter(sinGrabacion).length > 0 && <Badge color="peach">{clases.datos.filter(sinGrabacion).length} sin grabación</Badge>}
+            {pendientes > 0 && <Badge color="peach">{pendientes} without attendance</Badge>}
+            {clases.datos.filter(sinGrabacion).length > 0 && <Badge color="peach">{clases.datos.filter(sinGrabacion).length} without recording</Badge>}
           </div>
         </div>
         {clases.error ? (
-          <p className="px-4 py-6 text-sm text-red-600">No se pudieron cargar las clases: {clases.error}</p>
+          <p className="px-4 py-6 text-sm text-red-600">Could not load the classes: {clases.error}</p>
         ) : clases.cargando ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-500">Cargando…</p>
+          <p className="px-4 py-6 text-center text-sm text-slate-500">Loading…</p>
         ) : clases.datos.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-400">Este salón aún no tiene sesiones en el calendario.</p>
+          <p className="px-4 py-6 text-center text-sm text-slate-400">This classroom has no sessions in the calendar yet.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {clases.datos.map((c) => {
@@ -67,25 +67,25 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
                 <li key={c.sesion_id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-900">
-                      Clase {c.numero} · {formatFecha(c.fecha)} · {hora(c.hora_inicio)}–{hora(c.hora_fin)}{' '}
+                      Class {c.numero} · {formatFecha(c.fecha)} · {hora(c.hora_inicio)}–{hora(c.hora_fin)}{' '}
                       <Badge color={r.color}>{r.label}</Badge>
-                      {sinGrabacion(c) && <span className="ml-1"><Badge color="peach">Sin grabación</Badge></span>}
-                      {c.tipo === 'recuperacion' && <span className="ml-1"><Badge color="slate">Recuperación</Badge></span>}
+                      {sinGrabacion(c) && <span className="ml-1"><Badge color="peach">No recording</Badge></span>}
+                      {c.tipo === 'recuperacion' && <span className="ml-1"><Badge color="slate">Make-up</Badge></span>}
                     </p>
                     {c.estado_registro === 'registrada' ? (
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {c.tema ? `${c.tema} · ` : 'Sin tema · '}
+                        {c.tema ? `${c.tema} · ` : 'No topic · '}
                         {c.presentes} presentes · {c.ausentes} ausentes
                         {c.tardanzas > 0 && ` · ${c.tardanzas} tardanzas`}
                         {c.justificados > 0 && ` · ${c.justificados} justificados`}
                       </p>
                     ) : (
-                      c.estado_registro === 'pendiente' && <p className="mt-0.5 text-xs text-slate-500">Ya ocurrió: falta registrar asistencia y tema.</p>
+                      c.estado_registro === 'pendiente' && <p className="mt-0.5 text-xs text-slate-500">It already took place: attendance and topic still need to be recorded.</p>
                     )}
                   </div>
                   {c.estado_registro !== 'proxima' && (
                     <Button variant={c.estado_registro === 'pendiente' ? 'primary' : 'secondary'} className="px-3 py-1.5" onClick={() => setAbierta(c)}>
-                      {c.estado_registro === 'pendiente' ? 'Registrar clase' : 'Ver / corregir'}
+                      {c.estado_registro === 'pendiente' ? 'Record class' : 'View / edit'}
                     </Button>
                   )}
                 </li>
@@ -97,29 +97,29 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
 
       <Card>
         <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">Asistencia por estudiante</h2>
+          <h2 className="text-base font-semibold text-slate-900">Attendance by student</h2>
         </div>
         {resumen.error ? (
-          <p className="px-4 py-6 text-sm text-red-600">No se pudo cargar el resumen: {resumen.error}</p>
+          <p className="px-4 py-6 text-sm text-red-600">Could not load the summary: {resumen.error}</p>
         ) : resumen.datos.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-400">Todavía no hay estudiantes ni asistencia registrada.</p>
+          <p className="px-4 py-6 text-center text-sm text-slate-400">There are no students or recorded attendance yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="px-4 py-2">Estudiante</th>
-                  <th className="px-2 py-2 text-center">Presente</th>
-                  <th className="px-2 py-2 text-center">Ausente</th>
-                  <th className="px-2 py-2 text-center">Tardanza</th>
-                  <th className="px-2 py-2 text-center">Justificado</th>
+                  <th className="px-4 py-2">Student</th>
+                  <th className="px-2 py-2 text-center">Present</th>
+                  <th className="px-2 py-2 text-center">Absent</th>
+                  <th className="px-2 py-2 text-center">Late</th>
+                  <th className="px-2 py-2 text-center">Excused</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {resumen.datos.map((a) => (
                   <tr key={a.alumno_id}>
                     <td className="px-4 py-2 font-medium text-slate-900">
-                      {a.nombre} {!a.matriculado && <Badge color="slate">Retirado</Badge>}
+                      {a.nombre} {!a.matriculado && <Badge color="slate">Withdrawn</Badge>}
                     </td>
                     <td className="px-2 py-2 text-center">{a.presentes}</td>
                     <td className="px-2 py-2 text-center">{a.ausentes}</td>
@@ -137,7 +137,7 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
         <RegistroClase
           sesionId={abierta.sesion_id}
           salonId={salonId}
-          titulo={`Clase ${abierta.numero} · ${formatFecha(abierta.fecha)}`}
+          titulo={`Class ${abierta.numero} · ${formatFecha(abierta.fecha)}`}
           servicio={servicio}
           portal={portal}
           onClose={() => setAbierta(null)}

@@ -57,6 +57,6 @@ export async function marcarLeccion(salonId, leccionId, vista) {
   try {
     localStorage.setItem(k, JSON.stringify([...ids]))
   } catch {
-    throw new Error('Tu navegador no permite guardar el avance (modo privado o almacenamiento bloqueado).')
+    throw new Error('Your browser does not allow saving your progress (private mode or blocked storage).')
   }
 }

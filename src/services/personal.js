@@ -8,7 +8,7 @@ export const listarPersonal = async () => datos(await supabase.rpc('admin_person
 async function invocar(body) {
   const { data, error } = await supabase.functions.invoke('gestionar-acceso', { body })
   if (!error) return data
-  if (error.context?.status === 404) throw new Error('La función «gestionar-acceso» no está desplegada. Despliégala con: supabase functions deploy gestionar-acceso')
+  if (error.context?.status === 404) throw new Error('The “gestionar-acceso” function is not deployed. Deploy it with: supabase functions deploy gestionar-acceso')
   if (typeof error.context?.json === 'function') {
     try {
       const j = await error.context.json()
@@ -17,7 +17,7 @@ async function invocar(body) {
       if (e instanceof Error && e.message) throw e
     }
   }
-  throw new Error('No se pudo contactar la función «gestionar-acceso». Verifica que esté desplegada.')
+  throw new Error('Could not reach the “gestionar-acceso” function. Check that it is deployed.')
 }
 
 export const crearPersonal = ({ correo, password, rol }) => invocar({ accion: 'personal_crear', correo, password, rol })

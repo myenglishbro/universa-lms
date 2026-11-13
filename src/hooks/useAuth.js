@@ -52,7 +52,7 @@ export default function useAuth() {
 
   const signIn = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw new Error(error.code === 'invalid_credentials' ? 'Correo o contraseña incorrectos' : error.message)
+    if (error) throw new Error(error.code === 'invalid_credentials' ? 'Incorrect email or password' : error.message)
   }
 
   const signOut = () => supabase.auth.signOut()

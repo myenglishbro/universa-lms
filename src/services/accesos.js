@@ -5,7 +5,7 @@ export { cuentasDePersona, desvincularCuenta, vincularCuenta } from './portal'
 // quien usa la API administrativa de Supabase Auth. React solo envía la petición con la sesión del administrador.
 async function traducir(error) {
   if (error.context?.status === 404) {
-    return new Error('La función «gestionar-acceso» no está desplegada en Supabase. Despliégala con: supabase functions deploy gestionar-acceso')
+    return new Error('The “gestionar-acceso” function is not deployed in Supabase. Deploy it with: supabase functions deploy gestionar-acceso')
   }
   if (typeof error.context?.json === 'function') {
     try {
@@ -16,7 +16,7 @@ async function traducir(error) {
     }
   }
   if (error.name === 'FunctionsFetchError' || error.name === 'FunctionsRelayError') {
-    return new Error('No se pudo contactar la función «gestionar-acceso». Verifica que esté desplegada.')
+    return new Error('Could not reach the “gestionar-acceso” function. Check that it is deployed.')
   }
   return new Error(error.message)
 }

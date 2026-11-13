@@ -55,10 +55,10 @@ export default function FrecuenciaForm({ frecuencia, modalidades, intensidades, 
   }
 
   return (
-    <Modal wide title={frecuencia ? 'Editar frecuencia' : 'Nueva frecuencia'} onClose={onClose}>
+    <Modal wide title={frecuencia ? 'Edit frequency' : 'New frequency'} onClose={onClose}>
       <form onSubmit={guardar} className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nombre" name="nombre" value={v.nombre} onChange={cambiar} required hint="Ej.: Diario 3, Interdiario 6" />
+          <Field label="Name" name="nombre" value={v.nombre} onChange={cambiar} required hint="E.g.: Daily 3, Alternate days 6" />
           <Field label="Formato" name="formato" value={v.formato} onChange={cambiar} options={formatos} />
           <div>
             <Field label="Intensidad" name="intensidad" value={v.intensidad} onChange={cambiar} list="intensidades" />
@@ -68,25 +68,25 @@ export default function FrecuenciaForm({ frecuencia, modalidades, intensidades, 
               ))}
             </datalist>
           </div>
-          <Field label="Clases por semana" name="clases" type="number" min="1" max="7" step="1" value={v.clases} onChange={cambiarClases} />
+          <Field label="Classes per week" name="clases" type="number" min="1" max="7" step="1" value={v.clases} onChange={cambiarClases} />
         </div>
 
         <div>
           <p className="mb-1 text-sm font-medium text-slate-700">Duración de cada clase (minutos)</p>
           {v.minutos.length === 0 ? (
-            <p className="text-xs text-slate-500">Indica las clases por semana para definir la duración de cada una.</p>
+            <p className="text-xs text-slate-500">Enter the classes per week to define the length of each one.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {v.minutos.map((m, i) => (
                 <label key={i} className="text-xs text-slate-500">
-                  Clase {i + 1}
+                  Class {i + 1}
                   <input type="number" min="1" step="5" value={m} onChange={(e) => cambiarMinutos(i, e.target.value)} className={`${inputClass} mt-0.5 w-24`} required />
                 </label>
               ))}
             </div>
           )}
           <p className="mt-1 text-xs text-slate-500">
-            {completa ? `Total: ${horasSemanaTexto({ horasSemana: horas })}. ` : ''}Las clases pueden tener distinta duración (p. ej. 120, 120 y 60).
+            {completa ? `Total: ${horasSemanaTexto({ horasSemana: horas })}. ` : ''}Classes can have different lengths (e.g. 120, 120 and 60).
           </p>
         </div>
 
@@ -110,11 +110,11 @@ export default function FrecuenciaForm({ frecuencia, modalidades, intensidades, 
                 </button>
               ))}
             </div>
-            <p className="mt-1 text-xs text-slate-500">Márcalos solo si Coordinación los define. Si no, el salón puede usar cualquier día. Un horario distinto solo genera un aviso.</p>
+            <p className="mt-1 text-xs text-slate-500">Mark them only if Coordination defines them. Otherwise, the classroom can use any day. A different schedule only raises a warning.</p>
           </fieldset>
 
           <fieldset>
-            <legend className="mb-1 text-sm font-medium text-slate-700">Modalidades compatibles</legend>
+            <legend className="mb-1 text-sm font-medium text-slate-700">Compatible modalities</legend>
             <div className="space-y-1">
               {modalidades.map((m) => (
                 <label key={m.id} className="flex items-center gap-2 text-sm text-slate-700">
@@ -123,31 +123,31 @@ export default function FrecuenciaForm({ frecuencia, modalidades, intensidades, 
                 </label>
               ))}
             </div>
-            <p className="mt-1 text-xs text-slate-500">Define con qué modalidad se ofrece y para cuál se calcula la duración teórica.</p>
+            <p className="mt-1 text-xs text-slate-500">Defines which modality it is offered with and for which the theoretical duration is calculated.</p>
           </fieldset>
         </div>
 
         <div className="space-y-2 rounded-lg bg-slate-50 px-3 py-2">
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={confirmada} onChange={(e) => setV({ ...v, estado: e.target.checked ? 'confirmado' : 'pendiente', activa: e.target.checked ? v.activa : false })} />
-            Confirmada por Coordinación
+            Confirmed by Coordination
           </label>
           <label className={`flex items-center gap-2 text-sm ${confirmada ? 'text-slate-700' : 'text-slate-400'}`}>
             <input type="checkbox" checked={v.activa && confirmada} disabled={!confirmada} onChange={(e) => setV({ ...v, activa: e.target.checked })} />
             Activa (disponible al crear salones)
           </label>
-          {!confirmada && <p className="text-xs text-slate-500">Una frecuencia pendiente no puede estar activa.</p>}
+          {!confirmada && <p className="text-xs text-slate-500">A pending frequency cannot be active.</p>}
         </div>
 
-        <Field label="Notas" name="notas" as="textarea" rows="2" value={v.notas} onChange={cambiar} />
+        <Field label="Notes" name="notas" as="textarea" rows="2" value={v.notas} onChange={cambiar} />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : frecuencia ? 'Guardar cambios' : 'Crear frecuencia'}
+            {guardando ? 'Saving…' : frecuencia ? 'Save changes' : 'Create frequency'}
           </Button>
         </div>
       </form>
