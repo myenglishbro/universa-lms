@@ -72,3 +72,10 @@ export const registrarRemedial = (salonId, { alumnoId, ambito, moduloId, ciclo, 
 // ---- Estudiante ----
 export const informeAlumno = (salonId, alumnoId) => rpc('informe_alumno', { p_salon: salonId, p_alumno: alumnoId })
 export const misCalificaciones = (salonId) => rpc('portal_mis_calificaciones', { p_salon: salonId })
+
+// Nivel MCER (p. ej. «A2.2 – B1.1») de un nivel académico, por su nombre; null si no se encuentra.
+export const mcerDeNivel = async (nombre) => {
+  if (!nombre) return null
+  const { data } = await supabase.from('niveles').select('mcer').eq('nombre', nombre).maybeSingle()
+  return data?.mcer ?? null
+}

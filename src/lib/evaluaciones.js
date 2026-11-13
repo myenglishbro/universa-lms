@@ -49,6 +49,53 @@ export function notaRubrica(criterios, valores) {
   return Math.round((suma / max) * 10000) / 100
 }
 
+// Criterios agrupados para el formulario. Los criterios cuyo nombre empieza igual antes de « · » (p. ej. «Discourse Fluency & Pronunciation · Fluency» y
+// «Discourse Fluency & Pronunciation · Pronunciation») forman un grupo con subtotal; el resto va suelto. Devuelve [{ grupo, items, max }].
+export function agruparCriterios(criterios = []) {
+  const prefijo = (c) => (String(c.nombre).includes(' · ') ? String(c.nombre).split(' · ')[0] : null)
+  const cuenta = {}
+  for (const c of criterios) if (prefijo(c)) cuenta[prefijo(c)] = (cuenta[prefijo(c)] ?? 0) + 1
+  const grupos = []
+  for (const c of criterios) {
+    const g = prefijo(c) && cuenta[prefijo(c)] > 1 ? prefijo(c) : null
+    const ultimo = grupos[grupos.length - 1]
+    if (g && ultimo?.grupo === g) ultimo.items.push(c)
+    else grupos.push({ grupo: g, items: [c] })
+  }
+  return grupos.map((x) => ({ ...x, max: x.items.reduce((s, c) => s + Number(c.max_puntaje), 0) }))
+}
+
+// Nombre corto de un criterio dentro de su grupo: «Discourse Fluency & Pronunciation · Fluency» → «Fluency».
+export const nombreEnGrupo = (c, grupo) => (grupo && String(c.nombre).startsWith(`${grupo} · `) ? String(c.nombre).slice(grupo.length + 3) : c.nombre)
+
+// Subtotal de un grupo de criterios con lo escrito hasta ahora: { suma, max, completo }.
+export const subtotalGrupo = (items, valores) => totalCriterios(items, valores)
+
+// Nivel de desempeño (banda) que corresponde a un valor: null si no hay bandas con rango o el valor está vacío.
+export function bandaDe(criterio, valor) {
+  if (valor === '' || valor == null || Number.isNaN(Number(valor))) return null
+  const v = Number(valor)
+  // Los rangos pueden dejar huecos entre decimales (p. ej. 0–4 y 5–7 con 4.5): gana la banda más alta cuyo inicio no supere el valor.
+  const candidatas = (criterio.bandas ?? []).filter((b) => b.desde != null && b.hasta != null && v >= Number(b.desde))
+  return candidatas.sort((a, b) => Number(b.desde) - Number(a.desde))[0] ?? null
+}
+
+// Adapta un descriptor al nivel MCER del salón: «the student's CEFR level» → «the A2.2 – B1.1 level». Sin nivel, el texto queda igual.
+export function adaptarNivel(texto, mcer) {
+  if (!texto || !mcer) return texto ?? ''
+  return String(texto).replace(/the student[’']s (CEFR )?level/gi, `the ${mcer} level`).replace(/the student[’']s CEFR/gi, `the ${mcer}`)
+}
+
+// Mantiene lo escrito en un criterio dentro de 0 y su máximo (vacío sigue vacío: pendiente, nunca cero automático).
+export function acotarPuntaje(texto, max) {
+  if (texto === '' || texto == null) return ''
+  const n = Number(texto)
+  if (Number.isNaN(n)) return ''
+  if (n < 0) return '0'
+  if (n > Number(max)) return String(Number(max))
+  return String(texto)
+}
+
 // Clave de una fila de notas: estudiante + unidad.
 export const claveNota = (alumnoId, unidad = '') => `${alumnoId}|${unidad}`
 

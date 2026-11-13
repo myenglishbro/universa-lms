@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
@@ -9,6 +9,7 @@ import { descargarInforme } from '../../lib/informeNotas'
 import InformeDialogo from './InformeDialogo'
 import * as servicioReal from '../../services/evaluaciones'
 import CeldaNota from './CeldaNota'
+import { NivelMcerContext } from './CriteriosRubrica'
 import FormativeModal from './FormativeModal'
 import ParticipacionModal from './ParticipacionModal'
 
@@ -372,6 +373,13 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
   const cargar = useCallback(() => servicio.matrizSalon(salonId), [servicio, salonId])
   const { datos, cargando, error, recargar } = useCarga(cargar, null)
   const [editor, setEditor] = useState(null)
+  const [mcer, setMcer] = useState(null)
+  const nivelSalon = datos?.salon?.nivel
+  useEffect(() => {
+    let vivo = true
+    servicioReal.mcerDeNivel(nivelSalon).then((m) => vivo && setMcer(m)).catch(() => {})
+    return () => { vivo = false }
+  }, [nivelSalon])
   const [informeListo, setInformeListo] = useState(null)
   const [fallo, setFallo] = useState('')
   const [busqueda, setBusqueda] = useState('')
@@ -475,6 +483,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
         <VistaAlumno datos={datos} onAbrir={abrir} onInforme={informe} />
       )}
       {editor && (
+        <NivelMcerContext.Provider value={mcer}>
         <Editor
           evaluacionId={editor.evaluacion.id}
           alumnoId={editor.alumno.alumno_id}
@@ -484,6 +493,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           onClose={() => setEditor(null)}
           onCambio={recargar}
         />
+        </NivelMcerContext.Provider>
       )}
     </div>
   )

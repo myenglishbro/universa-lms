@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node --test src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js",
+    "test": "node --test src/lib/evaluaciones.test.js src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

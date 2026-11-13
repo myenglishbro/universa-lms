@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import Badge from '../ui/Badge'
+import CriteriosRubrica from './CriteriosRubrica'
 import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
@@ -59,25 +60,15 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
       </div>
 
       {criterios.length > 0 && abierta && (
-        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-          {criterios.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5">
-              <span className="text-xs text-slate-700">{c.nombre}</span>
-              <input
-                type="number"
-                min={0}
-                max={c.max_puntaje}
-                step="0.5"
-                disabled={!editable}
-                aria-label={`${c.nombre} for ${alumno.nombre}`}
-                value={edicion.valores[c.id] ?? ''}
-                onChange={(e) => onCambiar({ valores: { ...edicion.valores, [c.id]: e.target.value } })}
-                className={`${inputClass} w-20 text-right`}
-                placeholder={`/${c.max_puntaje}`}
-              />
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2">
+          <CriteriosRubrica
+            criterios={criterios}
+            valores={edicion.valores}
+            deshabilitado={!editable}
+            etiquetaSufijo={` for ${alumno.nombre}`}
+            onCambiar={(id, v) => onCambiar({ valores: { ...edicion.valores, [id]: v } })}
+          />
+        </div>
       )}
 
       {editable ? (

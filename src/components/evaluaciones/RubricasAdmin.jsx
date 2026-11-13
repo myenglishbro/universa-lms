@@ -5,7 +5,7 @@ import Card from '../ui/Card'
 import Field, { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { TIPOS_RUBRICA, fmtNota, sumaPesos } from '../../lib/evaluaciones'
+import { TIPOS_RUBRICA, agruparCriterios, fmtNota, nombreEnGrupo, sumaPesos } from '../../lib/evaluaciones'
 import * as servicioReal from '../../services/evaluaciones'
 
 const vacia = { nombre: '', tipo: 'otra', descripcion: '', activa: true, criterios: [{ nombre: '', max_puntaje: '10', bandas: [] }] }
@@ -97,14 +97,14 @@ export default function RubricasAdmin({ servicio = servicioReal }) {
                   {r.nombre} {!r.activa && <Badge color="slate">Inactive</Badge>}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  {r.criterios.length} criteria · maximum {fmtNota(sumaPesos(r.criterios.map((c) => ({ peso: c.max_puntaje }))))}
+                  {agruparCriterios(r.criterios).length} criteria · maximum {fmtNota(sumaPesos(r.criterios.map((c) => ({ peso: c.max_puntaje }))))}
                 </p>
               </div>
               <Button variant="secondary" className="px-3 py-1" onClick={() => setModal({ rubrica: r })}>
                 Edit
               </Button>
             </div>
-            <p className="mt-2 text-xs text-slate-600">{r.criterios.map((c) => `${c.nombre} (${fmtNota(c.max_puntaje)})`).join(' · ')}</p>
+            <p className="mt-2 text-xs text-slate-600">{agruparCriterios(r.criterios).map((g) => (g.grupo ? `${g.grupo} (${fmtNota(g.max)}: ${g.items.map((c) => `${nombreEnGrupo(c, g.grupo)} ${fmtNota(c.max_puntaje)}`).join(' + ')})` : `${g.items[0].nombre} (${fmtNota(g.items[0].max_puntaje)})`)).join(' · ')}</p>
           </Card>
         ))}
       </div>

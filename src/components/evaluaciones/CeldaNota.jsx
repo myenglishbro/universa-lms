@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import Badge from '../ui/Badge'
+import CriteriosRubrica from './CriteriosRubrica'
 import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
@@ -140,28 +141,14 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       )}
 
       {criterios.length > 0 ? (
-        <ul className="space-y-2">
-          {criterios.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-              <span className="text-sm text-slate-800">
-                {c.nombre} <span className="text-xs text-slate-400">0–{fmtNota(c.max_puntaje)}</span>
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={c.max_puntaje}
-                step="0.5"
-                disabled={!editable}
-                aria-label={c.nombre}
-                value={ed.valores[c.id] ?? ''}
-                onChange={(e) => cambiar(unidad, { valores: { ...ed.valores, [c.id]: e.target.value } })}
-                className={`${inputClass} w-24 text-right`}
-                placeholder={`/${fmtNota(c.max_puntaje)}`}
-              />
-            </li>
-          ))}
-        </ul>
+        <CriteriosRubrica
+          criterios={criterios}
+          valores={ed.valores}
+          deshabilitado={!editable}
+          sinDetalle={esFormative}
+          titulo={esFormative ? '' : `${evaluacion.nombre} Assessment`}
+          onCambiar={(id, v) => cambiar(unidad, { valores: { ...ed.valores, [id]: v } })}
+        />
       ) : (
         <div className="flex items-center gap-3">
           <label htmlFor="nota-directa" className="text-sm font-medium text-slate-700">
