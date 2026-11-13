@@ -34,13 +34,13 @@ function FormIngresar({ onSignIn }) {
   }
   return (
     <form onSubmit={enviar} className="space-y-5">
-      <CampoIcono icono="mail" etiqueta="Correo" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="tucorreo@ejemplo.com" required />
-      <CampoIcono icono="lock" etiqueta="Contraseña" secreto autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} required />
+      <CampoIcono icono="mail" etiqueta="Email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="you@example.com" required />
+      <CampoIcono icono="lock" etiqueta="Password" secreto autoComplete="current-password" value={clave} onChange={(e) => setClave(e.target.value)} required />
       {error && <Aviso>{error}</Aviso>}
       <button type="submit" disabled={enviando} className={boton}>
-        {enviando ? 'Ingresando…' : 'Ingresar'}
+        {enviando ? 'Signing in…' : 'Sign in'}
       </button>
-      <p className="text-center text-sm text-slate-500">¿Olvidaste tu contraseña? Pídela a administración.</p>
+      <p className="text-center text-sm text-slate-500">Forgot your password? Ask administration for it.</p>
     </form>
   )
 }
@@ -67,20 +67,20 @@ function FormRegistro({ onSignIn }) {
   return (
     <form onSubmit={enviar} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <CampoIcono icono="user" etiqueta="Nombres" name="nombres" autoComplete="given-name" value={v.nombres} onChange={cambiar} required />
-        <CampoIcono icono="user" etiqueta="Apellidos" name="apellidos" autoComplete="family-name" value={v.apellidos} onChange={cambiar} required />
+        <CampoIcono icono="user" etiqueta="First name" name="nombres" autoComplete="given-name" value={v.nombres} onChange={cambiar} required />
+        <CampoIcono icono="user" etiqueta="Last name" name="apellidos" autoComplete="family-name" value={v.apellidos} onChange={cambiar} required />
       </div>
-      <CampoIcono icono="phone" etiqueta="Celular" name="celular" type="tel" inputMode="tel" autoComplete="tel" value={v.celular} onChange={cambiar} placeholder="999 999 999" required />
-      <CampoIcono icono="pin" etiqueta="Dirección" name="direccion" autoComplete="street-address" value={v.direccion} onChange={cambiar} required />
-      <CampoIcono icono="mail" etiqueta="Correo" name="correo" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={v.correo} onChange={cambiar} ayuda="Con este correo ingresarás a la plataforma." required />
-      <CampoIcono icono="lock" etiqueta="Contraseña" name="password" secreto autoComplete="new-password" value={v.password} onChange={cambiar} ayuda="Mínimo 8 caracteres." minLength={8} required />
+      <CampoIcono icono="phone" etiqueta="Mobile" name="celular" type="tel" inputMode="tel" autoComplete="tel" value={v.celular} onChange={cambiar} placeholder="999 999 999" required />
+      <CampoIcono icono="pin" etiqueta="Address" name="direccion" autoComplete="street-address" value={v.direccion} onChange={cambiar} required />
+      <CampoIcono icono="mail" etiqueta="Email" name="correo" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={v.correo} onChange={cambiar} ayuda="You will sign in to the platform with this email." required />
+      <CampoIcono icono="lock" etiqueta="Password" name="password" secreto autoComplete="new-password" value={v.password} onChange={cambiar} ayuda="At least 8 characters." minLength={8} required />
       {/* Campo trampa para robots: las personas no lo ven. */}
       <input name="web" value={v.web} onChange={cambiar} tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
       {error && <Aviso>{error}</Aviso>}
       <button type="submit" disabled={enviando} className={boton}>
-        {enviando ? 'Creando tu cuenta…' : 'Crear mi cuenta'}
+        {enviando ? 'Creating your account…' : 'Create my account'}
       </button>
-      <p className="text-center text-xs text-slate-500">Después podrás marcar tu disponibilidad y subir tu foto. Administración activará tu cuenta como docente.</p>
+      <p className="text-center text-xs text-slate-500">Afterwards you can mark your availability and upload your photo. Administration will activate your account as a teacher.</p>
     </form>
   )
 }
@@ -110,15 +110,15 @@ export default function Login({ onSignIn }) {
     <PanelMarca>
       <div className="w-full max-w-md">
         <img src="/landing/logo-morado.png" alt="Universa" width="800" height="172" className="mb-8 h-9 w-auto sm:h-10 lg:mb-10" />
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{registro ? 'Regístrate como profesor' : 'Bienvenido de nuevo'}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{registro ? 'Sign up as a teacher' : 'Welcome back'}</h1>
         <p className="mb-7 mt-2 text-[15px] text-slate-500">
-          {registro ? 'Déjanos tus datos. Es rápido y no necesitas confirmar nada por correo.' : 'Ingresa con tu correo y tu contraseña.'}
+          {registro ? 'Leave us your details. It is quick and you do not need to confirm anything by email.' : 'Sign in with your email and password.'}
         </p>
 
         {/* El registro de profesores no se anuncia en el ingreso: se entra solo con el enlace /registro-profesor que administración envía. */}
         {registro && (
           <button type="button" onClick={() => navigate(RUTA_MODO.ingresar, { replace: true })} className="-mt-3 mb-6 text-sm font-medium text-slate-500 transition hover:text-brand-600">
-            ← Ya tengo cuenta, ingresar
+            ← I already have an account, sign in
           </button>
         )}
 
@@ -126,7 +126,7 @@ export default function Login({ onSignIn }) {
 
         {SITIO_URL && (
           <a href={SITIO_URL} className="mt-8 inline-block text-sm font-medium text-slate-500 transition hover:text-brand-600">
-            ← Ir al sitio de Universa
+            ← Go to the Universa site
           </a>
         )}
       </div>

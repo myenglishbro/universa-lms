@@ -21,23 +21,23 @@ export default function SalonDocente({ salon, onVolver, servicio = servicioReal,
   return (
     <>
       <button onClick={onVolver} className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-        <Icon name="back" className="h-4 w-4" /> Mis salones
+        <Icon name="back" className="h-4 w-4" /> My classrooms
       </button>
       <div className={`mb-6 rounded-2xl bg-gradient-to-br p-6 text-white shadow-sm ${portadaDe(salon.nombre)}`}>
-        <p className="text-sm text-white/80">{salon.nivel || 'Sin nivel asignado'}</p>
+        <p className="text-sm text-white/80">{salon.nivel || 'No level assigned'}</p>
         <h1 className="mt-1 text-2xl font-semibold">{salon.nombre}</h1>
         <p className="mt-2 text-sm text-white/90">
-          {horariosTexto(salon.horarios)} · {salon.estudiantes} de {salon.capacidad} estudiantes
+          {horariosTexto(salon.horarios)} · {salon.estudiantes} of {salon.capacidad} students
         </p>
       </div>
 
       <div className="mb-4 flex gap-1 border-b border-slate-200" role="tablist">
         {[
-          ['clases', 'Clases y asistencia'],
-          ['evaluaciones', 'Evaluaciones'],
-          ['ejercicios', 'Ejercicios'],
-          ['recursos', 'Recursos del curso'],
-          ['estudiantes', `Estudiantes (${salon.estudiantes})`],
+          ['clases', 'Classes and attendance'],
+          ['evaluaciones', 'Assessments'],
+          ['ejercicios', 'Exercises'],
+          ['recursos', 'Course resources'],
+          ['estudiantes', `Students (${salon.estudiantes})`],
         ].map(([id, texto]) => (
           <button
             key={id}
@@ -60,17 +60,17 @@ export default function SalonDocente({ salon, onVolver, servicio = servicioReal,
       ) : pestana === 'estudiantes' ? (
         <Card>
           {estudiantes.error ? (
-            <p className="px-4 py-6 text-sm text-red-600">No se pudo cargar la lista: {estudiantes.error}</p>
+            <p className="px-4 py-6 text-sm text-red-600">Could not load the list: {estudiantes.error}</p>
           ) : estudiantes.cargando ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-500">Cargando…</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-500">Loading…</p>
           ) : estudiantes.datos.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-400">Este salón aún no tiene estudiantes matriculados.</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-400">This classroom has no students enrolled yet.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {estudiantes.datos.map((e) => (
                 <li key={e.alumno_id} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span className="font-medium text-slate-900">{e.nombre}</span>
-                  <span className="text-xs text-slate-500">Desde {formatFecha(e.desde)}</span>
+                  <span className="text-xs text-slate-500">Since {formatFecha(e.desde)}</span>
                 </li>
               ))}
             </ul>

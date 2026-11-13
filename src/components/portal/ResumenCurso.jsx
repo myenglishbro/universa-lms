@@ -44,7 +44,7 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
     <div className="space-y-6">
       <Card className="flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
         <span className="inline-flex items-center gap-2 text-sm text-slate-700">
-          <Icon name="teacher" className="h-4 w-4 text-brand-500" /> {curso.docente || 'Docente por asignar'}
+          <Icon name="teacher" className="h-4 w-4 text-brand-500" /> {curso.docente || 'Teacher to be assigned'}
         </span>
         <span className="inline-flex items-center gap-2 text-sm text-slate-700">
           <Icon name="clock" className="h-4 w-4 text-brand-500" /> {horariosTexto(curso.horarios)}
@@ -57,26 +57,26 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Dato icono="calendar" etiqueta="Próxima clase" pie={proxima ? `${proxima.hora_inicio.slice(0, 5)}–${proxima.hora_fin.slice(0, 5)}` : undefined}>
-          {proxima ? `${cuando(proxima.fecha)} · ${diaMes(proxima.fecha)}` : 'Sin programar'}
+        <Dato icono="calendar" etiqueta="Next class" pie={proxima ? `${proxima.hora_inicio.slice(0, 5)}–${proxima.hora_fin.slice(0, 5)}` : undefined}>
+          {proxima ? `${cuando(proxima.fecha)} · ${diaMes(proxima.fecha)}` : 'Not scheduled'}
         </Dato>
-        <Dato icono="check" etiqueta="Lecciones vistas" pie={lecciones.length ? `${Math.round((nVistas / lecciones.length) * 100)}% del contenido` : undefined}>
+        <Dato icono="check" etiqueta="Lessons watched" pie={lecciones.length ? `${Math.round((nVistas / lecciones.length) * 100)}% of the content` : undefined}>
           {nVistas} / {lecciones.length}
         </Dato>
-        <Dato icono="users" etiqueta="Clases realizadas" pie={progreso?.programadas ? `${progreso.programadas} programadas` : undefined}>
+        <Dato icono="users" etiqueta="Classes held" pie={progreso?.programadas ? `${progreso.programadas} scheduled` : undefined}>
           {progreso ? progreso.realizadas : '—'}
         </Dato>
-        <Dato icono="clock" etiqueta="Por registrar">{progreso ? progreso.por_registrar : '—'}</Dato>
+        <Dato icono="clock" etiqueta="To be recorded">{progreso ? progreso.por_registrar : '—'}</Dato>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-5">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">Avance del curso</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-900">Course progress</h2>
           <div className="flex items-center gap-6">
-            <Anillo valor={pct} size={112} grosor={12} etiqueta="Avance del curso" />
+            <Anillo valor={pct} size={112} grosor={12} etiqueta="Course progress" />
             <div className="min-w-0 flex-1 space-y-1">
               <p className="text-sm font-medium text-slate-900">
-                {progreso?.total ? `${progreso.realizadas} de ${progreso.total} sesiones realizadas` : 'Total de sesiones por definir'}
+                {progreso?.total ? `${progreso.realizadas} of ${progreso.total} sessions held` : 'Total sessions to be defined'}
               </p>
               <p className="text-xs text-slate-500">{progreso?.programadas ?? 0} programadas</p>
             </div>
@@ -86,12 +86,12 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
               {ciclos.map((c) => (
                 <li key={c.ciclo}>
                   <p className="mb-1 flex justify-between text-xs text-slate-600">
-                    <span className="font-medium">Ciclo {c.ciclo}</span>
+                    <span className="font-medium">Cycle {c.ciclo}</span>
                     <span>
                       {c.realizadas} de {c.sesiones}
                     </span>
                   </p>
-                  <Barra valor={c.realizadas} total={c.sesiones} etiqueta={`Avance del ciclo ${c.ciclo}`} />
+                  <Barra valor={c.realizadas} total={c.sesiones} etiqueta={`Progress of cycle ${c.ciclo}`} />
                 </li>
               ))}
             </ul>
@@ -100,9 +100,9 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">Mi asistencia</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-900">My attendance</h2>
           <div className="flex items-center gap-6">
-            <Anillo valor={asist} size={112} grosor={12} color="var(--color-peach-700)" fondo="var(--color-peach-100)" etiqueta="Mi asistencia" />
+            <Anillo valor={asist} size={112} grosor={12} color="var(--color-peach-700)" fondo="var(--color-peach-100)" etiqueta="My attendance" />
             <div className="min-w-0 flex-1 space-y-1 text-sm text-slate-600">
               <p>
                 Presente: <strong className="text-slate-900">{conteoAsistencia.presente}</strong>
@@ -116,7 +116,7 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
             </div>
           </div>
           <button type="button" onClick={() => onIrA('asistencia')} className="mt-4 text-sm font-medium text-brand-700 hover:underline">
-            Ver historial de clases →
+            View class history →
           </button>
         </Card>
       </div>
@@ -124,13 +124,13 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
       {lecciones.length > 0 && (
         <Card className="p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">{completo ? '¡Completaste todo el contenido!' : nVistas > 0 ? 'Continúa estudiando' : 'Empieza a estudiar'}</h2>
+            <h2 className="text-base font-semibold text-slate-900">{completo ? 'You completed all the content!' : nVistas > 0 ? 'Keep studying' : 'Start studying'}</h2>
             <button type="button" onClick={() => onIrA('contenido')} className="text-sm font-medium text-brand-700 hover:underline">
-              Ver todo el contenido →
+              View all content →
             </button>
           </div>
           {completo ? (
-            <p className="text-sm text-slate-500">Has marcado como vistas las {lecciones.length} lecciones. Puedes repasarlas cuando quieras.</p>
+            <p className="text-sm text-slate-500">You have marked all {lecciones.length} lessons as watched. You can review them whenever you want.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-3">
               {pendientes.map((l) => (

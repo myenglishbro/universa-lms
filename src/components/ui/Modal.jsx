@@ -14,7 +14,7 @@ export default function Modal({ title, onClose, wide = false, children }) {
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
             <Icon name="close" />
           </button>
         </div>

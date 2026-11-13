@@ -6,8 +6,8 @@ import { inputClass } from '../../components/ui/Field'
 import * as servicioReal from '../../services/zonas'
 
 const ZONAS = {
-  docentes: { titulo: 'Teacher Zone', intro: 'Reglamentos, lineamientos y materiales para el equipo docente.', vacio: 'Administración aún no publicó documentos. Vuelve pronto.' },
-  estudiantes: { titulo: 'Student Zone', intro: 'Lineamientos, guías y documentos importantes para tu aprendizaje.', vacio: 'Administración aún no publicó documentos. Vuelve pronto.' },
+  docentes: { titulo: 'Teacher Zone', intro: 'Regulations, guidelines and materials for the teaching team.', vacio: 'Administration has not published any documents yet. Check back soon.' },
+  estudiantes: { titulo: 'Student Zone', intro: 'Guidelines, guides and important documents for your learning.', vacio: 'Administration has not published any documents yet. Check back soon.' },
 }
 
 // Zona de documentos del portal (Teacher Zone o Student Zone): lo que administración publica, ordenado por categoría.
@@ -45,24 +45,24 @@ export default function ZonaDocumentos({ zona, servicio = servicioReal }) {
 
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          No se pudieron cargar los documentos: {error}{' '}
+          Could not load the documents: {error}{' '}
           <button className="font-medium underline" onClick={recargar}>
-            Reintentar
+            Retry
           </button>
         </p>
       )}
 
       {cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500">Cargando documentos…</p>
+        <p className="py-10 text-center text-sm text-slate-500">Loading documents…</p>
       ) : datos.length === 0 ? (
         !error && <p className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-12 text-center text-sm text-slate-500">{info.vacio}</p>
       ) : (
         <>
           <div className="relative mb-6 max-w-sm">
             <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar un documento" className={`${inputClass} pl-9`} />
+            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search for a document" className={`${inputClass} pl-9`} />
           </div>
-          {grupos.length === 0 && <p className="text-sm text-slate-500">Ningún documento coincide con tu búsqueda.</p>}
+          {grupos.length === 0 && <p className="text-sm text-slate-500">No document matches your search.</p>}
           <div className="space-y-8">
             {grupos.map(([categoria, docs]) => (
               <section key={categoria}>
@@ -82,7 +82,7 @@ export default function ZonaDocumentos({ zona, servicio = servicioReal }) {
                           <span className="block font-semibold text-slate-900">{d.titulo}</span>
                           {d.descripcion && <span className="mt-0.5 line-clamp-2 block text-sm text-slate-500">{d.descripcion}</span>}
                           <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-700">
-                            Leer documento <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
+                            Read document <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
                           </span>
                         </span>
                       </button>

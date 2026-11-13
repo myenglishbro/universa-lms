@@ -10,7 +10,7 @@ import CursoEstudiante from './CursoEstudiante'
 
 const saludo = () => {
   const h = new Date().getHours()
-  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+  return h < 12 ? 'Good morning' : h < 19 ? 'Good afternoon' : 'Good evening'
 }
 
 function Dato({ icono, valor, etiqueta }) {
@@ -53,13 +53,13 @@ export default function MisCursos({ servicio = servicioReal, cursoInicialId = nu
         <span className="pointer-events-none absolute -bottom-20 right-40 h-48 w-48 rounded-full bg-white/10" />
         <div className="relative">
           <p className="text-sm text-brand-100">{saludo()} 👋</p>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Tu espacio de aprendizaje</h1>
-          <p className="mt-1 text-sm text-brand-100">Tus cursos, clases y materiales en un solo lugar.</p>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Your learning space</h1>
+          <p className="mt-1 text-sm text-brand-100">Your courses, classes and materials in one place.</p>
           {!cursos.cargando && cursos.datos.length > 0 && (
             <div className="mt-6 grid max-w-xl grid-cols-3 gap-3">
-              <Dato icono="building" valor={activos} etiqueta={activos === 1 ? 'Curso activo' : 'Cursos activos'} />
-              <Dato icono="calendar" valor={deHoy} etiqueta={deHoy === 1 ? 'Clase hoy' : 'Clases hoy'} />
-              <Dato icono="clock" valor={futuras.length} etiqueta="Clases por venir" />
+              <Dato icono="building" valor={activos} etiqueta={activos === 1 ? 'Active course' : 'Active courses'} />
+              <Dato icono="calendar" valor={deHoy} etiqueta={deHoy === 1 ? 'Class today' : 'Classes today'} />
+              <Dato icono="clock" valor={futuras.length} etiqueta="Upcoming classes" />
             </div>
           )}
         </div>
@@ -67,26 +67,26 @@ export default function MisCursos({ servicio = servicioReal, cursoInicialId = nu
 
       {cursos.error && (
         <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          No se pudieron cargar tus cursos: {cursos.error}
+          Could not load your courses: {cursos.error}
           <Button variant="secondary" className="ml-3" onClick={cursos.recargar}>
-            Reintentar
+            Retry
           </Button>
         </div>
       )}
 
       {cursos.cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500">Cargando tus cursos…</p>
+        <p className="py-10 text-center text-sm text-slate-500">Loading your courses…</p>
       ) : cursos.datos.length === 0 ? (
         !cursos.error && (
           <p className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-12 text-center text-sm text-slate-500">
-            Aún no estás matriculado en ningún salón. Cuando Administración te matricule, tu curso aparecerá aquí.
+            You are not enrolled in any classroom yet. When Administration enrolls you, your course will appear here.
           </p>
         )
       ) : (
         <>
           {deHoy > 0 && (
             <section className="mb-8">
-              <h2 className="mb-3 text-lg font-semibold text-slate-900">Tus clases de hoy</h2>
+              <h2 className="mb-3 text-lg font-semibold text-slate-900">Your classes today</h2>
               <ul className="grid gap-2 md:grid-cols-2">
                 {futuras
                   .filter((c) => c.fecha === hoy)
@@ -98,7 +98,7 @@ export default function MisCursos({ servicio = servicioReal, cursoInicialId = nu
           )}
 
           <section className="mb-10">
-            <h2 className="mb-4 text-lg font-semibold text-slate-900">Mis cursos</h2>
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">My courses</h2>
             <div className="grid gap-6 pt-6 sm:grid-cols-2 xl:grid-cols-3">
               {cursos.datos.map((c) => (
                 <TarjetaCursoEstudiante key={c.salon_id} curso={c} proxima={proximaDe(c.salon_id)} onAbrir={() => setAbierto(c.salon_id)} />
@@ -107,7 +107,7 @@ export default function MisCursos({ servicio = servicioReal, cursoInicialId = nu
           </section>
 
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-slate-900">Mi calendario</h2>
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">My calendar</h2>
             <CalendarioClases clases={clases.datos} />
           </section>
         </>

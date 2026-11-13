@@ -17,7 +17,7 @@ export default function TarjetaCurso({ curso, pie, onAbrir }) {
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className="line-clamp-2 text-base font-semibold text-slate-900 group-hover:text-brand-700">{curso.nombre}</h3>
-        <p className="text-sm text-slate-500">{[curso.nivel || 'Sin nivel asignado', curso.docente].filter(Boolean).join(' · ')}</p>
+        <p className="text-sm text-slate-500">{[curso.nivel || 'No level assigned', curso.docente].filter(Boolean).join(' · ')}</p>
         <p className="flex items-center gap-1.5 text-xs text-slate-500">
           <Icon name="clock" className="h-3.5 w-3.5" /> {horariosTexto(curso.horarios)}
         </p>

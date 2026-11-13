@@ -20,21 +20,21 @@ export default function MisSalones({ servicio = servicioReal }) {
 
   return (
     <>
-      <PageHeader title="Mis salones" description="Tus grupos, estudiantes y materiales" />
+      <PageHeader title="My classrooms" description="Your groups, students and materials" />
       {salones.error && (
         <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          No se pudieron cargar tus salones: {salones.error}
+          Could not load your classrooms: {salones.error}
           <Button variant="secondary" className="ml-3" onClick={salones.recargar}>
-            Reintentar
+            Retry
           </Button>
         </div>
       )}
       {salones.cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500">Cargando tus salones…</p>
+        <p className="py-10 text-center text-sm text-slate-500">Loading your classrooms…</p>
       ) : salones.datos.length === 0 ? (
         !salones.error && (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center text-sm text-slate-500">
-            Todavía no tienes salones asignados. Administración puede asignarte uno desde la gestión de salones.
+            You have no classrooms assigned yet. Administration can assign you one from classroom management.
           </p>
         )
       ) : (
@@ -44,7 +44,7 @@ export default function MisSalones({ servicio = servicioReal }) {
               key={s.salon_id}
               curso={s}
               onAbrir={() => setAbierto(s.salon_id)}
-              pie={`${s.estudiantes} ${s.estudiantes === 1 ? 'estudiante' : 'estudiantes'} · ${s.lecciones} ${s.lecciones === 1 ? 'lección' : 'lecciones'}`}
+              pie={`${s.estudiantes} ${s.estudiantes === 1 ? 'student' : 'students'} · ${s.lecciones} ${s.lecciones === 1 ? 'lesson' : 'lessons'}`}
             />
           ))}
         </div>

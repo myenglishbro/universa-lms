@@ -17,7 +17,7 @@ const guardar = (id, cerrada) => {
 }
 
 // Franja plegable «¿Para qué sirve esta pantalla?». Se muestra abierta la primera vez y recuerda si la cierran.
-export default function Ayuda({ id, titulo = '¿Para qué sirve esta pantalla?', children }) {
+export default function Ayuda({ id, titulo = 'What is this screen for?', children }) {
   const [cerrada, setCerrada] = useState(() => leer(id))
   const alternar = () => {
     guardar(id, !cerrada)

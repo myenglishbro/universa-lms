@@ -2,7 +2,7 @@ import Card from '../ui/Card'
 import { diaMes, nombreDia } from '../../lib/agenda'
 
 // Lista de próximas clases (grupales y particulares). `clases` viene de portal_proximas_clases.
-export default function ProximasClases({ clases, titulo = 'Próximas clases', vacio = 'No hay clases programadas por ahora.', limite = 6 }) {
+export default function ProximasClases({ clases, titulo = 'Upcoming classes', vacio = 'There are no classes scheduled for now.', limite = 6 }) {
   return (
     <Card className="p-5">
       <h2 className="mb-3 text-base font-semibold text-slate-900">{titulo}</h2>
@@ -19,7 +19,7 @@ export default function ProximasClases({ clases, titulo = 'Próximas clases', va
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-900">{c.titulo}</p>
                 <p className="text-xs text-slate-500">
-                  {c.hora_inicio.slice(0, 5)}–{c.hora_fin.slice(0, 5)} · {c.origen === 'grupal' ? 'Clase grupal' : 'Clase particular'}
+                  {c.hora_inicio.slice(0, 5)}–{c.hora_fin.slice(0, 5)} · {c.origen === 'grupal' ? 'Group class' : 'Private class'}
                   {c.docente ? ` · ${c.docente}` : ''}
                 </p>
               </div>

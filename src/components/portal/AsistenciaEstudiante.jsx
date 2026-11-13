@@ -13,15 +13,15 @@ export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial 
   return (
     <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
       <Card className="h-fit p-5">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">Mi asistencia</h2>
+        <h2 className="mb-4 text-base font-semibold text-slate-900">My attendance</h2>
         {marcadas === 0 ? (
-          <p className="text-sm text-slate-400">Aún no hay clases con asistencia registrada.</p>
+          <p className="text-sm text-slate-400">There are no classes with recorded attendance yet.</p>
         ) : (
           <>
             <div className="flex justify-center">
-              <Dona size={150} grosor={18} etiqueta="Reparto de mi asistencia" segmentos={ESTADOS_ASISTENCIA.map((e) => ({ valor: conteo[e.value], color: COLOR[e.value] }))}>
+              <Dona size={150} grosor={18} etiqueta="Breakdown of my attendance" segmentos={ESTADOS_ASISTENCIA.map((e) => ({ valor: conteo[e.value], color: COLOR[e.value] }))}>
                 <span className="text-3xl font-bold text-brand-800">{pct == null ? '—' : `${pct}%`}</span>
-                <span className="text-xs text-slate-500">asistencia</span>
+                <span className="text-xs text-slate-500">attendance</span>
               </Dona>
             </div>
             <ul className="mt-5 space-y-2">
@@ -39,9 +39,9 @@ export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial 
       </Card>
 
       <Card className="p-5">
-        <h2 className="mb-3 text-base font-semibold text-slate-900">Historial de clases</h2>
+        <h2 className="mb-3 text-base font-semibold text-slate-900">Class history</h2>
         {historial.length === 0 ? (
-          <p className="text-sm text-slate-400">Aún no hay clases realizadas en este curso.</p>
+          <p className="text-sm text-slate-400">There are no classes held in this course yet.</p>
         ) : (
           <ol className="relative space-y-4 border-l-2 border-brand-100 pl-5">
             {historial.map((h) => {
@@ -51,9 +51,9 @@ export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial 
                   <span className="absolute -left-[1.7rem] top-1.5 h-3 w-3 rounded-full border-2 border-white" style={{ background: e ? COLOR[e.value] : '#cbd5e1' }} />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-medium text-slate-900">
-                      Clase {h.numero} <span className="font-normal text-slate-400">· {formatFecha(h.fecha)}</span>
+                      Class {h.numero} <span className="font-normal text-slate-400">· {formatFecha(h.fecha)}</span>
                     </p>
-                    {e ? <Badge color={e.color}>{e.label}</Badge> : <Badge color="slate">{h.estado_registro === 'pendiente' ? 'Por registrar' : 'Sin marca'}</Badge>}
+                    {e ? <Badge color={e.color}>{e.label}</Badge> : <Badge color="slate">{h.estado_registro === 'pendiente' ? 'To be recorded' : 'No mark'}</Badge>}
                   </div>
                   {h.tema && <p className="mt-0.5 text-sm text-slate-600">{h.tema}</p>}
                   {h.materiales.length > 0 && (

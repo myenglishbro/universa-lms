@@ -16,7 +16,7 @@ export default function CampoIcono({ icono, etiqueta, secreto = false, ayuda, cl
         />
         {secreto && (
           <button type="button" aria-pressed={ver} onClick={() => setVer(!ver)} className="absolute inset-y-0 right-0 px-4 text-sm font-semibold text-brand-600 hover:text-brand-800">
-            {ver ? 'Ocultar' : 'Mostrar'}
+            {ver ? 'Hide' : 'Show'}
           </button>
         )}
       </span>

@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import { incrustarDe, tipoLabel } from '../../lib/recursos'
 import { formatFecha } from '../../lib/salones'
 
-const proveedorNombre = { youtube: 'YouTube', vimeo: 'Vimeo', drive: 'Google Drive', externo: 'sitio externo' }
+const proveedorNombre = { youtube: 'YouTube', vimeo: 'Vimeo', drive: 'Google Drive', externo: 'external site' }
 
 // Muestra una lección: video/archivo incrustado cuando es posible y, siempre, un botón para abrirlo en su plataforma.
 export default function ReproductorRecurso({ leccion: l }) {
@@ -27,7 +27,7 @@ export default function ReproductorRecurso({ leccion: l }) {
       ) : (
         <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-slate-100 to-brand-50 p-6 text-center">
           <Icon name={l.tipo === 'documento' ? 'doc' : 'link'} className="h-12 w-12 text-brand-500" />
-          <p className="text-sm text-slate-600">Este recurso se abre en {proveedorNombre[l.proveedor]}.</p>
+          <p className="text-sm text-slate-600">This resource opens in {proveedorNombre[l.proveedor]}.</p>
         </div>
       )}
 
@@ -36,7 +36,7 @@ export default function ReproductorRecurso({ leccion: l }) {
           <h2 className="text-xl font-semibold text-slate-900">{l.titulo}</h2>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
             <Badge color="brand">{tipoLabel(l.tipo)}</Badge>
-            {l.sesionFecha && <span>Clase del {formatFecha(l.sesionFecha)}</span>}
+            {l.sesionFecha && <span>Class of {formatFecha(l.sesionFecha)}</span>}
           </p>
         </div>
         {seguro && (
@@ -46,14 +46,14 @@ export default function ReproductorRecurso({ leccion: l }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            <Icon name="external" className="h-4 w-4" /> Abrir en {proveedorNombre[l.proveedor]}
+            <Icon name="external" className="h-4 w-4" /> Open in {proveedorNombre[l.proveedor]}
           </a>
         )}
       </div>
       {l.descripcion && <p className="mt-3 whitespace-pre-line text-sm text-slate-700">{l.descripcion}</p>}
       {l.proveedor !== 'externo' && (
         <p className="mt-3 text-xs text-slate-400">
-          Si no puedes verlo, el archivo no está compartido con tu cuenta: pide al docente que lo comparta en {proveedorNombre[l.proveedor]}.
+          If you cannot see it, the file is not shared with your account: ask the teacher to share it in {proveedorNombre[l.proveedor]}.
         </p>
       )}
     </div>

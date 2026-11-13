@@ -38,7 +38,7 @@ export function Anillo({ valor, size = 72, grosor = 8, color = 'var(--color-bran
 }
 
 // Dona con porciones: segmentos = [{ valor, color }]. Hijos = texto central.
-export function Dona({ segmentos, size = 120, grosor = 16, etiqueta = 'Distribución', children }) {
+export function Dona({ segmentos, size = 120, grosor = 16, etiqueta = 'Breakdown', children }) {
   const r = (size - grosor) / 2
   const c = 2 * Math.PI * r
   const total = segmentos.reduce((n, s) => n + s.valor, 0)

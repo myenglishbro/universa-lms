@@ -16,7 +16,7 @@ function Casilla({ vista, onClick, titulo }) {
         onClick()
       }}
       aria-pressed={vista}
-      aria-label={vista ? `Quitar «visto» de ${titulo}` : `Marcar «${titulo}» como visto`}
+      aria-label={vista ? `Remove “watched” from ${titulo}` : `Mark “${titulo}” as watched`}
       className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${
         vista ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-transparent hover:border-brand-500 hover:text-brand-300'
       }`}
@@ -58,14 +58,14 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
     if (siguiente) elegir(siguiente)
   }
 
-  if (cargando) return <p className="py-10 text-center text-sm text-slate-500">Cargando contenido…</p>
+  if (cargando) return <p className="py-10 text-center text-sm text-slate-500">Loading content…</p>
 
   const temario = (
     <Card className="overflow-hidden lg:sticky lg:top-4">
       <div className="border-b border-brand-100 bg-brand-50 px-5 py-4">
-        <h2 className="text-lg font-semibold text-slate-900">Contenido del curso</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Course content</h2>
         <p className="mt-0.5 text-sm text-slate-600">
-          {secciones.length} {secciones.length === 1 ? 'sección' : 'secciones'} · {total} lecciones
+          {secciones.length} {secciones.length === 1 ? 'section' : 'sections'} · {total} lessons
         </p>
         <div className="mt-3">
           <div className="mb-1 flex justify-between text-sm">
@@ -74,13 +74,13 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
             </span>
             <strong className="text-brand-700">{pct}%</strong>
           </div>
-          <div role="progressbar" aria-label="Lecciones vistas" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-2.5 overflow-hidden rounded-full bg-white">
+          <div role="progressbar" aria-label="Lessons watched" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-2.5 overflow-hidden rounded-full bg-white">
             <div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-peach-500 transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
         </div>
       </div>
       {secciones.length === 0 ? (
-        <p className="px-5 py-6 text-sm text-slate-400">Sin contenido todavía.</p>
+        <p className="px-5 py-6 text-sm text-slate-400">No content yet.</p>
       ) : (
         <div className="max-h-[calc(100vh-14rem)] min-h-[16rem] divide-y divide-brand-100 overflow-y-auto">
           {secciones.map((s, n) => {
@@ -94,14 +94,14 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
                       {n + 1}. {s.titulo}
                     </span>
                     <span className="mt-0.5 block text-sm text-slate-500">
-                      {hechas} / {s.lecciones.length} {hechas === s.lecciones.length && s.lecciones.length > 0 ? '· ¡completa!' : 'vistas'}
+                      {hechas} / {s.lecciones.length} {hechas === s.lecciones.length && s.lecciones.length > 0 ? '· complete!' : 'watched'}
                     </span>
                   </span>
                   <Icon name="down" className={`h-5 w-5 shrink-0 text-slate-400 transition ${abierta ? 'rotate-180' : ''}`} />
                 </button>
                 {abierta &&
                   (s.lecciones.length === 0 ? (
-                    <p className="px-5 pb-4 text-sm text-slate-400">Sin lecciones aún.</p>
+                    <p className="px-5 pb-4 text-sm text-slate-400">No lessons yet.</p>
                   ) : (
                     <ul>
                       {s.lecciones.map((l) => {
@@ -151,7 +151,7 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
                 onClick={() => setAmpliado((x) => !x)}
                 className="hidden items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 lg:inline-flex"
               >
-                <Icon name="menu" className="h-3.5 w-3.5" /> {ampliado ? 'Temario al lado' : 'Visor a todo el ancho'}
+                <Icon name="menu" className="h-3.5 w-3.5" /> {ampliado ? 'Syllabus on the side' : 'Full-width viewer'}
               </button>
             </div>
             <Card className="p-3 sm:p-5">
@@ -165,7 +165,7 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
                 onClick={() => elegir(lecciones[indice - 1])}
                 className="inline-flex items-center gap-1 rounded-full border border-brand-200 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Icon name="back" className="h-4 w-4" /> Anterior
+                <Icon name="back" className="h-4 w-4" /> Previous
               </button>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -175,37 +175,37 @@ export default function ContenidoCurso({ secciones, cargando, elegida, onElegir,
                       type="button"
                       onClick={() => onMarcar(actual.id, false)}
                       className="inline-flex items-center gap-2 rounded-full bg-brand-100 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-200"
-                      title="Quitar la marca de visto"
+                      title="Remove the watched mark"
                     >
                       <Icon name="check" className="h-4 w-4" /> Visto
                     </button>
                     {siguiente && (
                       <button type="button" onClick={() => elegir(siguiente)} className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                        Siguiente <Icon name="back" className="h-4 w-4 rotate-180" />
+                        Next <Icon name="back" className="h-4 w-4 rotate-180" />
                       </button>
                     )}
                   </>
                 ) : (
                   <>
                     <button type="button" onClick={() => onMarcar(actual.id, true)} className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">
-                      <Icon name="check" className="h-4 w-4" /> Marcar como visto
+                      <Icon name="check" className="h-4 w-4" /> Mark as watched
                     </button>
                     <button type="button" onClick={marcarYSeguir} className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                      {siguiente ? 'Visto y siguiente' : 'Marcar como visto'} {siguiente && <Icon name="back" className="h-4 w-4 rotate-180" />}
+                      {siguiente ? 'Watched, next' : 'Mark as watched'} {siguiente && <Icon name="back" className="h-4 w-4 rotate-180" />}
                     </button>
                   </>
                 )}
               </div>
             </div>
             <p className="text-center text-xs text-slate-400">
-              Lección {indice + 1} de {lecciones.length}
+              Lesson {indice + 1} of {lecciones.length}
             </p>
             {errorMarca && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorMarca}</p>}
           </>
         ) : (
           <Card className="p-10 text-center">
             <Icon name="play" className="mx-auto h-12 w-12 text-brand-200" />
-            <p className="mt-3 text-sm text-slate-500">Tu docente aún no ha publicado contenido en este curso. Vuelve pronto.</p>
+            <p className="mt-3 text-sm text-slate-500">Your teacher has not published any content in this course yet. Check back soon.</p>
           </Card>
         )}
       </div>

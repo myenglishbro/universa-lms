@@ -57,7 +57,7 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
       await servicio.marcarLeccion(curso.salon_id, id, vista)
     } catch (e) {
       setCambios((c) => ({ ...c, [id]: !vista }))
-      setErrorMarca(`No se pudo guardar tu avance: ${e.message}`)
+      setErrorMarca(`Could not save your progress: ${e.message}`)
     }
   }
 
@@ -69,22 +69,22 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
 
   // En la vista previa de la administración solo van las pestañas iguales para todos los estudiantes: ejercicios, notas y asistencia son personales.
   const tabs = [
-    { id: 'resumen', label: 'Resumen' },
-    { id: 'contenido', label: 'Contenido', conteo: nLecciones || null },
-    { id: 'calendario', label: 'Calendario', conteo: mias.length || null },
+    { id: 'resumen', label: 'Overview' },
+    { id: 'contenido', label: 'Content', conteo: nLecciones || null },
+    { id: 'calendario', label: 'Calendar', conteo: mias.length || null },
     ...(vistaPrevia
       ? []
       : [
-          { id: 'ejercicios', label: 'Ejercicios' },
-          { id: 'notas', label: 'Calificaciones' },
-          { id: 'asistencia', label: 'Asistencia' },
+          { id: 'ejercicios', label: 'Exercises' },
+          { id: 'notas', label: 'Grades' },
+          { id: 'asistencia', label: 'Attendance' },
         ]),
   ]
 
   return (
     <>
       {!vistaPrevia && <button onClick={onVolver} className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-        <Icon name="back" className="h-4 w-4" /> Mis cursos
+        <Icon name="back" className="h-4 w-4" /> My courses
       </button>}
 
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -95,15 +95,15 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
 
       {contenido.error && (
         <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          No se pudo cargar el contenido del curso: {contenido.error}{' '}
+          Could not load the course content: {contenido.error}{' '}
           <button className="font-medium underline" onClick={contenido.recargar}>
-            Reintentar
+            Retry
           </button>
         </p>
       )}
-      {progreso.error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">No se pudo cargar el avance: {progreso.error}</p>}
+      {progreso.error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Could not load progress: {progreso.error}</p>}
 
-      <Tabs tabs={tabs} activa={tab} onCambiar={setTab} etiqueta="Secciones del curso" />
+      <Tabs tabs={tabs} activa={tab} onCambiar={setTab} etiqueta="Course sections" />
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="pt-6">
         {tab === 'resumen' && (
@@ -112,12 +112,12 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
         {tab === 'contenido' && (
           <ContenidoCurso secciones={secciones} cargando={contenido.cargando} elegida={elegida} onElegir={setElegida} vistas={vistas} onMarcar={marcar} errorMarca={errorMarca} />
         )}
-        {tab === 'calendario' && <CalendarioClases clases={mias} titulo="Calendario de este curso" />}
+        {tab === 'calendario' && <CalendarioClases clases={mias} titulo="Calendar of this course" />}
         {tab === 'ejercicios' && <EjerciciosEstudiante salonId={curso.salon_id} />}
         {tab === 'notas' && <MisCalificaciones salonId={curso.salon_id} servicio={evaluaciones} />}
         {tab === 'asistencia' &&
           (historial.error ? (
-            <p className="text-sm text-red-600">No se pudo cargar tu asistencia: {historial.error}</p>
+            <p className="text-sm text-red-600">Could not load your attendance: {historial.error}</p>
           ) : (
             <AsistenciaEstudiante historial={historial.datos} conteo={conteo} onVerMaterial={(id) => irA('contenido', id)} />
           ))}
@@ -125,7 +125,7 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
 
       {curso.estado === 'finalizado' && (
         <p className="mt-4">
-          <Badge color="slate">Este curso ya finalizó; puedes seguir consultando su contenido.</Badge>
+          <Badge color="slate">This course has finished; you can keep consulting its content.</Badge>
         </p>
       )}
     </>

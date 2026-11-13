@@ -84,7 +84,7 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
 
   return (
     <Layout base="/panel" current={page} onNavigate={navegar} usuario={usuario} onSignOut={onSignOut} vistas={vistas} vista="gestion" onCambiarVista={onCambiarVista} badges={{ tickets: notifTickets.pendientes }}>
-      <Suspense fallback={<p className="p-6 text-sm text-slate-500">Cargando…</p>}>
+      <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading…</p>}>
       {ve('dashboard') && <Dashboard data={data} onVerSalon={verSalon} />}
       {ve('tickets') && <TaskBoard miId={auth.session.user.id} notif={notifTickets} />}
       {ve('agenda') && (
@@ -223,7 +223,7 @@ function Vistas({ auth, onSignOut }) {
 
 export default function App() {
   return (
-    <Suspense fallback={<Mensaje titulo="Cargando…" />}>
+    <Suspense fallback={<Mensaje titulo="Loading…" />}>
       <AppInterna />
     </Suspense>
   )
@@ -235,11 +235,11 @@ function AppInterna() {
   if (!supabase)
     return (
       <Mensaje
-        titulo="Falta configurar Supabase"
-        texto="Crea el archivo .env.local con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY (ver .env.example) y reinicia el servidor."
+        titulo="Supabase is not configured"
+        texto="Create the .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see .env.example) and restart the server."
       />
     )
-  if (auth.cargando) return <Mensaje titulo="Cargando…" />
+  if (auth.cargando) return <Mensaje titulo="Loading…" />
   if (!auth.session)
     return (
       <Routes>
@@ -262,9 +262,9 @@ function AppInterna() {
   if (!auth.rol && auth.portal.length === 0)
     return (
       <Mensaje
-        titulo="Tu usuario aún no tiene permisos"
-        texto="Pide a un administrador que te asigne un rol."
-        accion={{ label: 'Cerrar sesión', onClick: auth.signOut }}
+        titulo="Your user has no permissions yet"
+        texto="Ask an administrator to assign you a role."
+        accion={{ label: 'Sign out', onClick: auth.signOut }}
       />
     )
 

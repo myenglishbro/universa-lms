@@ -5,7 +5,7 @@ import PageHeader from '../../components/ui/PageHeader'
 export default function BancoDocente() {
   return (
     <>
-      <PageHeader title="Banco de ejercicios" description="Usa los ejercicios de administración o crea los tuyos con ayuda de una IA" />
+      <PageHeader title="Exercise bank" description="Use the administration exercises or create your own with the help of an AI" />
       <BancoEjercicios />
     </>
   )

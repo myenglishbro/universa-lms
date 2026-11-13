@@ -12,7 +12,7 @@ export default function Avatar({ nombre = '', fotoUrl = '', tamano = 'md', class
   return (
     <span className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 font-bold text-brand-700 ${TAMANOS[tamano]} ${className}`}>
       {mostrar ? (
-        <img src={src} alt={nombre ? `Foto de ${nombre}` : ''} className="h-full w-full object-cover" referrerPolicy="no-referrer" onError={() => setFallo(src)} />
+        <img src={src} alt={nombre ? `Photo of ${nombre}` : ''} className="h-full w-full object-cover" referrerPolicy="no-referrer" onError={() => setFallo(src)} />
       ) : (
         inicial
       )}

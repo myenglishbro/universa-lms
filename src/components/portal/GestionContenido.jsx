@@ -68,14 +68,14 @@ export default function GestionContenido({ salonId, servicio = servicioReal }) {
     <>
       {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-slate-500">Organiza el curso en secciones y lecciones. Lo oculto no se borra: solo deja de verse para los estudiantes.</p>
+        <p className="text-sm text-slate-500">Organize the course into sections and lessons. Hidden items are not deleted: they just stop being visible to students.</p>
         <Button onClick={() => setModal({ tipo: 'seccion' })}>
-          <Icon name="plus" className="h-4 w-4" /> Nueva sección
+          <Icon name="plus" className="h-4 w-4" /> New section
         </Button>
       </div>
-      {contenido.error && <p className="mb-4 text-sm text-red-600">No se pudo cargar el contenido: {contenido.error}</p>}
+      {contenido.error && <p className="mb-4 text-sm text-red-600">Could not load the content: {contenido.error}</p>}
       {contenido.cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500">Cargando…</p>
+        <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
       ) : secciones.length === 0 ? (
         !contenido.error && (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">
@@ -91,14 +91,14 @@ export default function GestionContenido({ salonId, servicio = servicioReal }) {
                   {s.titulo} {s.oculta && <Badge color="slate">Oculta</Badge>}
                 </h2>
                 <div className="flex items-center">
-                  <Accion icono="up" etiqueta={`Subir sección ${s.titulo}`} disabled={i === 0} onClick={() => mover(idsSecciones, s.id, -1, (ids) => servicio.reordenarSecciones(salonId, ids))} />
-                  <Accion icono="down" etiqueta={`Bajar sección ${s.titulo}`} disabled={i === secciones.length - 1} onClick={() => mover(idsSecciones, s.id, 1, (ids) => servicio.reordenarSecciones(salonId, ids))} />
-                  <Accion icono="pencil" etiqueta={`Editar sección ${s.titulo}`} onClick={() => setModal({ tipo: 'seccion', seccion: s })} />
-                  <Accion icono={s.oculta ? 'eye' : 'eyeoff'} etiqueta={`${s.oculta ? 'Mostrar' : 'Ocultar'} sección ${s.titulo}`} onClick={() => ejecutar(() => servicio.ocultarSeccion(s.id, !s.oculta))} />
+                  <Accion icono="up" etiqueta={`Move section ${s.titulo} up`} disabled={i === 0} onClick={() => mover(idsSecciones, s.id, -1, (ids) => servicio.reordenarSecciones(salonId, ids))} />
+                  <Accion icono="down" etiqueta={`Move section ${s.titulo} down`} disabled={i === secciones.length - 1} onClick={() => mover(idsSecciones, s.id, 1, (ids) => servicio.reordenarSecciones(salonId, ids))} />
+                  <Accion icono="pencil" etiqueta={`Edit section ${s.titulo}`} onClick={() => setModal({ tipo: 'seccion', seccion: s })} />
+                  <Accion icono={s.oculta ? 'eye' : 'eyeoff'} etiqueta={`${s.oculta ? 'Show' : 'Hide'} section ${s.titulo}`} onClick={() => ejecutar(() => servicio.ocultarSeccion(s.id, !s.oculta))} />
                 </div>
               </div>
               {s.lecciones.length === 0 ? (
-                <p className="px-4 py-3 text-sm text-slate-400">Sin lecciones.</p>
+                <p className="px-4 py-3 text-sm text-slate-400">No lessons.</p>
               ) : (
                 <ul className="divide-y divide-slate-100">
                   {s.lecciones.map((l, j) => {
@@ -111,14 +111,14 @@ export default function GestionContenido({ salonId, servicio = servicioReal }) {
                           </p>
                           <p className="text-xs text-slate-500">
                             {tipoLabel(l.tipo)}
-                            {l.sesionFecha && ` · Clase del ${formatFecha(l.sesionFecha)}`}
+                            {l.sesionFecha && ` · Class of ${formatFecha(l.sesionFecha)}`}
                           </p>
                         </div>
                         <div className="flex items-center">
-                          <Accion icono="up" etiqueta={`Subir lección ${l.titulo}`} disabled={j === 0} onClick={() => mover(ids, l.id, -1, (n) => servicio.reordenarLecciones(s.id, n))} />
-                          <Accion icono="down" etiqueta={`Bajar lección ${l.titulo}`} disabled={j === s.lecciones.length - 1} onClick={() => mover(ids, l.id, 1, (n) => servicio.reordenarLecciones(s.id, n))} />
-                          <Accion icono="pencil" etiqueta={`Editar lección ${l.titulo}`} onClick={() => setModal({ tipo: 'leccion', seccion: s, leccion: l })} />
-                          <Accion icono={l.oculta ? 'eye' : 'eyeoff'} etiqueta={`${l.oculta ? 'Mostrar' : 'Ocultar'} lección ${l.titulo}`} onClick={() => ejecutar(() => servicio.ocultarLeccion(l.id, !l.oculta))} />
+                          <Accion icono="up" etiqueta={`Move lesson ${l.titulo} up`} disabled={j === 0} onClick={() => mover(ids, l.id, -1, (n) => servicio.reordenarLecciones(s.id, n))} />
+                          <Accion icono="down" etiqueta={`Move lesson ${l.titulo} down`} disabled={j === s.lecciones.length - 1} onClick={() => mover(ids, l.id, 1, (n) => servicio.reordenarLecciones(s.id, n))} />
+                          <Accion icono="pencil" etiqueta={`Edit lesson ${l.titulo}`} onClick={() => setModal({ tipo: 'leccion', seccion: s, leccion: l })} />
+                          <Accion icono={l.oculta ? 'eye' : 'eyeoff'} etiqueta={`${l.oculta ? 'Show' : 'Hide'} lesson ${l.titulo}`} onClick={() => ejecutar(() => servicio.ocultarLeccion(l.id, !l.oculta))} />
                         </div>
                       </li>
                     )
@@ -127,7 +127,7 @@ export default function GestionContenido({ salonId, servicio = servicioReal }) {
               )}
               <div className="border-t border-slate-100 px-4 py-2">
                 <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'leccion', seccion: s })}>
-                  <Icon name="plus" className="h-4 w-4" /> Agregar lección
+                  <Icon name="plus" className="h-4 w-4" /> Add lesson
                 </Button>
               </div>
             </Card>

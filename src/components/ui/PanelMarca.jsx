@@ -17,8 +17,8 @@ export default function PanelMarca({ children }) {
         <div className="flex h-full flex-col justify-end p-6 pb-10 sm:p-10 sm:pb-12 lg:p-14">
           <div>
             <span aria-hidden="true" className="mb-4 block h-0.5 w-10 bg-peach-500 lg:mb-6 lg:w-14" />
-            <p className="max-w-md text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-[2.6rem] lg:leading-[1.12]">Tu espacio de clases, agenda y notas.</p>
-            <p className="mt-3 hidden max-w-sm text-base text-brand-100 lg:block">Tus clases en vivo, tus materiales y tu progreso, en un solo lugar.</p>
+            <p className="max-w-md text-xl font-semibold leading-snug tracking-tight sm:text-2xl lg:text-[2.6rem] lg:leading-[1.12]">Your space for classes, schedule and grades.</p>
+            <p className="mt-3 hidden max-w-sm text-base text-brand-100 lg:block">Your live classes, your materials and your progress, all in one place.</p>
           </div>
         </div>
       </aside>

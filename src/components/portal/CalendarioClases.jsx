@@ -25,14 +25,14 @@ export function FilaClase({ c, hoy = hoyISO() }) {
         </p>
       </div>
       <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${grupal ? 'bg-brand-100 text-brand-700' : 'bg-peach-100 text-peach-700'}`}>
-        {c.fecha === hoy ? 'Hoy' : grupal ? 'Grupal' : 'Particular'}
+        {c.fecha === hoy ? 'Today' : grupal ? 'Group' : 'Private'}
       </span>
     </li>
   )
 }
 
 // Calendario mensual con las clases del estudiante marcadas; al elegir un día se listan sus clases.
-export default function CalendarioClases({ clases, titulo = 'Calendario de clases', vacio = 'No hay clases programadas por ahora.' }) {
+export default function CalendarioClases({ clases, titulo = 'Class calendar', vacio = 'There are no classes scheduled for now.' }) {
   const hoy = hoyISO()
   const [mes, setMes] = useState({ y: Number(hoy.slice(0, 4)), m: Number(hoy.slice(5, 7)) - 1 })
   const [elegido, setElegido] = useState(null)
@@ -57,7 +57,7 @@ export default function CalendarioClases({ clases, titulo = 'Calendario de clase
     .filter((c) => c.fecha >= hoy)
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora_inicio.localeCompare(b.hora_inicio))
   const delDia = elegido ? (porDia.get(elegido) ?? []) : proximas.slice(0, 5)
-  const tituloLista = elegido ? `${cuando(elegido, hoy)} · ${diaMes(elegido)}` : 'Próximas clases'
+  const tituloLista = elegido ? `${cuando(elegido, hoy)} · ${diaMes(elegido)}` : 'Upcoming classes'
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
@@ -67,10 +67,10 @@ export default function CalendarioClases({ clases, titulo = 'Calendario de clase
             {MESES[mes.m]} <span className="font-normal text-slate-400">{mes.y}</span>
           </h2>
           <div className="flex gap-1">
-            <button type="button" aria-label="Mes anterior" onClick={() => cambiar(-1)} className="rounded-full p-1.5 text-slate-500 hover:bg-brand-50 hover:text-brand-700">
+            <button type="button" aria-label="Previous month" onClick={() => cambiar(-1)} className="rounded-full p-1.5 text-slate-500 hover:bg-brand-50 hover:text-brand-700">
               <Icon name="back" className="h-4 w-4" />
             </button>
-            <button type="button" aria-label="Mes siguiente" onClick={() => cambiar(1)} className="rounded-full p-1.5 text-slate-500 hover:bg-brand-50 hover:text-brand-700">
+            <button type="button" aria-label="Next month" onClick={() => cambiar(1)} className="rounded-full p-1.5 text-slate-500 hover:bg-brand-50 hover:text-brand-700">
               <Icon name="back" className="h-4 w-4 rotate-180" />
             </button>
           </div>
@@ -92,7 +92,7 @@ export default function CalendarioClases({ clases, titulo = 'Calendario de clase
                 type="button"
                 onClick={() => setElegido(on ? null : f)}
                 aria-pressed={on}
-                aria-label={`${Number(f.slice(8))} de ${MESES[mes.m]}${n ? `, ${n} ${n === 1 ? 'clase' : 'clases'}` : ''}`}
+                aria-label={`${MESES[mes.m]} ${Number(f.slice(8))}${n ? `, ${n} ${n === 1 ? 'class' : 'classes'}` : ''}`}
                 className={`relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition ${
                   on ? 'bg-brand-600 font-semibold text-white' : n ? 'bg-brand-50 font-semibold text-brand-800 hover:bg-brand-100' : 'text-slate-600 hover:bg-slate-50'
                 } ${esHoy && !on ? 'ring-2 ring-peach-500' : ''}`}
@@ -105,10 +105,10 @@ export default function CalendarioClases({ clases, titulo = 'Calendario de clase
         </div>
         <p className="mt-3 flex items-center gap-4 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-brand-500" /> Con clase
+            <span className="h-2 w-2 rounded-full bg-brand-500" /> Has a class
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full ring-2 ring-peach-500" /> Hoy
+            <span className="h-2 w-2 rounded-full ring-2 ring-peach-500" /> Today
           </span>
         </p>
       </section>
@@ -117,7 +117,7 @@ export default function CalendarioClases({ clases, titulo = 'Calendario de clase
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-700">{tituloLista}</h3>
         {delDia.length === 0 ? (
           <p className="rounded-xl border border-dashed border-brand-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
-            {elegido ? 'No tienes clases este día.' : vacio}
+            {elegido ? 'You have no classes this day.' : vacio}
           </p>
         ) : (
           <ul className="space-y-2">

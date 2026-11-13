@@ -10,7 +10,7 @@ export default function SeccionForm({ seccion, onSave, onClose }) {
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!titulo.trim()) return setError('Escribe el título de la sección')
+    if (!titulo.trim()) return setError('Enter the section title')
     setGuardando(true)
     setError('')
     try {
@@ -22,16 +22,16 @@ export default function SeccionForm({ seccion, onSave, onClose }) {
   }
 
   return (
-    <Modal title={seccion ? 'Editar sección' : 'Nueva sección'} onClose={onClose}>
+    <Modal title={seccion ? 'Edit section' : 'New section'} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
-        <Field label="Título" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ej.: Módulo 1 · Presentaciones" autoFocus />
+        <Field label="Title" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="E.g.: Module 1 · Introductions" autoFocus />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
+            {guardando ? 'Saving…' : 'Save'}
           </Button>
         </div>
       </form>

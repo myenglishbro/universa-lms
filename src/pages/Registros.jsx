@@ -192,7 +192,7 @@ export default function Registros({ onCambio, servicio = servicioReal, puedeEdit
 
       <Ayuda id="registros" titulo="How does it work?">
         <p>
-          Each teacher signs up from the sign-in screen (“I’m a teacher: sign up”) with their details and password. Their account <strong>has no access to anything</strong> until you activate it.
+          Each teacher signs up on the registration page with their details and password. Their account <strong>has no access to anything</strong> until you activate it.
         </p>
         <p>
           Review their details and their <strong>availability</strong> and tap <strong>“Activate as teacher”</strong>: the teacher is created and can enter their portal. From their profile you can also <strong>change their password</strong>.
