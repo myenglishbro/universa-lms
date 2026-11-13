@@ -20,7 +20,7 @@ function CorregirRubrica({ entrega, rubrica, tipo, servicio, onHecho }) {
 
   const guardar = async () => {
     setError('')
-    if (nota == null) return setError('Califica todos los criterios con un valor entre 0 y su máximo')
+    if (nota == null) return setError('Grade all criteria with a value between 0 and its maximum')
     setGuardando(true)
     try {
       await servicio.calificarEntregaRubrica(
@@ -38,7 +38,7 @@ function CorregirRubrica({ entrega, rubrica, tipo, servicio, onHecho }) {
 
   return (
     <div className="mt-4 space-y-3 rounded-xl bg-brand-50/60 p-4">
-      <p className="text-sm font-medium text-slate-800">Rúbrica: {rubrica.nombre}</p>
+      <p className="text-sm font-medium text-slate-800">Rubric: {rubrica.nombre}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {rubrica.criterios.map((c) => (
           <Field
@@ -54,14 +54,14 @@ function CorregirRubrica({ entrega, rubrica, tipo, servicio, onHecho }) {
           />
         ))}
       </div>
-      <Field as="textarea" rows={3} label="Feedback para el estudiante" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={tipo === 'writing' ? 'Qué hizo bien, qué corregir…' : 'Pronunciación, fluidez, vocabulario…'} />
+      <Field as="textarea" rows={3} label="Feedback for the student" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={tipo === 'writing' ? 'What they did well, what to fix…' : 'Pronunciation, fluency, vocabulary…'} />
       <p className="text-sm text-slate-600">
-        Resultado de la actividad: <strong>{nota == null ? '—' : `${nota2(nota)} / 100`}</strong>
+        Activity result: <strong>{nota == null ? '—' : `${nota2(nota)} / 100`}</strong>
       </p>
       {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
       <div className="flex justify-end">
         <Button onClick={guardar} disabled={guardando}>
-          {guardando ? 'Guardando…' : entrega.estado === 'revisada' ? 'Actualizar revisión' : 'Guardar revisión'}
+          {guardando ? 'Saving…' : entrega.estado === 'revisada' ? 'Update review' : 'Save review'}
         </Button>
       </div>
     </div>
@@ -92,13 +92,13 @@ function Corregir({ entrega, tipo, servicio, onHecho }) {
   return (
     <div className="mt-4 space-y-3 rounded-xl bg-brand-50/60 p-4">
       <div className="grid gap-3 sm:grid-cols-[8rem_1fr]">
-        <Field label="Nota (0–100)" type="number" min="0" max="100" value={nota} onChange={(e) => setNota(e.target.value)} />
-        <Field as="textarea" rows={3} label={`Feedback para el estudiante`} value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={tipo === 'writing' ? 'Qué hizo bien, qué corregir (gramática, vocabulario, organización)…' : 'Pronunciación, fluidez, vocabulario…'} />
+        <Field label="Grade (0–100)" type="number" min="0" max="100" value={nota} onChange={(e) => setNota(e.target.value)} />
+        <Field as="textarea" rows={3} label="Feedback for the student" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder={tipo === 'writing' ? 'What they did well, what to fix (grammar, vocabulary, organization)…' : 'Pronunciation, fluency, vocabulary…'} />
       </div>
       {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
       <div className="flex justify-end">
         <Button onClick={guardar} disabled={guardando}>
-          {guardando ? 'Guardando…' : entrega.estado === 'revisada' ? 'Actualizar revisión' : 'Guardar revisión'}
+          {guardando ? 'Saving…' : entrega.estado === 'revisada' ? 'Update review' : 'Save review'}
         </Button>
       </div>
     </div>
@@ -118,21 +118,21 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
   return (
     <>
       <button onClick={onVolver} className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-700">
-        <Icon name="back" className="h-4 w-4" /> Ejercicios del salón
+        <Icon name="back" className="h-4 w-4" /> Classroom exercises
       </button>
-      {cargando && <p className="py-10 text-center text-sm text-slate-500">Cargando…</p>}
-      {error && <p className="text-sm text-red-600">No se pudieron cargar las entregas: {error}</p>}
+      {cargando && <p className="py-10 text-center text-sm text-slate-500">Loading…</p>}
+      {error && <p className="text-sm text-red-600">Could not load the submissions: {error}</p>}
       {a && (
         <>
           <div className="mb-5">
             <h2 className="text-2xl font-bold text-brand-800">{a.titulo}</h2>
             <p className="text-sm text-slate-500">
               {t.label}
-              {a.fecha_limite && ` · hasta ${formatFecha(a.fecha_limite)}`}
-              {manual ? ' · revisión manual' : ' · se califica solo'}
+              {a.fecha_limite && ` · until ${formatFecha(a.fecha_limite)}`}
+              {manual ? ' · manual review' : ' · graded automatically'}
             </p>
             <p className={`text-sm font-medium ${a.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(a.formative)}</p>
-            {a.formative && <p className="text-xs text-slate-500">Esta actividad alimenta esa habilidad de la unidad. Cuenta cuando confirmes y publiques la nota de la unidad en «Calificaciones Formative».</p>}
+            {a.formative && <p className="text-xs text-slate-500">This activity feeds that skill of the unit. It counts when you confirm and publish the unit grade in “Formative grades”.</p>}
           </div>
           {manual && a.contenido.consigna && <p className="mb-4 rounded-xl border border-brand-100 bg-white p-4 text-sm text-slate-800">{a.contenido.consigna}</p>}
           <Card>
@@ -145,11 +145,11 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{f.nombre}</p>
-                        <p className="text-xs text-slate-500">{e ? `Entregó el ${formatFecha(String(e.entregado_at).slice(0, 10))}` : 'Aún no entrega'}</p>
+                        <p className="text-xs text-slate-500">{e ? `Submitted on ${formatFecha(String(e.entregado_at).slice(0, 10))}` : 'Not submitted yet'}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        {!e && <Badge color="slate">Pendiente</Badge>}
-                        {e?.estado === 'pendiente' && <Badge color="peach">Por revisar</Badge>}
+                        {!e && <Badge color="slate">Pending</Badge>}
+                        {e?.estado === 'pendiente' && <Badge color="peach">To review</Badge>}
                         {e?.estado === 'revisada' && <Badge color="brand">Revisado · {fmtPuntaje(e.puntaje)}</Badge>}
                         {e?.estado === 'autocalificada' && (
                           <Badge color="brand">
@@ -158,7 +158,7 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
                         )}
                         {e && manual && (
                           <Button variant={e.estado === 'pendiente' ? 'primary' : 'ghost'} className="px-4 py-1 text-xs" onClick={() => setAbierto(abre ? null : f.alumno_id)}>
-                            {e.estado === 'pendiente' ? 'Revisar' : abre ? 'Cerrar' : 'Ver'}
+                            {e.estado === 'pendiente' ? 'Review' : abre ? 'Close' : 'View'}
                           </Button>
                         )}
                       </div>
@@ -173,7 +173,7 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
                         ) : e.audio_path ? (
                           <AudioGuardado ruta={e.audio_path} />
                         ) : (
-                          <p className="text-sm text-slate-500">Sin audio.</p>
+                          <p className="text-sm text-slate-500">No audio.</p>
                         )}
                         {a.formative?.rubrica ? (
                           <CorregirRubrica entrega={e} rubrica={a.formative.rubrica} tipo={a.tipo} servicio={servicio} onHecho={recargar} />
@@ -185,7 +185,7 @@ export default function RevisionEjercicio({ asignacionId, servicio, onVolver }) 
                   </li>
                 )
               })}
-              {datos.filas.length === 0 && <li className="px-4 py-6 text-center text-sm text-slate-400">Este salón no tiene estudiantes matriculados.</li>}
+              {datos.filas.length === 0 && <li className="px-4 py-6 text-center text-sm text-slate-400">This classroom has no students enrolled.</li>}
             </ul>
           </Card>
         </>

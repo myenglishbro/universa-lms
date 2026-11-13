@@ -2,14 +2,14 @@
 // La calificación real la hace Supabase (entregar_ejercicio); aquí solo se prepara el material.
 
 export const TIPOS = [
-  { id: 'multiple_choice', label: 'Multiple choice', desc: 'Preguntas con 4 opciones y una correcta', icono: 'list', tono: 'brand', auto: true },
-  { id: 'fill_gap', label: 'Fill in the gap', desc: 'Oraciones con espacios para completar', icono: 'pen', tono: 'peach', auto: true },
-  { id: 'matching', label: 'Matching', desc: 'Unir cada elemento con su pareja', icono: 'link', tono: 'brand', auto: true },
-  { id: 'order_sentences', label: 'Order sentences', desc: 'Ordenar las palabras para formar la oración', icono: 'switch', tono: 'peach', auto: true },
-  { id: 'reading', label: 'Reading', desc: 'Un texto con afirmaciones verdadero / falso', icono: 'book', tono: 'brand', auto: true },
-  { id: 'listening', label: 'Listening', desc: 'Un audio de Drive con preguntas de opción múltiple', icono: 'headphones', tono: 'peach', auto: true },
-  { id: 'writing', label: 'Writing', desc: 'Respuesta escrita libre, la revisa el docente', icono: 'pencil', tono: 'brand', auto: false },
-  { id: 'speaking', label: 'Speaking', desc: 'El estudiante graba su voz, la revisa el docente', icono: 'mic', tono: 'peach', auto: false },
+  { id: 'multiple_choice', label: 'Multiple choice', desc: 'Questions with 4 options and one correct answer', icono: 'list', tono: 'brand', auto: true },
+  { id: 'fill_gap', label: 'Fill in the gap', desc: 'Sentences with gaps to fill in', icono: 'pen', tono: 'peach', auto: true },
+  { id: 'matching', label: 'Matching', desc: 'Match each item with its pair', icono: 'link', tono: 'brand', auto: true },
+  { id: 'order_sentences', label: 'Order sentences', desc: 'Put the words in order to form the sentence', icono: 'switch', tono: 'peach', auto: true },
+  { id: 'reading', label: 'Reading', desc: 'A text with true / false statements', icono: 'book', tono: 'brand', auto: true },
+  { id: 'listening', label: 'Listening', desc: 'A Drive audio with multiple-choice questions', icono: 'headphones', tono: 'peach', auto: true },
+  { id: 'writing', label: 'Writing', desc: 'Free written answer, reviewed by the teacher', icono: 'pencil', tono: 'brand', auto: false },
+  { id: 'speaking', label: 'Speaking', desc: 'The student records their voice, reviewed by the teacher', icono: 'mic', tono: 'peach', auto: false },
 ]
 export const tipoDe = (id) => TIPOS.find((t) => t.id === id)
 export const esManual = (tipo) => tipo === 'writing' || tipo === 'speaking'
@@ -75,38 +75,38 @@ export function audioDriveEmbed(url) {
 // ------------------------------------------------------------
 export function validar(tipo, d) {
   const lista = claveLista(tipo)
-  if (lista && (!Array.isArray(d[lista]) || d[lista].length === 0)) return 'Agrega al menos una pregunta'
+  if (lista && (!Array.isArray(d[lista]) || d[lista].length === 0)) return 'Add at least one item'
   switch (tipo) {
     case 'multiple_choice':
     case 'listening': {
-      if (tipo === 'listening' && !audioDriveEmbed(d.audio_url)) return 'Pega un enlace de Google Drive que apunte al audio (compartido para quien tenga el enlace)'
+      if (tipo === 'listening' && !audioDriveEmbed(d.audio_url)) return 'Paste a Google Drive link pointing to the audio (shared with anyone who has the link)'
       for (const [i, p] of d.preguntas.entries()) {
-        if (!texto(p.enunciado)) return `La pregunta ${i + 1} no tiene enunciado`
+        if (!texto(p.enunciado)) return `Question ${i + 1} has no text`
         const llenas = p.opciones.filter((o) => texto(o))
-        if (llenas.length < 2) return `La pregunta ${i + 1} necesita al menos 2 opciones`
-        if (!texto(p.opciones[p.correcta])) return `Marca como correcta una opción con texto en la pregunta ${i + 1}`
+        if (llenas.length < 2) return `Question ${i + 1} needs at least 2 options`
+        if (!texto(p.opciones[p.correcta])) return `Mark an option that has text as correct in question ${i + 1}`
       }
       return ''
     }
     case 'fill_gap':
-      for (const [i, o] of d.oraciones.entries()) if (!/\[\[[^\]]+\]\]/.test(o.texto ?? '')) return `La oración ${i + 1} necesita un espacio: escribe la respuesta entre [[ ]]`
+      for (const [i, o] of d.oraciones.entries()) if (!/\[\[[^\]]+\]\]/.test(o.texto ?? '')) return `Sentence ${i + 1} needs a gap: write the answer between [[ ]]`
       return ''
     case 'matching':
-      if (d.pares.length < 2) return 'Un matching necesita al menos 2 pares'
-      for (const [i, p] of d.pares.entries()) if (!texto(p.izq) || !texto(p.der)) return `Completa los dos lados del par ${i + 1}`
+      if (d.pares.length < 2) return 'A matching exercise needs at least 2 pairs'
+      for (const [i, p] of d.pares.entries()) if (!texto(p.izq) || !texto(p.der)) return `Fill in both sides of pair ${i + 1}`
       return ''
     case 'order_sentences':
-      for (const [i, o] of d.oraciones.entries()) if (texto(o).split(/\s+/).filter(Boolean).length < 3) return `La oración ${i + 1} debe tener al menos 3 palabras`
+      for (const [i, o] of d.oraciones.entries()) if (texto(o).split(/\s+/).filter(Boolean).length < 3) return `Sentence ${i + 1} must have at least 3 words`
       return ''
     case 'reading':
-      if (!texto(d.texto)) return 'Falta el texto de lectura'
-      for (const [i, a] of d.afirmaciones.entries()) if (!texto(a.enunciado)) return `La afirmación ${i + 1} está vacía`
+      if (!texto(d.texto)) return 'The reading text is missing'
+      for (const [i, a] of d.afirmaciones.entries()) if (!texto(a.enunciado)) return `Statement ${i + 1} is empty`
       return ''
     case 'writing':
     case 'speaking':
       return texto(d.consigna) ? '' : 'Escribe la consigna para el estudiante'
     default:
-      return 'Tipo de ejercicio no válido'
+      return 'Invalid exercise type'
   }
 }
 
@@ -188,7 +188,7 @@ export function compilar(tipo, d) {
     case 'speaking':
       return { contenido: { instrucciones, consigna: texto(d.consigna), segundos_max: Number(d.segundos_max) || 90 }, clave: null }
     default:
-      throw new Error('Tipo de ejercicio no válido')
+      throw new Error('Invalid exercise type')
   }
 }
 
@@ -201,7 +201,7 @@ export function cantidadItems(tipo, d) {
 }
 
 // ------------------------------------------------------------
-// Prompt para usar con una IA (ChatGPT, Claude, Gemini…)
+// Prompt to use with an AI (ChatGPT, Claude, Gemini…)
 // ------------------------------------------------------------
 const ESQUEMAS = {
   multiple_choice: `{
@@ -261,33 +261,33 @@ const ESQUEMAS = {
 }
 
 const REGLAS = {
-  multiple_choice: (p) => `- Crea exactamente ${p.cantidad} preguntas de opción múltiple con 4 opciones cada una y UNA sola correcta.\n- "correcta" es el índice de la opción correcta empezando en 0 (0 = primera opción).\n- Varía la posición de la respuesta correcta y evita "todas las anteriores".`,
+  multiple_choice: (p) => `- Create exactly ${p.cantidad} multiple-choice questions with 4 options each and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0 (0 = first option).\n- Vary the position of the correct answer and avoid "all of the above".`,
   listening: (p) =>
-    `- El estudiante escuchará un audio (no lo puedes oír). Basa las preguntas ÚNICAMENTE en esta transcripción:\n"""\n${p.transcripcion || '[PEGA AQUÍ LA TRANSCRIPCIÓN DEL AUDIO]'}\n"""\n- Crea exactamente ${p.cantidad} preguntas de opción múltiple con 4 opciones y UNA sola correcta.\n- "correcta" es el índice de la opción correcta empezando en 0.`,
-  fill_gap: (p) => `- Crea exactamente ${p.cantidad} oraciones. En cada una marca la palabra o frase que el estudiante debe completar entre dobles corchetes: [[respuesta]].\n- Si hay más de una respuesta válida, sepáralas con | dentro de los corchetes: [[are|'re]].\n- Cada oración puede tener 1 o 2 espacios. La respuesta debe ser inequívoca por el contexto.`,
-  matching: (p) => `- Crea exactamente ${p.cantidad} pares. Cada elemento de "izq" se une con UN elemento de "der" (por ejemplo palabra ↔ definición, o pregunta ↔ respuesta).\n- Los elementos de "der" deben ser todos distintos entre sí y sin ambigüedad.`,
-  order_sentences: (p) => `- Crea exactamente ${p.cantidad} oraciones completas y correctas, de 6 a 12 palabras. El estudiante recibirá las palabras desordenadas y deberá ordenarlas.\n- Cada oración debe tener un único orden natural posible.`,
+    `- The student will listen to an audio (you cannot hear it). Base the questions ONLY on this transcript:\n"""\n${p.transcripcion || '[PASTE THE AUDIO TRANSCRIPT HERE]'}\n"""\n- Create exactly ${p.cantidad} multiple-choice questions with 4 options and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0.`,
+  fill_gap: (p) => `- Create exactly ${p.cantidad} sentences. In each one, mark the word or phrase the student must fill in between double square brackets: [[answer]].\n- If more than one answer is valid, separate them with | inside the brackets: [[are|'re]].\n- Each sentence can have 1 or 2 gaps. The answer must be unambiguous from the context.`,
+  matching: (p) => `- Create exactly ${p.cantidad} pairs. Each "izq" item matches ONE "der" item (for example word ↔ definition, or question ↔ answer).\n- All "der" items must be different from each other and unambiguous.`,
+  order_sentences: (p) => `- Create exactly ${p.cantidad} complete, correct sentences of 6 to 12 words. The student will receive the words shuffled and must put them in order.\n- Each sentence must have only one natural word order.`,
   reading: (p) =>
-    `- ${p.texto ? `Usa este texto como lectura (no lo modifiques):\n"""\n${p.texto}\n"""` : 'Escribe un texto de lectura original de 120 a 200 palabras.'}\n- Crea exactamente ${p.cantidad} afirmaciones sobre el texto para marcar como verdadero o falso. "verdadero" es true o false.\n- Mezcla afirmaciones verdaderas y falsas; ninguna debe depender de conocimiento externo.`,
-  writing: () => `- Escribe una consigna clara de escritura (qué debe escribir, para quién y con qué elementos). Indica "min_palabras" apropiado para el nivel.`,
-  speaking: () => `- Escribe una consigna clara para que el estudiante hable grabando su voz (tema, qué debe mencionar). "segundos_max" entre 30 y 120 según el nivel.`,
+    `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : 'Write an original reading text of 120 to 200 words.'}\n- Create exactly ${p.cantidad} statements about the text to mark as true or false. "verdadero" is true or false.\n- Mix true and false statements; none may depend on outside knowledge.`,
+  writing: () => `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" appropriate for the level.`,
+  speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.`,
 }
 
 export function construirPrompt(tipo, p) {
   const t = tipoDe(tipo)
   const lineas = [
-    'Eres un profesor experto en enseñanza de inglés como lengua extranjera y diseñas ejercicios para estudiantes hispanohablantes.',
+    'You are an expert teacher of English as a foreign language and you design exercises for Spanish-speaking students.',
     '',
-    `Crea un ejercicio de tipo "${t.label}" con estas características:`,
-    `- Nivel del estudiante (MCER): ${p.nivel || 'A2'}`,
-    `- Tema: ${p.tema?.trim() || 'a tu elección, apropiado para el nivel'}`,
-    '- Todo el contenido del ejercicio (instrucciones, textos, preguntas, opciones) debe estar en inglés.',
+    `Create an exercise of type "${t.label}" with these characteristics:`,
+    `- Student level (CEFR): ${p.nivel || 'A2'}`,
+    `- Topic: ${p.tema?.trim() || 'your choice, appropriate for the level'}`,
+    '- All the exercise content (instructions, texts, questions, options) must be in English.',
     REGLAS[tipo](p),
   ]
-  if (p.extra?.trim()) lineas.push(`- Indicaciones adicionales: ${p.extra.trim()}`)
+  if (p.extra?.trim()) lineas.push(`- Additional instructions: ${p.extra.trim()}`)
   lineas.push(
     '',
-    'Responde ÚNICAMENTE con un objeto JSON válido (sin texto antes ni después, sin comentarios y sin bloques de código markdown) con exactamente esta estructura:',
+    'Reply ONLY with a valid JSON object (no text before or after, no comments and no markdown code blocks) with exactly this structure:',
     ESQUEMAS[tipo],
   )
   return lineas.join('\n')
@@ -315,16 +315,16 @@ function pregunta(p) {
 // Devuelve { titulo, datos } o lanza un Error con un mensaje claro para el usuario.
 export function leerRespuestaIA(tipo, bruto) {
   let s = String(bruto ?? '').trim()
-  if (!s) throw new Error('Pega aquí la respuesta que te dio la IA')
+  if (!s) throw new Error('Paste the answer the AI gave you here')
   s = s.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
   const a = s.indexOf('{')
   const b = s.lastIndexOf('}')
-  if (a < 0 || b <= a) throw new Error('No encuentro un JSON en lo que pegaste. Copia la respuesta completa de la IA, de la primera { a la última }')
+  if (a < 0 || b <= a) throw new Error('I cannot find JSON in what you pasted. Copy the AI\'s complete answer, from the first { to the last }')
   let j
   try {
     j = JSON.parse(s.slice(a, b + 1))
   } catch {
-    throw new Error('El JSON de la IA tiene un error de formato. Pídele a la IA: «devuélvelo de nuevo como JSON válido, sin texto extra»')
+    throw new Error('The AI\'s JSON has a formatting error. Ask the AI: “return it again as valid JSON, with no extra text”')
   }
   const base = { instrucciones: texto(j.instrucciones) }
   let datos
@@ -354,7 +354,7 @@ export function leerRespuestaIA(tipo, bruto) {
       datos = { ...base, consigna: texto(j.consigna), segundos_max: Number(j.segundos_max) || 90 }
       break
     default:
-      throw new Error('Tipo de ejercicio no válido')
+      throw new Error('Invalid exercise type')
   }
   return { titulo: texto(j.titulo), datos }
 }

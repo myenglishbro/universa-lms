@@ -30,7 +30,7 @@ test('reparto interno: 5 elementos de 16 % + participación 20 % = 100 %', () =>
 })
 
 test('etiqueta: práctica u oficial con módulo, unidad y habilidad', () => {
-  assert.equal(etiquetaFormative(null), 'Práctica')
+  assert.equal(etiquetaFormative(null), 'Practice')
   assert.equal(etiquetaFormative({ modulo: 'Módulo 1', unidad: 'Unit 2', habilidad: 'reading' }), 'Formative · Módulo 1 · Unit 2 · Reading')
 })
 

@@ -34,7 +34,7 @@ function Marca({ ok, correcta }) {
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-700">
-      <Icon name="close" className="h-3.5 w-3.5" /> Respuesta correcta: <strong>{correcta}</strong>
+      <Icon name="close" className="h-3.5 w-3.5" /> Correct answer: <strong>{correcta}</strong>
     </span>
   )
 }
@@ -107,7 +107,7 @@ function OrdenPalabras({ palabras: piezas, elegidas, onCambiar, bloqueado, detal
   return (
     <div>
       <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/40 p-2">
-        {elegidas.length === 0 && <span className="px-2 text-sm text-slate-400">Toca las palabras en orden…</span>}
+        {elegidas.length === 0 && <span className="px-2 text-sm text-slate-400">Tap the words in order…</span>}
         {elegidas.map((i, pos) => (
           <button key={i} type="button" onClick={() => onCambiar(elegidas.filter((_, p) => p !== pos))} className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700">
             {piezas[i]}
@@ -123,7 +123,7 @@ function OrdenPalabras({ palabras: piezas, elegidas, onCambiar, bloqueado, detal
       </div>
       {elegidas.length > 0 && (
         <button type="button" onClick={() => onCambiar([])} className="mt-2 text-xs text-slate-500 underline-offset-2 hover:text-brand-700 hover:underline">
-          Empezar de nuevo
+          Start over
         </button>
       )}
     </div>
@@ -156,7 +156,7 @@ function Grabadora({ segundosMax, onAudio, bloqueado }) {
 
   const empezar = async () => {
     setError('')
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return setError('Tu navegador no permite grabar audio. Prueba con Chrome, Edge o Safari actualizados.')
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return setError('Your browser does not allow audio recording. Try an up-to-date Chrome, Edge or Safari.')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find((m) => MediaRecorder.isTypeSupported?.(m))
@@ -176,7 +176,7 @@ function Grabadora({ segundosMax, onAudio, bloqueado }) {
       setEstado('grabando')
       timer.current = setInterval(() => setSeg((s) => s + 1), 1000)
     } catch {
-      setError('No pudimos usar tu micrófono. Revisa que el navegador tenga permiso para usarlo y vuelve a intentar.')
+      setError('We could not use your microphone. Check that the browser has permission to use it and try again.')
     }
   }
 
@@ -190,21 +190,21 @@ function Grabadora({ segundosMax, onAudio, bloqueado }) {
     <div className="rounded-2xl border border-brand-100 bg-brand-50/50 p-5 text-center">
       {estado === 'inicio' && (
         <>
-          <button type="button" disabled={bloqueado} onClick={empezar} className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg transition hover:scale-105 hover:bg-brand-700 disabled:opacity-50" aria-label="Empezar a grabar">
+          <button type="button" disabled={bloqueado} onClick={empezar} className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg transition hover:scale-105 hover:bg-brand-700 disabled:opacity-50" aria-label="Start recording">
             <Icon name="mic" className="h-9 w-9" />
           </button>
-          <p className="mt-3 text-sm text-slate-600">Toca el micrófono y habla. Puedes grabar hasta {segundosMax} segundos.</p>
+          <p className="mt-3 text-sm text-slate-600">Tap the microphone and speak. You can record up to {segundosMax} seconds.</p>
         </>
       )}
       {estado === 'grabando' && (
         <>
-          <button type="button" onClick={detener} className="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 text-white shadow-lg" aria-label="Detener grabación">
+          <button type="button" onClick={detener} className="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 text-white shadow-lg" aria-label="Stop recording">
             <Icon name="stop" className="h-8 w-8" />
           </button>
           <p className="mt-3 text-lg font-semibold tabular-nums text-rose-600">
             {mm(seg)} <span className="text-sm font-normal text-slate-500">/ {mm(segundosMax)}</span>
           </p>
-          <p className="text-sm text-slate-600">Grabando… toca el cuadro para terminar.</p>
+          <p className="text-sm text-slate-600">Recording… tap the square to finish.</p>
         </>
       )}
       {estado === 'listo' && (
@@ -221,7 +221,7 @@ function Grabadora({ segundosMax, onAudio, bloqueado }) {
                 onAudio(null)
               }}
             >
-              Grabar de nuevo
+              Record again
             </Button>
           )}
         </>
@@ -248,8 +248,8 @@ export function AudioGuardado({ ruta }) {
       vivo = false
     }
   }, [ruta])
-  if (error) return <p className="text-sm text-rose-700">No se pudo cargar el audio: {error}</p>
-  if (!url) return <p className="text-sm text-slate-500">Cargando audio…</p>
+  if (error) return <p className="text-sm text-rose-700">Could not load the audio: {error}</p>
+  if (!url) return <p className="text-sm text-slate-500">Loading audio…</p>
   return <audio controls src={url} className="w-full max-w-sm" />
 }
 
@@ -313,7 +313,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
         <div className={`rounded-2xl border p-5 ${pendiente ? 'border-peach-200 bg-peach-50' : hecho.estado === 'revisada' ? 'border-brand-200 bg-brand-50' : 'border-brand-200 bg-white shadow-sm'}`}>
           {pendiente ? (
             <p className="flex items-center gap-2 text-sm font-medium text-peach-700">
-              <Icon name="clock" className="h-5 w-5" /> Enviado. Tu docente lo revisará y verás aquí su nota y comentarios.
+              <Icon name="clock" className="h-5 w-5" /> Submitted. Your teacher will review it and you will see the grade and comments here.
             </p>
           ) : (
             <div className="flex flex-wrap items-center gap-5">
@@ -323,7 +323,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-lg font-semibold text-slate-900">
-                  {hecho.estado === 'revisada' ? 'Revisado por tu docente' : hecho.puntaje >= 70 ? '¡Muy bien!' : hecho.puntaje >= 40 ? '¡Buen intento!' : 'Sigue practicando'}
+                  {hecho.estado === 'revisada' ? 'Reviewed by your teacher' : hecho.puntaje >= 70 ? 'Well done!' : hecho.puntaje >= 40 ? 'Good try!' : 'Keep practicing'}
                 </p>
                 {hecho.total != null && (
                   <p className="text-sm text-slate-600">
@@ -335,7 +335,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
           )}
           {hecho.feedback && (
             <div className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-700 shadow-sm">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-700">Comentarios de tu docente</p>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-700">Comments from your teacher</p>
               <p className="whitespace-pre-wrap">{hecho.feedback}</p>
             </div>
           )}
@@ -347,9 +347,9 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
           {tipo === 'listening' && audioDriveEmbed(c.audio_url) && (
             <div className="overflow-hidden rounded-2xl border border-brand-100 bg-white p-3 shadow-sm">
               <p className="mb-2 flex items-center gap-2 text-sm font-medium text-brand-700">
-                <Icon name="headphones" className="h-4 w-4" /> Escucha el audio las veces que necesites
+                <Icon name="headphones" className="h-4 w-4" /> Listen to the audio as many times as you need
               </p>
-              <iframe title="Audio del ejercicio" src={audioDriveEmbed(c.audio_url)} allow="autoplay" className="h-28 w-full rounded-lg border-0 bg-slate-50" />
+              <iframe title="Exercise audio" src={audioDriveEmbed(c.audio_url)} allow="autoplay" className="h-28 w-full rounded-lg border-0 bg-slate-50" />
             </div>
           )}
           {c.preguntas.map((p, i) => (
@@ -426,10 +426,10 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
                   value={resp[i]}
                   disabled={bloqueado}
                   onChange={(e) => poner(i, e.target.value)}
-                  aria-label={`Pareja de ${izq}`}
+                  aria-label={`Pair of ${izq}`}
                   className={`w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200 ${d(i) ? (d(i).ok ? OK : MAL) : 'border-slate-300 bg-white'}`}
                 >
-                  <option value="">Elige la pareja…</option>
+                  <option value="">Choose the pair…</option>
                   {c.opciones.map((o) => (
                     <option key={o} value={o}>
                       {o}
@@ -446,7 +446,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
       {tipo === 'order_sentences' &&
         c.oraciones.map((o, i) => (
           <div key={i}>
-            <Enunciado n={i + 1}>Forma la oración</Enunciado>
+            <Enunciado n={i + 1}>Form the sentence</Enunciado>
             <OrdenPalabras palabras={o.palabras} elegidas={picks[i] ?? []} onCambiar={(p) => ponerPicks(i, p)} bloqueado={bloqueado} detalle={d(i)} respuesta={resp[i]} />
             {d(i) && !d(i).ok && <div className="mt-2"><Marca ok={false} correcta={d(i).correcta} /></div>}
           </div>
@@ -465,7 +465,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
           />
           {!bloqueado && (
             <p className={`mt-1 text-right text-xs ${c.min_palabras && enPalabras < c.min_palabras ? 'text-slate-500' : 'text-emerald-700'}`}>
-              {enPalabras} palabras{c.min_palabras ? ` · mínimo sugerido ${c.min_palabras}` : ''}
+              {enPalabras} words{c.min_palabras ? ` · suggested minimum ${c.min_palabras}` : ''}
             </p>
           )}
         </div>
@@ -481,7 +481,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
       {!bloqueado && (
         <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-100 bg-white/95 p-3 shadow-lg backdrop-blur">
           <p className="text-sm text-slate-600">
-            {tipo === 'writing' || tipo === 'speaking' ? (completo ? 'Listo para enviar' : tipo === 'writing' ? 'Escribe tu respuesta' : 'Graba tu respuesta') : `${respondidas} de ${meta} respondidas`}
+            {tipo === 'writing' || tipo === 'speaking' ? (completo ? 'Ready to submit' : tipo === 'writing' ? 'Write your answer' : 'Record your answer') : `${respondidas} of ${meta} answered`}
           </p>
           <div className="flex items-center gap-3">
             {error && (
@@ -490,10 +490,10 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
               </span>
             )}
             {vistaPrevia ? (
-              <span className="text-xs font-medium text-slate-500">Vista previa: así lo verá el estudiante</span>
+              <span className="text-xs font-medium text-slate-500">Preview: this is how the student will see it</span>
             ) : (
               <Button type="button" onClick={enviar} disabled={!completo || enviando}>
-                {enviando ? 'Enviando…' : 'Enviar respuestas'}
+                {enviando ? 'Submitting…' : 'Submit answers'}
               </Button>
             )}
           </div>

@@ -20,7 +20,7 @@ export const pesoElemento = (pesoParticipacion = PESO_PARTICIPACION) => (100 - p
 export const nombreHabilidad = (id) => ELEMENTOS.find((h) => h.id === id)?.label ?? id
 
 export const etiquetaFormative = (f) =>
-  !f ? 'Práctica' : `Formative · ${f.modulo} · ${f.unidad} · ${nombreHabilidad(f.habilidad)}`
+  !f ? 'Practice' : `Formative · ${f.modulo} · ${f.unidad} · ${nombreHabilidad(f.habilidad)}`
 
 // Dos decimales solo al mostrar; el valor completo se conserva.
 export const nota2 = (n) => (n == null || n === '' || Number.isNaN(Number(n)) ? '—' : Number(n).toFixed(2))
@@ -40,10 +40,10 @@ export function estadoFila(fila) {
 }
 
 export const ESTADOS_FILA = {
-  parcial: { texto: 'En avance', color: 'peach' },
-  publicada: { texto: 'Publicada', color: 'brand' },
-  cambio: { texto: 'Se actualizará', color: 'rose' },
-  listo: { texto: 'Se publica sola', color: 'peach' },
+  parcial: { texto: 'In progress', color: 'peach' },
+  publicada: { texto: 'Published', color: 'brand' },
+  cambio: { texto: 'Will be updated', color: 'rose' },
+  listo: { texto: 'Publishes automatically', color: 'peach' },
 }
 
 export const puedeConfirmar = (fila) => ['listo', 'cambio'].includes(estadoFila(fila))

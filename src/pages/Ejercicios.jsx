@@ -5,7 +5,7 @@ import PageHeader from '../components/ui/PageHeader'
 export default function Ejercicios() {
   return (
     <>
-      <PageHeader title="Banco de ejercicios" description="Crea ejercicios para que todos los docentes los asignen a sus salones" />
+      <PageHeader title="Exercise bank" description="Create exercises that all teachers can assign to their classrooms" />
       <BancoEjercicios esAdmin />
     </>
   )

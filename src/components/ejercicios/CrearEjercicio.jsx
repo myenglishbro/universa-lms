@@ -8,7 +8,7 @@ import EjercicioJugador from './EjercicioJugador'
 import { NIVELES, TIPOS, TONOS, compilar, construirPrompt, datosVacios, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
 
 function Pasos({ paso }) {
-  const pasos = ['Tipo', 'Prompt con IA', 'Editar y guardar']
+  const pasos = ['Type', 'AI prompt', 'Edit and save']
   return (
     <ol className="mb-6 flex items-center gap-2 text-sm" aria-label="Pasos">
       {pasos.map((t, i) => (
@@ -58,7 +58,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2500)
     } catch {
-      setErrorIA('No se pudo copiar automáticamente: selecciona el texto del prompt y cópialo a mano.')
+      setErrorIA('Could not copy automatically: select the prompt text and copy it by hand.')
     }
   }
   const leer = () => {
@@ -80,7 +80,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
 
   const guardar = async () => {
     setError('')
-    if (!meta.titulo.trim()) return setError('Ponle un título al ejercicio')
+    if (!meta.titulo.trim()) return setError('Give the exercise a title')
     if (errorValidacion) return setError(errorValidacion)
     setGuardando(true)
     try {
@@ -92,12 +92,12 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
   }
 
   return (
-    <Modal title={ejercicio?.id ? 'Editar ejercicio' : ejercicio ? 'Nuevo ejercicio a partir de otro' : 'Nuevo ejercicio'} onClose={onClose} wide="xl">
+    <Modal title={ejercicio?.id ? 'Edit exercise' : ejercicio ? 'New exercise based on another' : 'New exercise'} onClose={onClose} wide="xl">
       <Pasos paso={paso} />
 
       {paso === 0 && (
         <div>
-          <p className="mb-4 text-sm text-slate-600">¿Qué tipo de ejercicio quieres crear?</p>
+          <p className="mb-4 text-sm text-slate-600">What type of exercise do you want to create?</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {TIPOS.map((x) => (
               <button key={x.id} type="button" onClick={() => elegirTipo(x.id)} className="group flex items-start gap-4 rounded-2xl border border-brand-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-md">
@@ -107,7 +107,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
                 <span>
                   <span className="block text-base font-semibold text-slate-900 group-hover:text-brand-700">{x.label}</span>
                   <span className="block text-sm text-slate-500">{x.desc}</span>
-                  <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${x.auto ? 'bg-emerald-50 text-emerald-700' : 'bg-peach-100 text-peach-700'}`}>{x.auto ? 'Se califica solo' : 'Lo revisa el docente'}</span>
+                  <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${x.auto ? 'bg-emerald-50 text-emerald-700' : 'bg-peach-100 text-peach-700'}`}>{x.auto ? 'Graded automatically' : 'Reviewed by the teacher'}</span>
                 </span>
               </button>
             ))}
@@ -124,46 +124,46 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
             <div>
               <h3 className="font-semibold text-slate-900">{t.label}</h3>
               <button type="button" onClick={() => setPaso(0)} className="text-xs text-brand-700 hover:underline">
-                Cambiar tipo
+                Change type
               </button>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field className="sm:col-span-2" label="Tema" value={params.tema} onChange={setP('tema')} placeholder="Ej. Daily routines, travel, past simple…" />
-            <Field label="Nivel" options={NIVELES} value={params.nivel} onChange={setP('nivel')} />
+            <Field className="sm:col-span-2" label="Topic" value={params.tema} onChange={setP('tema')} placeholder="E.g. Daily routines, travel, past simple…" />
+            <Field label="Level" options={NIVELES} value={params.nivel} onChange={setP('nivel')} />
             {t.auto && tipo !== 'matching' && (
-              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Cantidad de oraciones' : tipo === 'reading' ? 'Afirmaciones' : 'Cantidad de preguntas'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} />
+              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' ? 'Statements' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} />
             )}
-            {tipo === 'matching' && <Field label="Cantidad de pares" type="number" min="2" max="12" value={params.cantidad} onChange={setP('cantidad')} />}
+            {tipo === 'matching' && <Field label="Number of pairs" type="number" min="2" max="12" value={params.cantidad} onChange={setP('cantidad')} />}
           </div>
-          {tipo === 'reading' && <Field as="textarea" rows={4} label="Texto propio (opcional)" value={params.texto} onChange={setP('texto')} hint="Si lo dejas vacío, la IA escribirá un texto original." />}
+          {tipo === 'reading' && <Field as="textarea" rows={4} label="Your own text (optional)" value={params.texto} onChange={setP('texto')} hint="If you leave it empty, the AI will write an original text." />}
           {tipo === 'listening' && (
             <>
-              <Field as="textarea" rows={4} label="Transcripción del audio" value={params.transcripcion} onChange={setP('transcripcion')} hint="La IA no puede oír el audio: pega aquí lo que se dice para que las preguntas coincidan." />
-              <Field label="Enlace del audio en Google Drive" value={params.audio_url ?? ''} onChange={setP('audio_url')} placeholder="https://drive.google.com/file/d/…/view" hint="Lo usaremos en el siguiente paso. También puedes agregarlo después." />
+              <Field as="textarea" rows={4} label="Audio transcript" value={params.transcripcion} onChange={setP('transcripcion')} hint="The AI cannot hear the audio: paste here what is said so the questions match." />
+              <Field label="Audio link on Google Drive" value={params.audio_url ?? ''} onChange={setP('audio_url')} placeholder="https://drive.google.com/file/d/…/view" hint="We will use it in the next step. You can also add it later." />
             </>
           )}
-          <Field label="Indicaciones adicionales (opcional)" value={params.extra} onChange={setP('extra')} placeholder="Ej. Usa vocabulario de restaurantes; que sea un poco difícil." />
+          <Field label="Additional instructions (optional)" value={params.extra} onChange={setP('extra')} placeholder="E.g. Use restaurant vocabulary; make it a bit difficult." />
 
           <div className="rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="flex items-center gap-2 text-sm font-semibold text-brand-800">
-                <Icon name="sparkle" className="h-4 w-4" /> Tu prompt está listo
+                <Icon name="sparkle" className="h-4 w-4" /> Your prompt is ready
               </p>
               <Button type="button" onClick={copiar}>
-                <Icon name={copiado ? 'check' : 'copy'} className="h-4 w-4" /> {copiado ? '¡Copiado!' : 'Copiar prompt'}
+                <Icon name={copiado ? 'check' : 'copy'} className="h-4 w-4" /> {copiado ? 'Copied!' : 'Copy prompt'}
               </Button>
             </div>
             <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-xl bg-white p-3 text-xs leading-5 text-slate-700">{prompt}</pre>
             <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
               <li>Copia el prompt y pégalo en tu IA favorita (ChatGPT, Claude, Gemini…).</li>
-              <li>Copia la respuesta completa que te dé.</li>
-              <li>Pégala aquí abajo y revisa el resultado antes de guardarlo.</li>
+              <li>Copy the complete answer it gives you.</li>
+              <li>Paste it below and review the result before saving it.</li>
             </ol>
           </div>
 
-          <Field as="textarea" rows={7} label="Respuesta de la IA" value={pegado} onChange={(e) => setPegado(e.target.value)} placeholder='Pega aquí el JSON que te devolvió la IA: { "titulo": …' />
+          <Field as="textarea" rows={7} label="AI answer" value={pegado} onChange={(e) => setPegado(e.target.value)} placeholder='Paste here the JSON the AI returned: { "titulo": …' />
           {errorIA && (
             <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {errorIA}
@@ -171,10 +171,10 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
           )}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button type="button" variant="ghost" onClick={manual}>
-              Prefiero escribirlo yo
+              I would rather write it myself
             </Button>
             <Button type="button" onClick={leer} disabled={!pegado.trim()}>
-              Usar esta respuesta
+              Use this answer
             </Button>
           </div>
         </div>
@@ -183,15 +183,15 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
       {paso === 2 && t && datos && (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field className="sm:col-span-2" label="Título del ejercicio" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`Ej. ${t.label}: daily routines`} autoFocus />
-            <Field label="Nivel" options={[{ value: '', label: 'Sin nivel' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
+            <Field className="sm:col-span-2" label="Exercise title" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`E.g. ${t.label}: daily routines`} autoFocus />
+            <Field label="Level" options={[{ value: '', label: 'No level' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
           </div>
-          <Field label="Tema (opcional)" value={meta.tema} onChange={(e) => setMeta((m) => ({ ...m, tema: e.target.value }))} placeholder="Para encontrarlo más fácil en el banco" />
+          <Field label="Topic (optional)" value={meta.tema} onChange={(e) => setMeta((m) => ({ ...m, tema: e.target.value }))} placeholder="To find it more easily in the bank" />
 
           <div role="group" aria-label="Modo" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
             {[
-              ['editar', 'Editar'],
-              ['previa', 'Vista previa'],
+              ['editar', 'Edit'],
+              ['previa', 'Preview'],
             ].map(([v, x]) => (
               <button key={v} type="button" aria-pressed={vista === v} onClick={() => setVista(v)} className={`rounded-lg px-4 py-1.5 text-sm transition-colors ${vista === v ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600'}`}>
                 {x}
@@ -203,14 +203,14 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
             <EditorEjercicio tipo={tipo} datos={datos} onChange={setDatos} />
           ) : previa ? (
             <div className="rounded-2xl bg-canvas p-4 sm:p-6">
-              <h3 className="mb-4 text-xl font-bold text-brand-800">{meta.titulo || 'Sin título'}</h3>
+              <h3 className="mb-4 text-xl font-bold text-brand-800">{meta.titulo || 'Untitled'}</h3>
               <EjercicioJugador ejercicio={previa} vistaPrevia />
             </div>
           ) : (
-            <p className="rounded-xl bg-peach-50 px-4 py-3 text-sm text-peach-700">Corrige esto para ver la vista previa: {errorValidacion}</p>
+            <p className="rounded-xl bg-peach-50 px-4 py-3 text-sm text-peach-700">Fix this to see the preview: {errorValidacion}</p>
           )}
 
-          {vista === 'editar' && errorValidacion && <p className="text-sm text-peach-700">Pendiente: {errorValidacion}</p>}
+          {vista === 'editar' && errorValidacion && <p className="text-sm text-peach-700">To do: {errorValidacion}</p>}
           {error && (
             <p role="alert" className="text-sm text-rose-700">
               {error}
@@ -219,17 +219,17 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
           <div className="flex justify-between gap-2 border-t border-slate-100 pt-4">
             {!ejercicio ? (
               <Button type="button" variant="ghost" onClick={() => setPaso(1)}>
-                Volver al prompt
+                Back to the prompt
               </Button>
             ) : (
               <span />
             )}
             <div className="flex gap-2">
               <Button type="button" variant="ghost" onClick={onClose}>
-                Cancelar
+                Cancel
               </Button>
               <Button type="button" onClick={guardar} disabled={guardando}>
-                {guardando ? 'Guardando…' : ejercicio?.id ? 'Guardar cambios' : 'Guardar ejercicio'}
+                {guardando ? 'Saving…' : ejercicio?.id ? 'Save changes' : 'Save exercise'}
               </Button>
             </div>
           </div>

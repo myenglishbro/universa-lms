@@ -13,11 +13,11 @@ function Unidad({ u }) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-slate-900">{u.unidad}</h4>
         {u.oficial != null ? (
-          <Badge color="brand">Nota de la unidad {nota2(u.oficial)} / 100</Badge>
+          <Badge color="brand">Unit grade {nota2(u.oficial)} / 100</Badge>
         ) : u.provisional != null ? (
           <Badge color="peach">Avance {nota2(u.provisional)} / 100 · {u.completos} de 5</Badge>
         ) : (
-          <Badge color="slate">Sin notas todavía</Badge>
+          <Badge color="slate">No grades yet</Badge>
         )}
       </div>
       <ul className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2 lg:grid-cols-5">
@@ -27,7 +27,7 @@ function Unidad({ u }) {
             <li key={h.id} className="flex items-baseline justify-between gap-2 sm:block">
               <span className="text-xs text-slate-500">{h.label}</span>
               <span className="block">
-                {el?.valor == null ? <span className="text-xs italic text-slate-400">pendiente</span> : <strong className="text-slate-900">{nota2(el.valor)}</strong>}
+                {el?.valor == null ? <span className="text-xs italic text-slate-400">pending</span> : <strong className="text-slate-900">{nota2(el.valor)}</strong>}
                 {el?.valor != null && <span className="text-xs text-slate-400"> / 5</span>}
               </span>
             </li>
@@ -45,8 +45,8 @@ export default function MiFormative({ salonId, servicio = servicioReal }) {
   if (error || !datos || datos.length === 0) return null
   return (
     <Card className="mb-5 p-4">
-      <h3 className="text-base font-semibold text-slate-900">Mi Formative</h3>
-      <p className="mb-3 text-xs text-slate-500">Se actualiza sola cuando entregas tus actividades oficiales o cuando tu docente registra una nota. Cuando los 5 elementos de la unidad están completos, se publica en «Mis calificaciones».</p>
+      <h3 className="text-base font-semibold text-slate-900">My Formative</h3>
+      <p className="mb-3 text-xs text-slate-500">It updates automatically when you submit your official activities or when your teacher records a grade. When the 5 elements of the unit are complete, it is published in “My grades”.</p>
       <div className="space-y-4">
         {datos.map((m) => (
           <section key={m.evaluacion_id}>

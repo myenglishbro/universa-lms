@@ -34,23 +34,23 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
       <div className="mt-3 flex flex-wrap gap-1.5">
         {e.nivel && <Badge color="brand">{e.nivel}</Badge>}
         {e.tema && <Badge color="slate">{e.tema}</Badge>}
-        <Badge color={e.publico ? 'brand' : 'peach'}>{e.publico ? 'Banco' : 'Mío'}</Badge>
-        {!t.auto && <Badge color="peach">Con revisión</Badge>}
+        <Badge color={e.publico ? 'brand' : 'peach'}>{e.publico ? 'Bank' : 'Mine'}</Badge>
+        {!t.auto && <Badge color="peach">Needs review</Badge>}
       </div>
-      <p className="mt-2 text-xs text-slate-400">Creado por {e.autor_nombre}</p>
+      <p className="mt-2 text-xs text-slate-400">Created by {e.autor_nombre}</p>
       <div className="mt-auto flex flex-wrap items-center gap-1 pt-3">
         {onElegir ? (
           <Button type="button" className="flex-1" onClick={() => onElegir(e)}>
-            Usar este ejercicio
+            Use this exercise
           </Button>
         ) : null}
         <Button type="button" variant="ghost" className="px-3 py-1 text-xs" onClick={() => onVer(e)}>
-          <Icon name="eye" className="h-4 w-4" /> Ver
+          <Icon name="eye" className="h-4 w-4" /> View
         </Button>
         {!onElegir && puedeEditar && esMio && (
           <>
             <Button type="button" variant="ghost" className="px-3 py-1 text-xs" onClick={() => onEditar(e)}>
-              <Icon name="pencil" className="h-4 w-4" /> Editar
+              <Icon name="pencil" className="h-4 w-4" /> Edit
             </Button>
             <Button type="button" variant="ghost" className="px-3 py-1 text-xs" onClick={() => onQuitar(e)}>
               <Icon name="trash" className="h-4 w-4" /> Quitar
@@ -59,7 +59,7 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
         )}
         {!onElegir && puedeEditar && !esMio && (
           <Button type="button" variant="ghost" className="px-3 py-1 text-xs" onClick={() => onBase(e)}>
-            <Icon name="copy" className="h-4 w-4" /> Usar como base
+            <Icon name="copy" className="h-4 w-4" /> Use as a base
           </Button>
         )}
       </div>
@@ -104,7 +104,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
     await recargar()
   }
   const quitar = async (e) => {
-    if (!window.confirm(`¿Quitar «${e.titulo}»? Los salones donde ya se asignó lo conservan.`)) return
+    if (!window.confirm(`Remove “${e.titulo}”? Classrooms where it was already assigned keep it.`)) return
     setFalla('')
     try {
       await servicio.archivarEjercicio(e.id)
@@ -119,14 +119,14 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="relative min-w-56 flex-1 sm:max-w-sm">
           <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por título, tema o nivel" className={`${inputClass} pl-9`} />
+          <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by title, topic or level" className={`${inputClass} pl-9`} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!esAdmin && !onElegir && (
-            <div role="group" aria-label="Ver" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
+            <div role="group" aria-label="View" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
               {[
-                ['todos', 'Todos'],
-                ['banco', 'Banco'],
+                ['todos', 'All'],
+                ['banco', 'Bank'],
                 ['mios', 'Míos'],
               ].map(([v, t]) => (
                 <button key={v} type="button" aria-pressed={alcance === v} onClick={() => setAlcance(v)} className={`rounded-lg px-3 py-1.5 text-sm ${alcance === v ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600'}`}>
@@ -137,15 +137,15 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           )}
           {!onElegir && (
             <Button type="button" onClick={() => setForm({ ejercicio: null })}>
-              <Icon name="plus" className="h-4 w-4" /> Nuevo ejercicio
+              <Icon name="plus" className="h-4 w-4" /> New exercise
             </Button>
           )}
         </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo">
+      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filter by type">
         <button type="button" aria-pressed={!tipo} onClick={() => setTipo('')} className={`rounded-full border px-3.5 py-1.5 text-sm transition ${!tipo ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'}`}>
-          Todos <span className="opacity-70">{lista.length}</span>
+          All <span className="opacity-70">{lista.length}</span>
         </button>
         {TIPOS.map((t) => (
           <button key={t.id} type="button" aria-pressed={tipo === t.id} onClick={() => setTipo(tipo === t.id ? '' : t.id)} className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition ${tipo === t.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'}`}>
@@ -157,10 +157,10 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       {falla && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{falla}</p>}
 
       {cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500">Cargando ejercicios…</p>
+        <p className="py-10 text-center text-sm text-slate-500">Loading exercises…</p>
       ) : error ? (
         <div className="py-10 text-center text-sm">
-          <p className="text-red-600">No se pudo cargar el banco: {error}</p>
+          <p className="text-red-600">Could not load the bank: {error}</p>
           <Button variant="secondary" className="mt-3" onClick={recargar}>
             Reintentar
           </Button>
@@ -170,16 +170,16 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
             <Icon name="sparkle" className="h-7 w-7" />
           </span>
-          <p className="mt-4 text-base font-semibold text-slate-900">{esAdmin ? 'El banco está vacío' : 'Aún no hay ejercicios'}</p>
-          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Crea el primer ejercicio: todos los docentes podrán usarlo.' : 'Crea tu primer ejercicio o espera a que administración publique ejercicios en el banco.'}</p>
+          <p className="mt-4 text-base font-semibold text-slate-900">{esAdmin ? 'The bank is empty' : 'There are no exercises yet'}</p>
+          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Create the first exercise: all teachers will be able to use it.' : 'Create your first exercise or wait for administration to publish exercises in the bank.'}</p>
           {!onElegir && (
             <Button className="mt-5" onClick={() => setForm({ ejercicio: null })}>
-              <Icon name="plus" className="h-4 w-4" /> Crear ejercicio
+              <Icon name="plus" className="h-4 w-4" /> Create exercise
             </Button>
           )}
         </div>
       ) : visibles.length === 0 ? (
-        <p className="py-10 text-center text-sm text-slate-500">Ningún ejercicio coincide con tu búsqueda.</p>
+        <p className="py-10 text-center text-sm text-slate-500">No exercise matches your search.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {visibles.map((e) => (
