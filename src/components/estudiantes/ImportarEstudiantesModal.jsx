@@ -16,24 +16,24 @@ const descargarJson = (nombre, objeto) => {
 }
 
 const colorEstado = { nuevo: 'brand', existente: 'slate', error: 'rose' }
-const textoEstado = { nuevo: 'Nuevo', existente: 'Ya existe', error: 'Con error' }
+const textoEstado = { nuevo: 'New', existente: 'Already exists', error: 'With error' }
 const colorResultado = { creado: 'brand', actualizado: 'brand', omitido: 'slate', error: 'rose', no_procesado: 'peach' }
-const textoResultado = { creado: 'Creado', actualizado: 'Actualizado', omitido: 'Omitido', error: 'Error', no_procesado: 'No procesado' }
+const textoResultado = { creado: 'Created', actualizado: 'Updated', omitido: 'Skipped', error: 'Error', no_procesado: 'Not processed' }
 
 const CAMPOS_AYUDA = [
-  ['nombres *', 'Nombres', 'JUAN SEBASTIAN'],
-  ['apellidos *', 'Apellidos', 'MONTENEGRO ARIAS'],
-  ['tipo_documento', 'dni · ce · pasaporte · licencia · otro', 'dni'],
-  ['numero_documento', 'DNI = 8 dígitos; otros 5 a 20 letras o números', '72266090'],
-  ['fecha_nacimiento', 'AAAA-MM-DD (o DD/MM/AAAA)', '1997-10-15'],
-  ['pais_nacionalidad', 'País', 'Perú'],
-  ['genero', 'M · F · O (o Masculino / Femenino)', 'M'],
-  ['correo', 'Correo', 'juan@correo.com'],
-  ['celular', 'Celular (también vale «telefono»)', '+51 949531737'],
-  ['maskpark_usuario', 'Usuario de MaskPark', 'JUANSEBASTIAN…'],
-  ['maskpark_clave', 'Contraseña de MaskPark', '72266090Jsma_'],
-  ['notas', 'Notas', ''],
-  ['salon', 'Código del salón donde matricularlo', 'SAL-0001'],
+  ['nombres *', 'First names', 'JUAN SEBASTIAN'],
+  ['apellidos *', 'Last names', 'MONTENEGRO ARIAS'],
+  ['tipo_documento', 'dni · ce · pasaporte · licencia · otro (ID · foreign ID · passport · license · other)', 'dni'],
+  ['numero_documento', 'DNI = 8 digits; others 5 to 20 letters or numbers', '72266090'],
+  ['fecha_nacimiento', 'YYYY-MM-DD (or DD/MM/YYYY)', '1997-10-15'],
+  ['pais_nacionalidad', 'Country', 'Perú'],
+  ['genero', 'M · F · O (or Masculino / Femenino)', 'M'],
+  ['correo', 'Email', 'juan@correo.com'],
+  ['celular', 'Mobile (“telefono” also works)', '+51 949531737'],
+  ['maskpark_usuario', 'MaskPark user', 'JUANSEBASTIAN…'],
+  ['maskpark_clave', 'MaskPark password', '72266090Jsma_'],
+  ['notas', 'Notes', ''],
+  ['salon', 'Code of the classroom to enroll them in', 'SAL-0001'],
 ]
 
 // Carga masiva de estudiantes desde un JSON: 1) elegir archivo, 2) revisar (nada se guarda aún), 3) importar fila por fila, 4) resultado.
@@ -57,7 +57,7 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
     e.target.value = ''
     if (!archivo) return
     setErrorArchivo('')
-    if (archivo.size > MAX_BYTES) return setErrorArchivo(`El archivo pesa ${(archivo.size / 1048576).toFixed(1)} MB; el máximo es ${MAX_BYTES / 1048576} MB.`)
+    if (archivo.size > MAX_BYTES) return setErrorArchivo(`The file weighs ${(archivo.size / 1048576).toFixed(1)} MB; the maximum is ${MAX_BYTES / 1048576} MB.`)
     const { filas, error } = leerJson(await archivo.text())
     if (error) return setErrorArchivo(error)
     setNombreArchivo(archivo.name)
@@ -82,7 +82,7 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
 
   const cuenta = (r) => resultados.filter((x) => x.resultado === r).length
   const conProblema = resultados.filter((x) => x.resultado === 'error' || x.resultado === 'no_procesado')
-  const matriculados = resultados.filter((x) => x.matricula.startsWith('Matriculado')).length
+  const matriculados = resultados.filter((x) => x.matricula.startsWith('Enrolled')).length
 
   const descargarErrores = () =>
     descargarJson(
@@ -91,37 +91,37 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
     )
 
   return (
-    <Modal wide="xl" title="Importar estudiantes desde JSON" onClose={paso === 'procesando' ? () => {} : onClose}>
+    <Modal wide="xl" title="Import students from JSON" onClose={paso === 'procesando' ? () => {} : onClose}>
       {paso === 'archivo' && (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Sube un archivo <strong>.json</strong> con tus estudiantes (hasta {MAX_FILAS} por archivo). Antes de guardar nada verás una revisión con lo que se creará y lo que
-            tiene problemas.
+            Upload a <strong>.json</strong> file with your students (up to {MAX_FILAS} per file). Before anything is saved you will see a review of what will be created and what
+            has problems.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="inline-flex cursor-pointer items-center rounded-full bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">
-              Elegir archivo JSON
+              Choose JSON file
               <input type="file" accept=".json,application/json" className="sr-only" onChange={elegirArchivo} />
             </label>
             <Button variant="secondary" onClick={() => descargarJson('plantilla-estudiantes.json', plantillaEstudiantes)}>
-              Descargar plantilla de ejemplo
+              Download example template
             </Button>
           </div>
           {errorArchivo && <p className="text-sm text-red-600">{errorArchivo}</p>}
 
           <details className="rounded-xl border border-slate-200 p-4 text-sm" open>
-            <summary className="cursor-pointer font-medium text-slate-900">Formato del archivo</summary>
+            <summary className="cursor-pointer font-medium text-slate-900">File format</summary>
             <p className="mt-2 text-slate-600">
-              Una lista de estudiantes, o un objeto <code>{'{ "estudiantes": [ … ] }'}</code>. Los campos con <strong>*</strong> son obligatorios; el resto se puede omitir.
+              A list of students, or an object <code>{'{ "estudiantes": [ … ] }'}</code>. Fields with <strong>*</strong> are required; the rest can be omitted.
               La edad no se carga: se calcula con la fecha de nacimiento.
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="text-slate-500">
                   <tr>
-                    <th className="py-1 pr-4 font-medium">Campo</th>
-                    <th className="py-1 pr-4 font-medium">Qué lleva</th>
-                    <th className="py-1 font-medium">Ejemplo</th>
+                    <th className="py-1 pr-4 font-medium">Field</th>
+                    <th className="py-1 pr-4 font-medium">What it holds</th>
+                    <th className="py-1 font-medium">Example</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -136,12 +136,12 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
               </table>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Si el estudiante ya está registrado (mismo documento o mismo nombre) lo detecta y, según elijas, lo omite o lo actualiza. Si pones <code>salon</code>, lo matricula en ese
-              salón (con los cupos del salón).
+              If the student is already registered (same document or same name) it is detected and, depending on your choice, skipped or updated. If you set <code>salon</code>, they are enrolled in that
+              classroom (subject to its capacity).
             </p>
           </details>
           <p className="rounded-lg bg-peach-50 px-3 py-2 text-xs text-peach-700">
-            El archivo puede incluir contraseñas de MaskPark: guárdalo en un lugar seguro y bórralo cuando termines la carga.
+            The file may include MaskPark passwords: keep it in a safe place and delete it when you finish the upload.
           </p>
         </div>
       )}
@@ -149,27 +149,27 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
       {paso === 'revision' && (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Archivo <strong>{nombreArchivo}</strong>: {resumen.total} {resumen.total === 1 ? 'estudiante' : 'estudiantes'}. Todavía no se guardó nada.
+            File <strong>{nombreArchivo}</strong>: {resumen.total} {resumen.total === 1 ? 'student' : 'students'}. Nothing has been saved yet.
           </p>
           <div className="flex flex-wrap gap-2 text-sm">
-            <Badge color="brand">{resumen.nuevos} nuevos</Badge>
-            <Badge color="slate">{resumen.existentes} ya existen</Badge>
-            <Badge color={resumen.errores ? 'rose' : 'slate'}>{resumen.errores} con error (no se importarán)</Badge>
+            <Badge color="brand">{resumen.nuevos} new</Badge>
+            <Badge color="slate">{resumen.existentes} already exist</Badge>
+            <Badge color={resumen.errores ? 'rose' : 'slate'}>{resumen.errores} with errors (will not be imported)</Badge>
           </div>
 
           {resumen.existentes > 0 && (
             <fieldset className="rounded-xl border border-slate-200 p-3 text-sm">
-              <legend className="px-1 text-xs font-medium text-slate-500">Estudiantes que ya existen</legend>
+              <legend className="px-1 text-xs font-medium text-slate-500">Students that already exist</legend>
               <label className="flex items-start gap-2">
                 <input type="radio" name="modo" checked={modo === 'omitir'} onChange={() => setModo('omitir')} className="mt-1 accent-brand-600" />
                 <span>
-                  <strong>Omitirlos</strong> — no se modifican (si traen <code>salon</code>, igual se matriculan).
+                  <strong>Skip them</strong> — they are not modified (if they include <code>salon</code>, they are still enrolled).
                 </span>
               </label>
               <label className="mt-2 flex items-start gap-2">
                 <input type="radio" name="modo" checked={modo === 'actualizar'} onChange={() => setModo('actualizar')} className="mt-1 accent-brand-600" />
                 <span>
-                  <strong>Actualizarlos con el archivo</strong> — lo que el archivo no trae se conserva.
+                  <strong>Update them from the file</strong> — whatever the file does not include is kept.
                 </span>
               </label>
             </fieldset>
@@ -177,19 +177,19 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
 
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={soloProblemas} onChange={(e) => setSoloProblemas(e.target.checked)} className="h-4 w-4 accent-brand-600" />
-            Mostrar solo las filas con problemas
+            Show only rows with problems
           </label>
 
           <div className="max-h-96 overflow-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="px-3 py-2">Fila</th>
-                  <th className="px-3 py-2">Estudiante</th>
-                  <th className="px-3 py-2">Documento</th>
-                  <th className="px-3 py-2">Salón</th>
-                  <th className="px-3 py-2">Estado</th>
-                  <th className="px-3 py-2">Detalle</th>
+                  <th className="px-3 py-2">Row</th>
+                  <th className="px-3 py-2">Student</th>
+                  <th className="px-3 py-2">Document</th>
+                  <th className="px-3 py-2">Classroom</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -220,11 +220,11 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
 
           <div className="flex flex-wrap justify-end gap-2">
             <Button variant="secondary" onClick={() => { setCrudas([]); setPaso('archivo') }}>
-              Elegir otro archivo
+              Choose another file
             </Button>
             <Button onClick={importar} disabled={resumen.nuevos + resumen.existentes === 0}>
-              Importar {resumen.nuevos + (modo === 'actualizar' ? resumen.existentes : 0)}{' '}
-              {resumen.nuevos + (modo === 'actualizar' ? resumen.existentes : 0) === 1 ? 'estudiante' : 'estudiantes'}
+              Import {resumen.nuevos + (modo === 'actualizar' ? resumen.existentes : 0)}{' '}
+              {resumen.nuevos + (modo === 'actualizar' ? resumen.existentes : 0) === 1 ? 'student' : 'students'}
             </Button>
           </div>
         </div>
@@ -233,14 +233,14 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
       {paso === 'procesando' && (
         <div className="space-y-4 py-4" role="status">
           <p className="text-sm text-slate-700">
-            Importando… {avance.hechas} de {avance.total}
+            Importing… {avance.hechas} of {avance.total}
           </p>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full bg-brand-600 transition-all" style={{ width: `${avance.total ? (avance.hechas / avance.total) * 100 : 0}%` }} />
           </div>
-          <p className="text-xs text-slate-500">No cierres esta ventana. Si cancelas, lo ya guardado se conserva.</p>
+          <p className="text-xs text-slate-500">Do not close this window. If you cancel, what was already saved is kept.</p>
           <Button variant="secondary" onClick={() => { cancelado.current = true }}>
-            Cancelar importación
+            Cancel import
           </Button>
         </div>
       )}
@@ -248,28 +248,28 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
       {paso === 'resultado' && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 text-sm">
-            <Badge color="brand">{cuenta('creado')} creados</Badge>
-            {cuenta('actualizado') > 0 && <Badge color="brand">{cuenta('actualizado')} actualizados</Badge>}
-            {cuenta('omitido') > 0 && <Badge color="slate">{cuenta('omitido')} omitidos</Badge>}
-            {matriculados > 0 && <Badge color="brand">{matriculados} matriculados</Badge>}
-            <Badge color={cuenta('error') ? 'rose' : 'slate'}>{cuenta('error')} con error</Badge>
-            {cuenta('no_procesado') > 0 && <Badge color="peach">{cuenta('no_procesado')} sin procesar</Badge>}
+            <Badge color="brand">{cuenta('creado')} created</Badge>
+            {cuenta('actualizado') > 0 && <Badge color="brand">{cuenta('actualizado')} updated</Badge>}
+            {cuenta('omitido') > 0 && <Badge color="slate">{cuenta('omitido')} skipped</Badge>}
+            {matriculados > 0 && <Badge color="brand">{matriculados} enrolled</Badge>}
+            <Badge color={cuenta('error') ? 'rose' : 'slate'}>{cuenta('error')} with errors</Badge>
+            {cuenta('no_procesado') > 0 && <Badge color="peach">{cuenta('no_procesado')} unprocessed</Badge>}
           </div>
 
-          {resultados.some((r) => r.resultado === 'error' || r.resultado === 'no_procesado' || r.matricula.startsWith('No se pudo')) && (
+          {resultados.some((r) => r.resultado === 'error' || r.resultado === 'no_procesado' || r.matricula.startsWith('Could not')) && (
             <div className="max-h-72 overflow-auto rounded-xl border border-slate-200">
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-slate-100">
                   {resultados
-                    .filter((r) => r.resultado === 'error' || r.resultado === 'no_procesado' || r.matricula.startsWith('No se pudo'))
+                    .filter((r) => r.resultado === 'error' || r.resultado === 'no_procesado' || r.matricula.startsWith('Could not'))
                     .map((r) => (
                       <tr key={r.n}>
-                        <td className="px-3 py-2 text-slate-500">Fila {r.n}</td>
+                        <td className="px-3 py-2 text-slate-500">Row {r.n}</td>
                         <td className="px-3 py-2 font-medium text-slate-900">{r.nombre || '—'}</td>
                         <td className="px-3 py-2">
                           <Badge color={colorResultado[r.resultado]}>{textoResultado[r.resultado]}</Badge>
                         </td>
-                        <td className="px-3 py-2 text-xs text-red-600">{[r.mensaje, r.matricula.startsWith('No se pudo') ? r.matricula : ''].filter(Boolean).join(' · ')}</td>
+                        <td className="px-3 py-2 text-xs text-red-600">{[r.mensaje, r.matricula.startsWith('Could not') ? r.matricula : ''].filter(Boolean).join(' · ')}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -280,12 +280,12 @@ export default function ImportarEstudiantesModal({ estudiantes, salones, onTermi
           <div className="flex flex-wrap justify-end gap-2">
             {conProblema.length > 0 && (
               <Button variant="secondary" onClick={descargarErrores}>
-                Descargar las filas con error (JSON)
+                Download rows with errors (JSON)
               </Button>
             )}
-            <Button onClick={onClose}>Cerrar</Button>
+            <Button onClick={onClose}>Close</Button>
           </div>
-          {conProblema.length > 0 && <p className="text-xs text-slate-500">El archivo descargado trae cada fila con un campo «_error»; corrígelas y vuelve a subirlas (el campo extra se ignora).</p>}
+          {conProblema.length > 0 && <p className="text-xs text-slate-500">The downloaded file has each row with an “_error” field; fix them and upload them again (the extra field is ignored).</p>}
         </div>
       )}
     </Modal>

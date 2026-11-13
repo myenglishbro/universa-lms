@@ -91,12 +91,12 @@ export function leerJson(texto) {
   try {
     datos = JSON.parse(texto.replace(/^﻿/, ''))
   } catch (e) {
-    return { error: `El archivo no es un JSON válido (${e.message}).` }
+    return { error: `The file is not valid JSON (${e.message}).` }
   }
   const lista = Array.isArray(datos) ? datos : Array.isArray(datos?.estudiantes) ? datos.estudiantes : null
-  if (!lista) return { error: 'El JSON debe ser una lista de estudiantes o un objeto con la clave "estudiantes".' }
-  if (lista.length === 0) return { error: 'El archivo no tiene estudiantes.' }
-  if (lista.length > MAX_FILAS) return { error: `Máximo ${MAX_FILAS} estudiantes por archivo (el tuyo tiene ${lista.length}). Divídelo en partes.` }
+  if (!lista) return { error: 'The JSON must be a list of students or an object with the key "estudiantes".' }
+  if (lista.length === 0) return { error: 'The file has no students.' }
+  if (lista.length > MAX_FILAS) return { error: `Maximum ${MAX_FILAS} students per file (yours has ${lista.length}). Split it into parts.` }
   return { filas: lista }
 }
 
@@ -107,12 +107,12 @@ export function normalizarFila(raw, hoy) {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return { fila: null, salon: '', errores: ['La fila no es un objeto.'], avisos }
 
   const ignorados = Object.keys(raw).filter((k) => !CAMPOS.has(k))
-  if (ignorados.length) avisos.push(`Campos ignorados: ${ignorados.join(', ')}${ignorados.includes('edad') ? ' (la edad se calcula sola)' : ''}.`)
+  if (ignorados.length) avisos.push(`Ignored fields: ${ignorados.join(', ')}${ignorados.includes('edad') ? ' (age is calculated automatically)' : ''}.`)
 
   const nombres = txt(raw.nombres)
   const apellidos = txt(raw.apellidos)
-  if (!nombres) errores.push('Falta "nombres".')
-  if (!apellidos) errores.push('Falta "apellidos".')
+  if (!nombres) errores.push('Missing "nombres".')
+  if (!apellidos) errores.push('Missing "apellidos".')
 
   let tipo = ''
   let tipoInvalido = false
@@ -120,7 +120,7 @@ export function normalizarFila(raw, hoy) {
     tipo = TIPOS[sinTildes(txt(raw.tipo_documento))] ?? ''
     if (!tipo) {
       tipoInvalido = true
-      errores.push(`Tipo de documento no válido: "${raw.tipo_documento}" (usa dni, ce, pasaporte, licencia u otro).`)
+      errores.push(`Invalid document type: "${raw.tipo_documento}" (use dni, ce, pasaporte, licencia or otro).`)
     }
   }
   const numero = txt(raw.numero_documento).replace(/\s+/g, '').toUpperCase()
@@ -132,34 +132,34 @@ export function normalizarFila(raw, hoy) {
   let nacimiento = ''
   if (txt(raw.fecha_nacimiento)) {
     nacimiento = aFechaIso(raw.fecha_nacimiento)
-    if (!nacimiento) errores.push(`Fecha de nacimiento no válida: "${raw.fecha_nacimiento}" (usa AAAA-MM-DD o DD/MM/AAAA).`)
-    else if (nacimiento > hoy || nacimiento < '1900-01-01') errores.push('La fecha de nacimiento está fuera de rango.')
-    else if (calcularEdad(nacimiento, hoy) > 110) avisos.push('La edad resultante supera los 110 años: revisa la fecha.')
+    if (!nacimiento) errores.push(`Invalid birth date: "${raw.fecha_nacimiento}" (use YYYY-MM-DD or DD/MM/YYYY).`)
+    else if (nacimiento > hoy || nacimiento < '1900-01-01') errores.push('The birth date is out of range.')
+    else if (calcularEdad(nacimiento, hoy) > 110) avisos.push('The resulting age exceeds 110 years: check the date.')
   }
 
   let genero = ''
   if (txt(raw.genero)) {
     genero = GENEROS[sinTildes(txt(raw.genero))]
     if (!genero) {
-      errores.push(`Género no válido: "${raw.genero}" (usa M, F u O).`)
+      errores.push(`Invalid gender: "${raw.genero}" (use M, F or O).`)
       genero = ''
     }
   }
 
   const correo = txt(raw.correo).toLowerCase()
-  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) errores.push(`Correo no válido: "${raw.correo}".`)
+  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) errores.push(`Invalid email: "${raw.correo}".`)
 
   const celular = txt(raw.celular ?? raw.telefono)
   if (celular) {
     const digitos = celular.replace(/\D/g, '').length
-    if (digitos < 6 || digitos > 15) errores.push(`Celular no válido: "${celular}" (debe tener entre 6 y 15 dígitos).`)
+    if (digitos < 6 || digitos > 15) errores.push(`Invalid mobile number: "${celular}" (must have between 6 and 15 digits).`)
   }
 
   const mp = raw.maskpark && typeof raw.maskpark === 'object' ? raw.maskpark : {}
   const usuario = txt(raw.maskpark_usuario ?? mp.usuario)
   const clave = raw.maskpark_clave ?? mp.clave
   const claveTxt = clave == null ? '' : String(clave)
-  if (claveTxt && !usuario) errores.push('Hay contraseña de MaskPark pero falta "maskpark_usuario".')
+  if (claveTxt && !usuario) errores.push('There is a MaskPark password but "maskpark_usuario" is missing.')
 
   const fila = {
     nombres,
@@ -207,36 +207,36 @@ export function analizarLote(crudas, { estudiantes = [], salones = [], hoy }) {
     // Repetidos dentro del mismo archivo (la primera aparición manda)
     const repetido = (mapa, clave, etiqueta) => {
       if (!clave) return
-      if (mapa.has(clave)) r.errores.push(`${etiqueta} repetido: ya aparece en la fila ${mapa.get(clave)}.`)
+      if (mapa.has(clave)) r.errores.push(`Duplicate ${etiqueta}: already appears in row ${mapa.get(clave)}.`)
       else mapa.set(clave, n)
     }
-    repetido(vistos.doc, fila.tipoDocumento ? `${fila.tipoDocumento}|${fila.numeroDocumento}` : '', 'Documento')
-    repetido(vistos.nombre, claveNombre(fila.nombre), 'Nombre')
-    repetido(vistos.correo, fila.correo, 'Correo')
-    repetido(vistos.tel, fila.telefono.replace(/\D/g, ''), 'Celular')
-    repetido(vistos.usuario, fila.maskparkUsuario.toLowerCase(), 'Usuario de MaskPark')
+    repetido(vistos.doc, fila.tipoDocumento ? `${fila.tipoDocumento}|${fila.numeroDocumento}` : '', 'document')
+    repetido(vistos.nombre, claveNombre(fila.nombre), 'name')
+    repetido(vistos.correo, fila.correo, 'email')
+    repetido(vistos.tel, fila.telefono.replace(/\D/g, ''), 'mobile number')
+    repetido(vistos.usuario, fila.maskparkUsuario.toLowerCase(), 'MaskPark user')
 
     // ¿Ya está registrado? Primero por documento, luego por nombre completo.
     const porD = fila.tipoDocumento ? porDoc.get(`${fila.tipoDocumento}|${fila.numeroDocumento}`) : null
     const porN = porNombre.get(claveNombre(fila.nombre))
-    if (porD && porN && porD.id !== porN.id) r.errores.push(`El documento es de «${porD.nombre}» pero el nombre coincide con «${porN.nombre}».`)
+    if (porD && porN && porD.id !== porN.id) r.errores.push(`The document belongs to «${porD.nombre}» but the name matches «${porN.nombre}».`)
     r.existente = porD ?? porN ?? null
     if (r.existente) {
       r.estado = 'existente'
       if (!porD && fila.tipoDocumento && r.existente.numero_documento && r.existente.numero_documento.toUpperCase() !== fila.numeroDocumento)
-        r.avisos.push('El estudiante ya tiene otro documento registrado.')
+        r.avisos.push('The student already has another document registered.')
     }
 
     // Correo o celular que ya son de otra persona
     const otroCorreo = fila.correo ? porCorreo.get(fila.correo) : null
-    if (otroCorreo && otroCorreo.id !== r.existente?.id) r.errores.push(`El correo ya pertenece a «${otroCorreo.nombre}».`)
+    if (otroCorreo && otroCorreo.id !== r.existente?.id) r.errores.push(`The email already belongs to «${otroCorreo.nombre}».`)
     const otroTel = fila.telefono ? porTel.get(fila.telefono.replace(/\D/g, '')) : null
-    if (otroTel && otroTel.id !== r.existente?.id) r.errores.push(`El celular ya pertenece a «${otroTel.nombre}».`)
+    if (otroTel && otroTel.id !== r.existente?.id) r.errores.push(`The mobile number already belongs to «${otroTel.nombre}».`)
 
     if (salon) {
       r.salonObj = salonPorCodigo.get(salon) ?? null
-      if (!r.salonObj) r.errores.push(`No existe el salón "${salon}".`)
-      else if (r.salonObj.estado === 'finalizado') r.errores.push(`El salón ${salon} está finalizado: no admite matrículas.`)
+      if (!r.salonObj) r.errores.push(`The classroom "${salon}" does not exist.`)
+      else if (r.salonObj.estado === 'finalizado') r.errores.push(`Classroom ${salon} is finished: it does not accept enrollments.`)
     }
     if (r.errores.length) r.estado = 'error'
     return r
@@ -280,7 +280,7 @@ export async function ejecutarImportacion(analisis, { servicio, modo = 'omitir',
   let hechas = 0
   for (const r of analisis) {
     if (cancelado()) {
-      resultados.push({ n: r.n, nombre: r.fila?.nombre ?? '', resultado: 'no_procesado', mensaje: 'Importación cancelada antes de llegar a esta fila.', matricula: '' })
+      resultados.push({ n: r.n, nombre: r.fila?.nombre ?? '', resultado: 'no_procesado', mensaje: 'Import cancelled before reaching this row.', matricula: '' })
       continue
     }
     const base = { n: r.n, nombre: r.fila?.nombre ?? '', matricula: '' }
@@ -297,14 +297,14 @@ export async function ejecutarImportacion(analisis, { servicio, modo = 'omitir',
           await servicio.guardarEstudiante(id, combinar(r.existente, r.fila))
           resultado = 'actualizado'
         }
-        const item = { ...base, resultado, mensaje: resultado === 'omitido' ? 'Ya estaba registrado: no se modificó.' : '' }
+        const item = { ...base, resultado, mensaje: resultado === 'omitido' ? 'Already registered: not modified.' : '' }
         if (r.salonObj) {
           try {
             await servicio.matricularAlumnos(r.salonObj.id, [id])
-            item.matricula = `Matriculado en ${r.salonObj.codigo}`
+            item.matricula = `Enrolled in ${r.salonObj.codigo}`
           } catch (e) {
             // Volver a subir el mismo archivo no es un problema: si ya estaba matriculado, solo se informa.
-            item.matricula = e.message.startsWith('Ya matriculados') ? `Ya estaba matriculado en ${r.salonObj.codigo}` : `No se pudo matricular en ${r.salonObj.codigo}: ${e.message}`
+            item.matricula = e.message.startsWith('Ya matriculados') ? `Already enrolled in ${r.salonObj.codigo}` : `Could not enroll in ${r.salonObj.codigo}: ${e.message}`
           }
         }
         resultados.push(item)

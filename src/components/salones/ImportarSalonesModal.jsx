@@ -23,22 +23,22 @@ const descargarJson = (nombre, objeto) => {
 }
 
 const colorEstado = { nuevo: 'brand', existente: 'slate', error: 'rose' }
-const textoEstado = { nuevo: 'Nuevo', existente: 'Ya existe', error: 'Con error' }
+const textoEstado = { nuevo: 'New', existente: 'Already exists', error: 'With error' }
 const colorResultado = { creado: 'brand', omitido: 'slate', error: 'rose', no_procesado: 'peach' }
-const textoResultado = { creado: 'Creado', omitido: 'Omitido', error: 'Error', no_procesado: 'No procesado' }
+const textoResultado = { creado: 'Created', omitido: 'Skipped', error: 'Error', no_procesado: 'Not processed' }
 
 const CAMPOS_AYUDA = [
-  ['nombre *', 'Nombre del salón', 'Básico noche A'],
-  ['nivel *', 'Código o nombre del nivel', 'basico'],
-  ['fecha_inicio *', 'AAAA-MM-DD (o DD/MM/AAAA)', '2026-12-01'],
-  ['capacidad', 'Alumnos máximos (entero). Si falta se pone 8 (1 en privados) para ajustar luego', '8'],
-  ['docente', 'Nombre completo o correo', 'Ana Ruiz Paz'],
-  ['estado', 'pendiente · en_curso · finalizado', 'pendiente'],
-  ['plan', '{ modalidad, minutos, sesiones_semana, tipo_alumno, ciclo_desde, ciclo_hasta }: solo lo necesario para identificar un plan del nivel', '{ "modalidad": "estandar", "minutos": 60 }'],
-  ['frecuencia', 'Código o nombre de una frecuencia grupal', 'grupal-lv-60'],
-  ['total_sesiones', 'Clases en total (con plan lo fija el plan)', '40'],
-  ['horarios', 'Lista de { dia, hora_inicio, hora_fin }; dia = 1 a 7 o lun…dom', '{ "dia": "lun", "hora_inicio": "19:00", "hora_fin": "20:00" }'],
-  ['observaciones', 'Texto libre', ''],
+  ['nombre *', 'Classroom name', 'Basic evening A'],
+  ['nivel *', 'Code or name of the level', 'basico'],
+  ['fecha_inicio *', 'YYYY-MM-DD (or DD/MM/YYYY)', '2026-12-01'],
+  ['capacidad', 'Maximum students (whole number). If missing, 8 is used (1 for private) to adjust later', '8'],
+  ['docente', 'Full name or email', 'Ana Ruiz Paz'],
+  ['estado', 'pendiente · en_curso · finalizado (pending · ongoing · finished)', 'pendiente'],
+  ['plan', '{ modalidad, minutos, sesiones_semana, tipo_alumno, ciclo_desde, ciclo_hasta }: only what is needed to identify a plan of the level', '{ "modalidad": "estandar", "minutos": 60 }'],
+  ['frecuencia', 'Code or name of a group frequency', 'grupal-lv-60'],
+  ['total_sesiones', 'Total classes (with a plan, the plan sets it)', '40'],
+  ['horarios', 'List of { dia, hora_inicio, hora_fin }; dia = 1 to 7 or lun…dom (mon…sun)', '{ "dia": "lun", "hora_inicio": "19:00", "hora_fin": "20:00" }'],
+  ['observaciones', 'Free text', ''],
 ]
 
 // Carga masiva de salones desde un JSON: 1) elegir archivo, 2) revisar (nada se guarda; se consulta a la base si los horarios y docentes cuadran),
@@ -79,7 +79,7 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
     e.target.value = ''
     if (!archivo) return
     setErrorArchivo('')
-    if (archivo.size > MAX_BYTES) return setErrorArchivo(`El archivo pesa ${(archivo.size / 1048576).toFixed(1)} MB; el máximo es ${MAX_BYTES / 1048576} MB.`)
+    if (archivo.size > MAX_BYTES) return setErrorArchivo(`The file weighs ${(archivo.size / 1048576).toFixed(1)} MB; the maximum is ${MAX_BYTES / 1048576} MB.`)
     const { filas, error } = leerJson(await archivo.text())
     if (error) return setErrorArchivo(error)
     setNombreArchivo(archivo.name)
@@ -111,36 +111,36 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
     )
 
   return (
-    <Modal wide="xl" title="Importar salones desde JSON" onClose={paso === 'procesando' ? () => {} : onClose}>
+    <Modal wide="xl" title="Import classrooms from JSON" onClose={paso === 'procesando' ? () => {} : onClose}>
       {paso === 'archivo' && (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Sube un archivo <strong>.json</strong> con tus salones (hasta {MAX_FILAS} por archivo). Antes de guardar nada verás una revisión con lo que se creará y lo que tiene
-            problemas; los horarios y los docentes se comprueban contra la base de datos. El código (SAL-0001…) se asigna solo.
+            Upload a <strong>.json</strong> file with your classrooms (up to {MAX_FILAS} per file). Before anything is saved you will see a review of what will be created and what has
+            problems; schedules and teachers are checked against the database. The code (SAL-0001…) is assigned automatically.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="inline-flex cursor-pointer items-center rounded-full bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700">
-              Elegir archivo JSON
+              Choose JSON file
               <input type="file" accept=".json,application/json" className="sr-only" onChange={elegirArchivo} />
             </label>
             <Button variant="secondary" onClick={() => descargarJson('plantilla-salones.json', plantillaSalones)}>
-              Descargar plantilla de ejemplo
+              Download example template
             </Button>
           </div>
           {errorArchivo && <p className="text-sm text-red-600">{errorArchivo}</p>}
 
           <details className="rounded-xl border border-slate-200 p-4 text-sm" open>
-            <summary className="cursor-pointer font-medium text-slate-900">Formato del archivo</summary>
+            <summary className="cursor-pointer font-medium text-slate-900">File format</summary>
             <p className="mt-2 text-slate-600">
-              Una lista de salones, o un objeto <code>{'{ "salones": [ … ] }'}</code>. Los campos con <strong>*</strong> son obligatorios; el resto se puede omitir.
+              A list of classrooms, or an object <code>{'{ "salones": [ … ] }'}</code>. Fields with <strong>*</strong> are required; the rest can be omitted.
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="text-slate-500">
                   <tr>
-                    <th className="py-1 pr-4 font-medium">Campo</th>
-                    <th className="py-1 pr-4 font-medium">Qué lleva</th>
-                    <th className="py-1 font-medium">Ejemplo</th>
+                    <th className="py-1 pr-4 font-medium">Field</th>
+                    <th className="py-1 pr-4 font-medium">What it holds</th>
+                    <th className="py-1 font-medium">Example</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -155,7 +155,7 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
               </table>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Niveles disponibles: {niveles.map((n) => n.codigo).join(', ') || '—'}. Si ya existe un salón con el mismo nombre y fecha de inicio, se omite (no se duplica ni se modifica).
+              Available levels: {niveles.map((n) => n.codigo).join(', ') || '—'}. If a classroom with the same name and start date already exists, it is skipped (not duplicated or modified).
             </p>
           </details>
         </div>
@@ -164,35 +164,35 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
       {paso === 'revision' && (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Archivo <strong>{nombreArchivo}</strong>: {resumen.total} {resumen.total === 1 ? 'salón' : 'salones'}. Todavía no se guardó nada.
+            File <strong>{nombreArchivo}</strong>: {resumen.total} {resumen.total === 1 ? 'classroom' : 'classrooms'}. Nothing has been saved yet.
           </p>
           {revisando && (
             <p role="status" className="text-sm text-slate-500">
-              Comprobando horarios y docentes en la base de datos…
+              Checking schedules and teachers in the database…
             </p>
           )}
           <div className="flex flex-wrap gap-2 text-sm">
-            <Badge color="brand">{resumen.nuevos} nuevos</Badge>
-            <Badge color="slate">{resumen.existentes} ya existen</Badge>
-            <Badge color={resumen.errores ? 'rose' : 'slate'}>{resumen.errores} con error (no se importarán)</Badge>
+            <Badge color="brand">{resumen.nuevos} new</Badge>
+            <Badge color="slate">{resumen.existentes} already exist</Badge>
+            <Badge color={resumen.errores ? 'rose' : 'slate'}>{resumen.errores} with errors (will not be imported)</Badge>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={soloProblemas} onChange={(e) => setSoloProblemas(e.target.checked)} className="h-4 w-4 accent-brand-600" />
-            Mostrar solo las filas con problemas
+            Show only rows with problems
           </label>
 
           <div className="max-h-96 overflow-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="px-3 py-2">Fila</th>
-                  <th className="px-3 py-2">Salón</th>
-                  <th className="px-3 py-2">Nivel</th>
-                  <th className="px-3 py-2">Docente</th>
-                  <th className="px-3 py-2">Inicio</th>
-                  <th className="px-3 py-2">Estado</th>
-                  <th className="px-3 py-2">Detalle</th>
+                  <th className="px-3 py-2">Row</th>
+                  <th className="px-3 py-2">Classroom</th>
+                  <th className="px-3 py-2">Level</th>
+                  <th className="px-3 py-2">Teacher</th>
+                  <th className="px-3 py-2">Start</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -203,7 +203,7 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
                       <td className="px-3 py-2 text-slate-500">{r.n}</td>
                       <td className="px-3 py-2 font-medium text-slate-900">{r.fila?.nombre || '—'}</td>
                       <td className="px-3 py-2 text-slate-600">{r.nivel?.nombre ?? '—'}</td>
-                      <td className="px-3 py-2 text-slate-600">{r.docente?.nombre ?? 'Sin asignar'}</td>
+                      <td className="px-3 py-2 text-slate-600">{r.docente?.nombre ?? 'Unassigned'}</td>
                       <td className="px-3 py-2 text-slate-600">{r.fila?.fechaInicio ? r.fila.fechaInicio.split('-').reverse().join('/') : '—'}</td>
                       <td className="px-3 py-2">
                         <Badge color={colorEstado[r.estado]}>{textoEstado[r.estado]}</Badge>
@@ -224,10 +224,10 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
 
           <div className="flex flex-wrap justify-end gap-2">
             <Button variant="secondary" onClick={() => { setCrudas([]); setPaso('archivo') }}>
-              Elegir otro archivo
+              Choose another file
             </Button>
             <Button onClick={importar} disabled={revisando || resumen.nuevos === 0}>
-              Crear {resumen.nuevos} {resumen.nuevos === 1 ? 'salón' : 'salones'}
+              Create {resumen.nuevos} {resumen.nuevos === 1 ? 'classroom' : 'classrooms'}
             </Button>
           </div>
         </div>
@@ -236,14 +236,14 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
       {paso === 'procesando' && (
         <div className="space-y-4 py-4" role="status">
           <p className="text-sm text-slate-700">
-            Creando salones… {avance.hechas} de {avance.total}
+            Creating classrooms… {avance.hechas} of {avance.total}
           </p>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full bg-brand-600 transition-all" style={{ width: `${avance.total ? (avance.hechas / avance.total) * 100 : 0}%` }} />
           </div>
-          <p className="text-xs text-slate-500">No cierres esta ventana. Si cancelas, lo ya creado se conserva.</p>
+          <p className="text-xs text-slate-500">Do not close this window. If you cancel, what was already created is kept.</p>
           <Button variant="secondary" onClick={() => { cancelado.current = true }}>
-            Cancelar importación
+            Cancel import
           </Button>
         </div>
       )}
@@ -251,10 +251,10 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
       {paso === 'resultado' && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 text-sm">
-            <Badge color="brand">{cuenta('creado')} creados</Badge>
-            {cuenta('omitido') > 0 && <Badge color="slate">{cuenta('omitido')} omitidos</Badge>}
-            <Badge color={cuenta('error') ? 'rose' : 'slate'}>{cuenta('error')} con error</Badge>
-            {cuenta('no_procesado') > 0 && <Badge color="peach">{cuenta('no_procesado')} sin procesar</Badge>}
+            <Badge color="brand">{cuenta('creado')} created</Badge>
+            {cuenta('omitido') > 0 && <Badge color="slate">{cuenta('omitido')} skipped</Badge>}
+            <Badge color={cuenta('error') ? 'rose' : 'slate'}>{cuenta('error')} with errors</Badge>
+            {cuenta('no_procesado') > 0 && <Badge color="peach">{cuenta('no_procesado')} unprocessed</Badge>}
           </div>
 
           {conProblema.length > 0 && (
@@ -263,7 +263,7 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
                 <tbody className="divide-y divide-slate-100">
                   {conProblema.map((r) => (
                     <tr key={r.n}>
-                      <td className="px-3 py-2 text-slate-500">Fila {r.n}</td>
+                      <td className="px-3 py-2 text-slate-500">Row {r.n}</td>
                       <td className="px-3 py-2 font-medium text-slate-900">{r.nombre || '—'}</td>
                       <td className="px-3 py-2">
                         <Badge color={colorResultado[r.resultado]}>{textoResultado[r.resultado]}</Badge>
@@ -279,12 +279,12 @@ export default function ImportarSalonesModal({ salones, niveles, docentes, catal
           <div className="flex flex-wrap justify-end gap-2">
             {conProblema.length > 0 && (
               <Button variant="secondary" onClick={descargarErrores}>
-                Descargar las filas con error (JSON)
+                Download rows with errors (JSON)
               </Button>
             )}
-            <Button onClick={onClose}>Cerrar</Button>
+            <Button onClick={onClose}>Close</Button>
           </div>
-          {conProblema.length > 0 && <p className="text-xs text-slate-500">El archivo descargado trae cada fila con un campo «_error»; corrígelas y vuelve a subirlas (el campo extra se ignora).</p>}
+          {conProblema.length > 0 && <p className="text-xs text-slate-500">The downloaded file has each row with an “_error” field; fix them and upload them again (the extra field is ignored).</p>}
         </div>
       )}
     </Modal>
