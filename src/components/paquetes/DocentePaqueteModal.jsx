@@ -22,22 +22,22 @@ export default function DocentePaqueteModal({ actualId, docentes, onSave, onClos
   }
 
   return (
-    <Modal title="Docente del paquete" onClose={onClose}>
+    <Modal title="Package teacher" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <Field
-          label="Docente"
+          label="Teacher"
           value={docenteId}
           onChange={(e) => setDocenteId(e.target.value)}
-          options={[{ value: '', label: 'Sin docente' }, ...docentes.filter((d) => d.activo || d.id === actualId).map((d) => ({ value: d.id, label: d.nombre }))]}
-          hint="Se usará para las clases que programes de ahora en adelante. Las ya programadas conservan su docente; para cambiarlas usa «Reprogramar»."
+          options={[{ value: '', label: 'No teacher' }, ...docentes.filter((d) => d.activo || d.id === actualId).map((d) => ({ value: d.id, label: d.nombre }))]}
+          hint="Used for classes you schedule from now on. Classes already scheduled keep their teacher; to change them use “Reschedule”."
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
+            {guardando ? 'Saving…' : 'Save'}
           </Button>
         </div>
       </form>

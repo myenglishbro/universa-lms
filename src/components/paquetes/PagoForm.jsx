@@ -13,7 +13,7 @@ export default function PagoForm({ paquete, onSave, onClose }) {
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!(Number(v.monto) > 0)) return setError('El monto debe ser mayor que cero')
+    if (!(Number(v.monto) > 0)) return setError('The amount must be greater than zero')
     setGuardando(true)
     setError('')
     try {
@@ -25,25 +25,25 @@ export default function PagoForm({ paquete, onSave, onClose }) {
   }
 
   return (
-    <Modal title="Registrar pago" onClose={onClose}>
+    <Modal title="Record payment" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <p className="text-sm text-slate-600">
-          Precio {dinero(paquete.precio, paquete.moneda)} · pagado {dinero(paquete.pagado, paquete.moneda)} · pendiente{' '}
+          Price {dinero(paquete.precio, paquete.moneda)} · paid {dinero(paquete.pagado, paquete.moneda)} · pending{' '}
           <strong>{dinero(paquete.pendiente, paquete.moneda)}</strong>
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Monto" name="monto" type="number" min="0.01" step="0.01" value={v.monto} onChange={cambiar} required />
-          <Field label="Fecha" name="fecha" type="date" value={v.fecha} onChange={cambiar} required />
-          <Field label="Método" name="metodo" value={v.metodo} onChange={cambiar} options={metodosPago} />
-          <Field label="Nota (opcional)" name="nota" value={v.nota} onChange={cambiar} />
+          <Field label="Amount" name="monto" type="number" min="0.01" step="0.01" value={v.monto} onChange={cambiar} required />
+          <Field label="Date" name="fecha" type="date" value={v.fecha} onChange={cambiar} required />
+          <Field label="Method" name="metodo" value={v.metodo} onChange={cambiar} options={metodosPago} />
+          <Field label="Note (optional)" name="nota" value={v.nota} onChange={cambiar} />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Registrar pago'}
+            {guardando ? 'Saving…' : 'Record payment'}
           </Button>
         </div>
       </form>

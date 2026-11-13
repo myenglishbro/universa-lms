@@ -76,7 +76,7 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
   return (
     <>
       <button onClick={onVolver} className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
-        <Icon name="back" className="h-4 w-4" /> Paquetes
+        <Icon name="back" className="h-4 w-4" /> Packages
       </button>
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
@@ -92,21 +92,21 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
             <Badge color={estado.color}>{estado.label}</Badge>
           </h1>
           <p className="text-sm text-slate-500">
-            {minutosTexto(p.minutos_contratados)} contratadas el {formatFecha(p.fecha_compra)}
+            {minutosTexto(p.minutos_contratados)} contracted on {formatFecha(p.fecha_compra)}
             {p.docente && ` · ${p.docente}`}
             {p.nivel && ` · ${p.nivel}`}
-            {p.vigencia_hasta && ` · vence el ${formatFecha(p.vigencia_hasta)}`}
+            {p.vigencia_hasta && ` · expires on ${formatFecha(p.vigencia_hasta)}`}
           </p>
         </div>
         {puede && (
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setModal({ tipo: 'docente' })}>
-              Docente
+              Teacher
             </Button>
             <Button variant="secondary" onClick={() => setModal({ tipo: 'ajuste' })}>
-              Ampliar o ajustar
+              Extend or adjust
             </Button>
-            <Button onClick={() => onRenovar(p)}>Renovar / comprar más</Button>
+            <Button onClick={() => onRenovar(p)}>Renew / buy more</Button>
           </div>
         )}
       </div>
@@ -115,28 +115,28 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
       {aviso && <p className="mb-4 rounded-lg bg-peach-100 px-3 py-2 text-sm text-peach-700">{aviso}</p>}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Cifra etiqueta="Compradas" valor={minutosTexto(p.compradas)} nota={p.ajustes ? `Ajustes: ${minutosTexto(p.ajustes)}` : undefined} />
-        <Cifra etiqueta="Consumidas" valor={minutosTexto(p.consumidas)} />
-        <Cifra etiqueta="Disponibles" valor={minutosTexto(p.disponibles)} destacada />
+        <Cifra etiqueta="Purchased" valor={minutosTexto(p.compradas)} nota={p.ajustes ? `Adjustments: ${minutosTexto(p.ajustes)}` : undefined} />
+        <Cifra etiqueta="Used" valor={minutosTexto(p.consumidas)} />
+        <Cifra etiqueta="Available" valor={minutosTexto(p.disponibles)} destacada />
         <Cifra
-          etiqueta="Programadas"
+          etiqueta="Scheduled"
           valor={minutosTexto(p.programadas)}
-          nota={`${p.clases_programadas} ${p.clases_programadas === 1 ? 'clase' : 'clases'} por dictar`}
+          nota={`${p.clases_programadas} ${p.clases_programadas === 1 ? 'class' : 'classes'} to teach`}
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">Clases</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Classes</h2>
             {puede && (
               <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'clase' })}>
-                <Icon name="plus" className="h-4 w-4" /> Programar clase
+                <Icon name="plus" className="h-4 w-4" /> Schedule class
               </Button>
             )}
           </div>
           {detalle.clases.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-slate-500">Aún no hay clases programadas.</p>
+            <p className="px-4 py-8 text-center text-sm text-slate-500">No classes scheduled yet.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {detalle.clases.map((c) => {
@@ -150,7 +150,7 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <Badge color={ec.color}>{ec.label}</Badge>
-                        {c.cancelacion === 'tardia' && <span>Cancelación tardía con descuento</span>}
+                        {c.cancelacion === 'tardia' && <span>Late cancellation with deduction</span>}
                         {c.docente_id && docente(c.docente_id) && <span>{docente(c.docente_id)}</span>}
                         {c.nota && <span>{c.nota}</span>}
                       </p>
@@ -160,19 +160,19 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
                         {c.estado === 'programada' && (
                           <>
                             <Button className="px-3 py-1" disabled={Boolean(ocupado)} onClick={() => ejecutar(c.id, () => servicio.marcarDictada(c.id))}>
-                              {ocupado === c.id ? 'Confirmando…' : 'Confirmar dictada'}
+                              {ocupado === c.id ? 'Confirming…' : 'Confirm taught'}
                             </Button>
                             <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'clase', clase: c })}>
-                              Reprogramar
+                              Reschedule
                             </Button>
                             <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'cancelar', clase: c })}>
-                              Cancelar
+                              Cancel
                             </Button>
                           </>
                         )}
                         {c.estado === 'dictada' && (
                           <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'corregir', clase: c })}>
-                            Corregir
+                            Correct
                           </Button>
                         )}
                       </div>
@@ -186,26 +186,26 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
 
         <Card>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">Pagos</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Payments</h2>
             {puede && Number(p.pendiente) > 0 && (
               <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'pago' })}>
-                <Icon name="plus" className="h-4 w-4" /> Registrar pago
+                <Icon name="plus" className="h-4 w-4" /> Record payment
               </Button>
             )}
           </div>
           <dl className="divide-y divide-slate-100 text-sm">
             <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Precio</dt>
+              <dt className="text-slate-500">Price</dt>
               <dd className="font-medium">{dinero(p.precio, p.moneda)}</dd>
             </div>
             <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Pagado</dt>
+              <dt className="text-slate-500">Paid</dt>
               <dd className="font-medium">{dinero(p.pagado, p.moneda)}</dd>
             </div>
             <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Pendiente</dt>
+              <dt className="text-slate-500">Pending</dt>
               <dd className={`font-semibold ${Number(p.pendiente) > 0 ? 'text-peach-700' : 'text-brand-700'}`}>
-                {Number(p.pendiente) > 0 ? dinero(p.pendiente, p.moneda) : 'Pagado completo'}
+                {Number(p.pendiente) > 0 ? dinero(p.pendiente, p.moneda) : 'Paid in full'}
               </dd>
             </div>
           </dl>
@@ -221,11 +221,11 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
                     </p>
                   </div>
                   {g.anulado ? (
-                    <Badge color="rose">Anulado</Badge>
+                    <Badge color="rose">Voided</Badge>
                   ) : (
                     puede && (
                       <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'anular-pago', pago: g })}>
-                        Anular
+                        Void
                       </Button>
                     )
                   )}
@@ -238,14 +238,14 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
 
       <Card className="mt-6">
         <details>
-          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900">Historial de movimientos ({detalle.movimientos.length})</summary>
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900">Movement history ({detalle.movimientos.length})</summary>
           <ul className="divide-y divide-slate-100 border-t border-slate-200">
             {detalle.movimientos.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm">
                 <div>
                   <p className="font-medium text-slate-900">{tipoMovimiento[m.tipo]}</p>
                   <p className="text-xs text-slate-500">
-                    {new Date(m.created_at).toLocaleString('es-PE')}
+                    {new Date(m.created_at).toLocaleString('en-US')}
                     {m.motivo && ` · ${m.motivo}`}
                   </p>
                 </div>
@@ -262,7 +262,7 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
       {puede && !cerrado && (
         <p className="mt-4 text-right">
           <button onClick={() => setModal({ tipo: 'anular' })} className="text-xs text-slate-400 hover:text-red-600">
-            Anular este paquete
+            Void this package
           </button>
         </p>
       )}
@@ -293,27 +293,27 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
       {modal?.tipo === 'ajuste' && <AjusteForm onClose={() => setModal(null)} onSave={(v) => enModal(() => servicio.ajustarPaquete(p.id, v))} />}
       {modal?.tipo === 'corregir' && (
         <MotivoModal
-          titulo="Corregir clase dictada"
-          texto={`Se devolverán ${minutosTexto(modal.clase.minutos)} al paquete y la clase volverá a quedar programada. El movimiento original se conserva en el historial.`}
-          confirmar="Corregir"
+          titulo="Correct a taught class"
+          texto={`${minutosTexto(modal.clase.minutos)} will be returned to the package and the class will go back to scheduled. The original movement is kept in the history.`}
+          confirmar="Correct"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.corregirClase(modal.clase.id, motivo))}
         />
       )}
       {modal?.tipo === 'anular-pago' && (
         <MotivoModal
-          titulo="Anular pago"
-          texto={`Se anulará el pago de ${dinero(modal.pago.monto, p.moneda)}. Quedará registrado como anulado.`}
-          confirmar="Anular pago"
+          titulo="Void payment"
+          texto={`The payment of ${dinero(modal.pago.monto, p.moneda)} will be voided. It will be recorded as voided.`}
+          confirmar="Void payment"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.anularPago(modal.pago.id, motivo))}
         />
       )}
       {modal?.tipo === 'anular' && (
         <MotivoModal
-          titulo="Anular paquete"
-          texto="El paquete quedará anulado, sin nuevas clases ni pagos. Su historial se conserva."
-          confirmar="Anular paquete"
+          titulo="Void package"
+          texto="The package will be voided, with no new classes or payments. Its history is kept."
+          confirmar="Void package"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.anularPaquete(p.id, motivo))}
         />

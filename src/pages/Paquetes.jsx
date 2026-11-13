@@ -78,46 +78,46 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
       ) : (
         <>
           <PageHeader
-            title="Paquetes de horas"
-            description="Las clases particulares (1 a 1): cuántas horas compró cada alumno y cuántas le quedan"
+            title="Hour packages"
+            description="Private classes (1-on-1): how many hours each student bought and how many are left"
             action={
               puedeEditar && (
                 <Button onClick={() => setForm({ origen: null })} disabled={cargando || Boolean(error)}>
-                  <Icon name="plus" className="h-4 w-4" /> Nuevo paquete
+                  <Icon name="plus" className="h-4 w-4" /> New package
                 </Button>
               )
             }
           />
 
-          <Ayuda id="paquetes" titulo="¿Para qué sirven los paquetes de horas?">
+          <Ayuda id="paquetes" titulo="What are hour packages for?">
             <p>
-              Un <strong>paquete</strong> es como una <strong>tarjeta prepago</strong> de clases particulares: el alumno compra, por ejemplo, 10 horas y las va usando una a una. Aquí controlas sus horas y su pago.
+              A <strong>package</strong> is like a <strong>prepaid card</strong> for private classes: the student buys, for example, 10 hours and uses them one by one. Here you track their hours and payment.
             </p>
             <div className="space-y-1.5">
               <Paso n={1}>
-                <strong>Vende el paquete</strong> con «Nuevo paquete» y registra lo que paga.
+                <strong>Sell the package</strong> with “New package” and record what they pay.
               </Paso>
               <Paso n={2}>
-                <strong>Programa sus clases</strong> en la <strong>Agenda</strong> (botón «Programar clase particular»).
+                <strong>Schedule their classes</strong> in the <strong>Agenda</strong> (“Schedule a private class” button).
               </Paso>
               <Paso n={3}>
-                Cuando la clase se da, <strong>márcala como dictada</strong>: el paquete descuenta esa hora solo.
+                When the class is given, <strong>mark it as taught</strong>: the package deducts that hour automatically.
               </Paso>
               <Paso n={4}>
-                Si se acaba, usa <strong>Renovar</strong> dentro del paquete para venderle otro.
+                If it runs out, use <strong>Renew</strong> inside the package to sell them another.
               </Paso>
             </div>
             <p className="text-slate-600">
-              Los colores avisan el saldo: <strong className="text-brand-700">morado</strong> = con horas, <strong className="text-peach-700">durazno</strong> = pocas horas (hora de ofrecerle renovar), <strong className="text-rose-700">rojo</strong> = sin horas.
+              Colors show the balance: <strong className="text-brand-700">purple</strong> = has hours, <strong className="text-peach-700">peach</strong> = few hours (time to offer a renewal), <strong className="text-rose-700">red</strong> = no hours.
             </p>
           </Ayuda>
 
           {!cargando && !error && (
             <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Resumen icono="box" tono="brand" valor={activos} etiqueta={activos === 1 ? 'Paquete activo' : 'Paquetes activos'} />
-              <Resumen icono="clock" tono={porRenovar > 0 ? 'peach' : 'slate'} valor={porRenovar} etiqueta="Por renovar (pocas o sin horas)" />
-              <Resumen icono="calendar" tono="slate" valor={minutosTexto(horasAgendadas)} etiqueta="Ya agendadas en la Agenda" />
-              <Resumen icono="alert" tono={conDeuda > 0 ? 'peach' : 'slate'} valor={conDeuda} etiqueta={conDeuda === 1 ? 'Alumno con pago pendiente' : 'Alumnos con pago pendiente'} />
+              <Resumen icono="box" tono="brand" valor={activos} etiqueta={activos === 1 ? 'Active package' : 'Active packages'} />
+              <Resumen icono="clock" tono={porRenovar > 0 ? 'peach' : 'slate'} valor={porRenovar} etiqueta="To renew (few or no hours)" />
+              <Resumen icono="calendar" tono="slate" valor={minutosTexto(horasAgendadas)} etiqueta="Already scheduled in the Agenda" />
+              <Resumen icono="alert" tono={conDeuda > 0 ? 'peach' : 'slate'} valor={conDeuda} etiqueta={conDeuda === 1 ? 'Student with pending payment' : 'Students with pending payment'} />
             </div>
           )}
 
@@ -125,9 +125,9 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
             <div className="flex flex-wrap gap-3 border-b border-brand-100 p-4">
               <div className="relative min-w-56 flex-1 sm:max-w-xs">
                 <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por alumno o docente" className={`${inputClass} pl-9`} />
+                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by student or teacher" className={`${inputClass} pl-9`} />
               </div>
-              <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filtrar por estado">
+              <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter by status">
                 {estadosFiltro.map((e) => (
                   <option key={e.value} value={e.value}>
                     {e.label}
@@ -137,12 +137,12 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
             </div>
 
             {cargando ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Cargando paquetes…</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-500">Loading packages…</p>
             ) : error ? (
-              <p className="px-4 py-10 text-center text-sm text-red-600">No se pudieron cargar los paquetes: {error}</p>
+              <p className="px-4 py-10 text-center text-sm text-red-600">Could not load packages: {error}</p>
             ) : visibles.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">
-                {paquetes.length === 0 ? 'Aún no hay paquetes. Registra el primero con «Nuevo paquete».' : 'Ningún paquete coincide con los filtros.'}
+                {paquetes.length === 0 ? 'No packages yet. Register the first one with “New package”.' : 'No package matches the filters.'}
               </p>
             ) : (
               <ul className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -167,7 +167,7 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
                             <div className="min-w-0">
                               <p className="truncate font-semibold text-slate-900">{p.alumno}</p>
                               <p className="flex items-center gap-1 truncate text-xs text-slate-500">
-                                <Icon name="teacher" className="h-3.5 w-3.5 shrink-0" /> {p.docente || 'Sin docente'}
+                                <Icon name="teacher" className="h-3.5 w-3.5 shrink-0" /> {p.docente || 'No teacher'}
                               </p>
                             </div>
                           </div>
@@ -177,7 +177,7 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
                         <div>
                           <div className="flex items-end justify-between">
                             <div>
-                              <p className="text-xs text-slate-500">Le quedan</p>
+                              <p className="text-xs text-slate-500">Remaining</p>
                               <p className="text-2xl font-bold leading-tight text-slate-900">{minutosTexto(Math.max(p.disponibles, 0))}</p>
                             </div>
                             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${t.chip}`}>
@@ -186,7 +186,7 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
                           </div>
                           <div
                             role="img"
-                            aria-label={`Usó ${minutosTexto(p.consumidas)} de ${minutosTexto(total)}`}
+                            aria-label={`Used ${minutosTexto(p.consumidas)} of ${minutosTexto(total)}`}
                             className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-brand-50"
                           >
                             <div className="h-full bg-brand-500" style={{ width: `${usado}%` }} />
@@ -194,30 +194,30 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
                           </div>
                           <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
                             <span className="inline-flex items-center gap-1">
-                              <span className="h-2 w-2 rounded-full bg-brand-500" /> Usó {minutosTexto(p.consumidas)}
+                              <span className="h-2 w-2 rounded-full bg-brand-500" /> Used {minutosTexto(p.consumidas)}
                             </span>
                             {p.programadas > 0 && (
                               <span className="inline-flex items-center gap-1">
-                                <span className="h-2 w-2 rounded-full bg-peach-200" /> Agendadas {minutosTexto(p.programadas)}
+                                <span className="h-2 w-2 rounded-full bg-peach-200" /> Scheduled {minutosTexto(p.programadas)}
                               </span>
                             )}
-                            <span>de {minutosTexto(total)}</span>
+                            <span>of {minutosTexto(total)}</span>
                           </p>
-                          {advertenciaSaldo(p) && <p className="mt-1 text-xs text-peach-700">Tiene más clases agendadas que horas disponibles.</p>}
+                          {advertenciaSaldo(p) && <p className="mt-1 text-xs text-peach-700">Has more classes scheduled than hours available.</p>}
                         </div>
 
                         <div className="mt-auto flex items-center justify-between border-t border-brand-100 pt-3 text-xs">
                           {debe ? (
                             <span className="inline-flex items-center gap-1 font-medium text-peach-700">
-                              <Icon name="alert" className="h-3.5 w-3.5" /> Debe {dinero(p.pendiente, p.moneda)}
+                              <Icon name="alert" className="h-3.5 w-3.5" /> Owes {dinero(p.pendiente, p.moneda)}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-slate-500">
-                              <Icon name="check" className="h-3.5 w-3.5 text-brand-500" /> Pagado
+                              <Icon name="check" className="h-3.5 w-3.5 text-brand-500" /> Paid
                             </span>
                           )}
                           <span className="inline-flex items-center gap-1 font-semibold text-brand-700">
-                            Ver detalle <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
+                            View details <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
                           </span>
                         </div>
                       </button>

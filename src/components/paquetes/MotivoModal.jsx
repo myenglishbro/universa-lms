@@ -11,7 +11,7 @@ export default function MotivoModal({ titulo, texto, confirmar, onConfirm, onClo
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!motivo.trim()) return setError('Escribe el motivo')
+    if (!motivo.trim()) return setError('Enter the reason')
     setGuardando(true)
     setError('')
     try {
@@ -26,11 +26,11 @@ export default function MotivoModal({ titulo, texto, confirmar, onConfirm, onClo
     <Modal title={titulo} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         {texto && <p className="text-sm text-slate-600">{texto}</p>}
-        <Field label="Motivo" as="textarea" rows="2" value={motivo} onChange={(e) => setMotivo(e.target.value)} required />
+        <Field label="Reason" as="textarea" rows="2" value={motivo} onChange={(e) => setMotivo(e.target.value)} required />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
             {guardando ? 'Guardando…' : confirmar}

@@ -20,40 +20,40 @@ const simbolo = { PEN: 'S/', USD: 'US$' }
 export const dinero = (monto, moneda = 'PEN') => `${simbolo[moneda] ?? moneda} ${Number(monto ?? 0).toFixed(2)}`
 
 export const estadoPaquete = {
-  activo: { color: 'brand', label: 'Activo' },
-  agotado: { color: 'slate', label: 'Agotado' },
-  vencido: { color: 'peach', label: 'Vencido' },
-  anulado: { color: 'rose', label: 'Anulado' },
+  activo: { color: 'brand', label: 'Active' },
+  agotado: { color: 'slate', label: 'Used up' },
+  vencido: { color: 'peach', label: 'Expired' },
+  anulado: { color: 'rose', label: 'Voided' },
 }
 export const estadosFiltro = [
-  { value: '', label: 'Todos los estados' },
-  { value: 'activo', label: 'Activos' },
-  { value: 'agotado', label: 'Agotados' },
-  { value: 'vencido', label: 'Vencidos' },
-  { value: 'anulado', label: 'Anulados' },
+  { value: '', label: 'All statuses' },
+  { value: 'activo', label: 'Active' },
+  { value: 'agotado', label: 'Used up' },
+  { value: 'vencido', label: 'Expired' },
+  { value: 'anulado', label: 'Voided' },
 ]
 
 export const estadoClase = {
-  programada: { color: 'peach', label: 'Programada' },
-  dictada: { color: 'brand', label: 'Dictada' },
-  cancelada: { color: 'slate', label: 'Cancelada' },
+  programada: { color: 'peach', label: 'Scheduled' },
+  dictada: { color: 'brand', label: 'Taught' },
+  cancelada: { color: 'slate', label: 'Cancelled' },
 }
 
 export const tipoMovimiento = {
-  compra: 'Compra',
-  ampliacion: 'Ampliación',
-  ajuste: 'Ajuste',
-  consumo: 'Clase dictada',
-  cancelacion_tardia: 'Cancelación tardía',
-  reversion: 'Corrección (devolución)',
+  compra: 'Purchase',
+  ampliacion: 'Extension',
+  ajuste: 'Adjustment',
+  consumo: 'Class taught',
+  cancelacion_tardia: 'Late cancellation',
+  reversion: 'Correction (refund)',
 }
 
-export const metodosPago = ['Efectivo', 'Yape / Plin', 'Transferencia', 'Tarjeta', 'Otro']
+export const metodosPago = ['Cash', 'Yape / Plin', 'Bank transfer', 'Card', 'Other']
 
 // Advertencia cuando lo programado supera lo disponible (programar se permite; confirmar no).
 export const advertenciaSaldo = (s) =>
   s && s.libres < 0 && !['anulado'].includes(s.estado)
-    ? `Hay ${minutosTexto(-s.libres)} programadas por encima de lo disponible. Puedes programarlas, pero no confirmarlas como dictadas hasta ampliar el paquete.`
+    ? `${minutosTexto(-s.libres)} are scheduled above what is available. You can schedule them, but not confirm them as taught until the package is extended.`
     : ''
 
 export const hoyISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
@@ -61,8 +61,8 @@ export const hoyISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Americ
 // Semáforo del saldo de un paquete: qué tan cerca está de quedarse sin horas (pocas = 20 % o menos, o 1 hora).
 export function nivelSaldo(p) {
   const total = Math.max(p.compradas + p.ajustes, 1)
-  if (p.estado === 'anulado') return { tono: 'rose', icono: 'close', texto: 'Anulado' }
-  if (p.disponibles <= 0) return { tono: 'rose', icono: 'alert', texto: 'Sin horas' }
-  if (p.disponibles <= Math.max(60, total * 0.2)) return { tono: 'peach', icono: 'clock', texto: 'Pocas horas' }
-  return { tono: 'brand', icono: 'check', texto: 'Con horas' }
+  if (p.estado === 'anulado') return { tono: 'rose', icono: 'close', texto: 'Voided' }
+  if (p.disponibles <= 0) return { tono: 'rose', icono: 'alert', texto: 'No hours' }
+  if (p.disponibles <= Math.max(60, total * 0.2)) return { tono: 'peach', icono: 'clock', texto: 'Few hours' }
+  return { tono: 'brand', icono: 'check', texto: 'Has hours' }
 }

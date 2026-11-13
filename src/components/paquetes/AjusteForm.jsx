@@ -14,9 +14,9 @@ export default function AjusteForm({ onSave, onClose }) {
   const enviar = async (e) => {
     e.preventDefault()
     const h = Number(v.horas)
-    if (!h) return setError('Indica las horas')
-    if (v.tipo === 'ampliacion' && h < 0) return setError('Una ampliación debe sumar horas')
-    if (!v.motivo.trim()) return setError('Escribe el motivo')
+    if (!h) return setError('Enter the hours')
+    if (v.tipo === 'ampliacion' && h < 0) return setError('An extension must add hours')
+    if (!v.motivo.trim()) return setError('Enter the reason')
     setGuardando(true)
     setError('')
     try {
@@ -28,36 +28,36 @@ export default function AjusteForm({ onSave, onClose }) {
   }
 
   return (
-    <Modal title="Ampliar o ajustar horas" onClose={onClose}>
+    <Modal title="Extend or adjust hours" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <Field
-          label="Tipo"
+          label="Type"
           name="tipo"
           value={v.tipo}
           onChange={cambiar}
           options={[
-            { value: 'ampliacion', label: 'Ampliación (sumar horas)' },
-            { value: 'ajuste', label: 'Ajuste autorizado (sumar o restar)' },
+            { value: 'ampliacion', label: 'Extension (add hours)' },
+            { value: 'ajuste', label: 'Authorized adjustment (add or subtract)' },
           ]}
         />
         <Field
-          label="Horas"
+          label="Hours"
           name="horas"
           type="number"
           step="0.25"
           value={v.horas}
           onChange={cambiar}
-          hint={v.tipo === 'ajuste' ? 'Usa un número negativo para restar.' : 'Ej.: 1, 2.5'}
+          hint={v.tipo === 'ajuste' ? 'Use a negative number to subtract.' : 'E.g.: 1, 2.5'}
           required
         />
-        <Field label="Motivo" name="motivo" as="textarea" rows="2" value={v.motivo} onChange={cambiar} required />
+        <Field label="Reason" name="motivo" as="textarea" rows="2" value={v.motivo} onChange={cambiar} required />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Registrar'}
+            {guardando ? 'Saving…' : 'Record'}
           </Button>
         </div>
       </form>

@@ -22,20 +22,20 @@ export default function AlumnoForm({ onSave, onClose }) {
   }
 
   return (
-    <Modal title="Nuevo alumno" onClose={onClose}>
+    <Modal title="New student" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
-        <Field label="Nombre" name="nombre" value={v.nombre} onChange={cambiar} required />
+        <Field label="Name" name="nombre" value={v.nombre} onChange={cambiar} required />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Teléfono (opcional)" name="telefono" value={v.telefono} onChange={cambiar} />
-          <Field label="Correo (opcional)" name="correo" type="email" value={v.correo} onChange={cambiar} />
+          <Field label="Phone (optional)" name="telefono" value={v.telefono} onChange={cambiar} />
+          <Field label="Email (optional)" name="correo" type="email" value={v.correo} onChange={cambiar} />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Registrar alumno'}
+            {guardando ? 'Saving…' : 'Register student'}
           </Button>
         </div>
       </form>

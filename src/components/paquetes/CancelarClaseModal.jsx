@@ -14,9 +14,9 @@ export default function CancelarClaseModal({ clase, onConfirm, onClose }) {
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (tardia && !motivo.trim()) return setError('La cancelación tardía exige un motivo')
+    if (tardia && !motivo.trim()) return setError('A late cancellation requires a reason')
     const m = Number(minutos)
-    if (tardia && !(m >= 1 && m <= clase.minutos)) return setError(`El descuento debe estar entre 1 y ${clase.minutos} minutos`)
+    if (tardia && !(m >= 1 && m <= clase.minutos)) return setError(`The deduction must be between 1 and ${clase.minutos} minutes`)
     setGuardando(true)
     setError('')
     try {
@@ -38,33 +38,33 @@ export default function CancelarClaseModal({ clase, onConfirm, onClose }) {
   )
 
   return (
-    <Modal title="Cancelar clase" onClose={onClose}>
+    <Modal title="Cancel class" onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <div className="space-y-2">
-          {opcion(false, 'Cancelación normal', 'No se descuentan horas del paquete.')}
-          {opcion(true, 'Cancelación tardía', 'Se descuentan horas del paquete. Requiere motivo.')}
+          {opcion(false, 'Normal cancellation', 'No hours are deducted from the package.')}
+          {opcion(true, 'Late cancellation', 'Hours are deducted from the package. A reason is required.')}
         </div>
         {tardia && (
           <>
             <Field
-              label="Minutos a descontar"
+              label="Minutes to deduct"
               type="number"
               min="1"
               max={clase.minutos}
               value={minutos}
               onChange={(e) => setMinutos(e.target.value)}
-              hint={`La clase dura ${minutosTexto(clase.minutos)}.`}
+              hint={`The class lasts ${minutosTexto(clase.minutos)}.`}
             />
-            <Field label="Motivo" as="textarea" rows="2" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+            <Field label="Reason" as="textarea" rows="2" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
           </>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Volver
+            Back
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : tardia ? 'Cancelar y descontar' : 'Cancelar clase'}
+            {guardando ? 'Saving…' : tardia ? 'Cancel and deduct' : 'Cancel class'}
           </Button>
         </div>
       </form>

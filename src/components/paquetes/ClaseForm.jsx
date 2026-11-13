@@ -23,7 +23,7 @@ export default function ClaseForm({ paquete, clase, docentes = [], fechaInicial 
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (min <= 0) return setError('La hora de fin debe ser posterior a la de inicio')
+    if (min <= 0) return setError('The end time must be after the start time')
     setGuardando(true)
     setError('')
     try {
@@ -35,41 +35,41 @@ export default function ClaseForm({ paquete, clase, docentes = [], fechaInicial 
   }
 
   return (
-    <Modal title={clase ? 'Reprogramar clase' : 'Programar clase'} onClose={onClose}>
+    <Modal title={clase ? 'Reschedule class' : 'Schedule class'} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Fecha" name="fecha" type="date" value={v.fecha} onChange={cambiar} required />
-          <Field label="Desde" name="horaInicio" type="time" value={v.horaInicio} onChange={cambiar} required />
-          <Field label="Hasta" name="horaFin" type="time" value={v.horaFin} onChange={cambiar} required />
+          <Field label="Date" name="fecha" type="date" value={v.fecha} onChange={cambiar} required />
+          <Field label="From" name="horaInicio" type="time" value={v.horaInicio} onChange={cambiar} required />
+          <Field label="To" name="horaFin" type="time" value={v.horaFin} onChange={cambiar} required />
         </div>
         {docentes.length > 0 && (
           <Field
-            label="Docente"
+            label="Teacher"
             name="docenteId"
             value={v.docenteId}
             onChange={cambiar}
-            options={[{ value: '', label: 'Sin docente' }, ...docentes.filter((d) => d.activo || d.id === v.docenteId).map((d) => ({ value: d.id, label: d.nombre }))]}
+            options={[{ value: '', label: 'No teacher' }, ...docentes.filter((d) => d.activo || d.id === v.docenteId).map((d) => ({ value: d.id, label: d.nombre }))]}
           />
         )}
-        {!clase && <Field label="Nota (opcional)" name="nota" value={v.nota} onChange={cambiar} />}
+        {!clase && <Field label="Note (optional)" name="nota" value={v.nota} onChange={cambiar} />}
         {min > 0 && (
           <p className="text-sm text-slate-600">
-            Duración: <strong>{minutosTexto(min)}</strong>. Solo se descuenta cuando confirmes que se dictó.
+            Duration: <strong>{minutosTexto(min)}</strong>. It is only deducted when you confirm it was taught.
           </p>
         )}
         {!clase && min > 0 && libresTras < 0 && (
           <p className="rounded-lg bg-peach-100 px-3 py-2 text-sm text-peach-700">
-            Con esta clase habrá {minutosTexto(-libresTras)} programadas por encima de lo disponible. Se puede programar, pero para confirmarla habrá
-            que ampliar el paquete.
+            With this class there will be {minutosTexto(-libresTras)} scheduled above what is available. It can be scheduled, but to confirm it the package
+            will need to be extended.
           </p>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button type="submit" disabled={guardando}>
-            {guardando ? 'Guardando…' : clase ? 'Guardar cambios' : 'Programar'}
+            {guardando ? 'Saving…' : clase ? 'Save changes' : 'Schedule'}
           </Button>
         </div>
       </form>
