@@ -4,10 +4,10 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { COLOR_PRIORIDAD, ESTADOS, PRIORIDADES, TIPOS, nombreCorto, textoHistorial, vencido } from '../../lib/tickets'
+import { COLOR_PRIORIDAD, etiquetaPrioridad, ESTADOS, PRIORIDADES, TIPOS, nombreCorto, textoHistorial, vencido } from '../../lib/tickets'
 import { actualizarTicket, archivarTicket, comentarTicket, comentariosDe, historialDe, suscribirTickets } from '../../services/tickets'
 
-const fechaHora = (iso) => new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })
+const fechaHora = (iso) => new Date(iso).toLocaleString('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })
 
 // Formulario de edición. Se reinicia solo cuando cambian los valores guardados (key en el padre).
 function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
@@ -19,8 +19,8 @@ function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
   const cambios = Object.fromEntries(Object.entries(f).filter(([k, v]) => v !== inicial[k]))
   const hayCambios = Object.keys(cambios).length > 0
   const responsables = [
-    { value: '', label: 'Sin asignar' },
-    ...personal.filter((p) => p.activo || p.user_id === ticket.responsable_id).map((p) => ({ value: p.user_id, label: `${p.correo}${p.user_id === miId ? ' (yo)' : ''}${p.activo ? '' : ' (inactivo)'}` })),
+    { value: '', label: 'Unassigned' },
+    ...personal.filter((p) => p.activo || p.user_id === ticket.responsable_id).map((p) => ({ value: p.user_id, label: `${p.correo}${p.user_id === miId ? ' (me)' : ''}${p.activo ? '' : ' (inactive)'}` })),
   ]
 
   const guardar = async (e) => {
@@ -41,21 +41,21 @@ function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
   return (
     <form onSubmit={guardar} className="space-y-3">
       <fieldset disabled={deshabilitado} className="space-y-3">
-        <Field label="Título" value={f.titulo} onChange={cambiar('titulo')} maxLength={200} required />
-        <Field as="textarea" rows={4} label="Descripción" value={f.descripcion} onChange={cambiar('descripcion')} maxLength={5000} />
+        <Field label="Title" value={f.titulo} onChange={cambiar('titulo')} maxLength={200} required />
+        <Field as="textarea" rows={4} label="Description" value={f.descripcion} onChange={cambiar('descripcion')} maxLength={5000} />
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Estado" options={ESTADOS} value={f.estado} onChange={cambiar('estado')} />
-          <Field label="Prioridad" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} />
-          <Field label="Tipo" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
-          <Field label="Responsable" options={responsables} value={f.responsable_id} onChange={cambiar('responsable_id')} />
-          <Field type="date" label="Fecha límite" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
+          <Field label="Status" options={ESTADOS} value={f.estado} onChange={cambiar('estado')} />
+          <Field label="Priority" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} />
+          <Field label="Type" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
+          <Field label="Assignee" options={responsables} value={f.responsable_id} onChange={cambiar('responsable_id')} />
+          <Field type="date" label="Due date" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
         </div>
       </fieldset>
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {!deshabilitado && (
         <div className="flex justify-end">
           <Button type="submit" disabled={guardando || !hayCambios || !f.titulo.trim()}>
-            {guardando ? 'Guardando…' : 'Guardar cambios'}
+            {guardando ? 'Saving…' : 'Save changes'}
           </Button>
         </div>
       )}
@@ -124,13 +124,13 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
   const clave = [ticket.titulo, ticket.descripcion, ticket.tipo, ticket.prioridad, ticket.estado, ticket.responsable_id, ticket.fecha_limite, ticket.archivado].join('|')
 
   return (
-    <Modal title={`${ticket.codigo} · Detalle`} wide="xl" onClose={onCerrar}>
+    <Modal title={`${ticket.codigo} · Details`} wide="xl" onClose={onCerrar}>
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-        <Badge color={COLOR_PRIORIDAD[ticket.prioridad]}>{ticket.prioridad}</Badge>
-        {ticket.archivado && <Badge color="slate">Archivado</Badge>}
-        {vencido(ticket) && <Badge color="rose">Vencido</Badge>}
+        <Badge color={COLOR_PRIORIDAD[ticket.prioridad]}>{etiquetaPrioridad(ticket.prioridad)}</Badge>
+        {ticket.archivado && <Badge color="slate">Archived</Badge>}
+        {vencido(ticket) && <Badge color="rose">Overdue</Badge>}
         <span>
-          Creado por {nombreCorto(nombre(ticket.creado_por), 'alguien')} · {fechaHora(ticket.created_at)}
+          Created by {nombreCorto(nombre(ticket.creado_por), 'someone')} · {fechaHora(ticket.created_at)}
         </span>
       </div>
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
@@ -139,14 +139,14 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
           <div className="mt-4 border-t border-slate-100 pt-3">
             {ticket.archivado ? (
               <Button variant="secondary" disabled={ocupado} onClick={() => archivar(false)}>
-                Restaurar ticket
+                Restore ticket
               </Button>
             ) : (
               <Button variant="ghost" disabled={ocupado} onClick={() => archivar(true)}>
-                Archivar ticket
+                Archive ticket
               </Button>
             )}
-            <span className="ml-2 text-xs text-slate-400">Los tickets no se borran: se archivan y se pueden restaurar.</span>
+            <span className="ml-2 text-xs text-slate-400">Tickets are never deleted: they are archived and can be restored.</span>
           </div>
         </div>
 
@@ -157,17 +157,17 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
               {comentarios.datos.map((c) => (
                 <li key={c.id} className="rounded-xl bg-slate-50 px-3 py-2">
                   <p className="text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{nombreCorto(nombre(c.autor_id), 'Alguien')}</span> · {fechaHora(c.created_at)}
+                    <span className="font-medium text-slate-700">{nombreCorto(nombre(c.autor_id), 'Someone')}</span> · {fechaHora(c.created_at)}
                   </p>
                   <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-slate-800">{c.texto}</p>
                 </li>
               ))}
-              {!comentarios.cargando && comentarios.datos.length === 0 && <li className="text-xs text-slate-400">Aún no hay comentarios.</li>}
+              {!comentarios.cargando && comentarios.datos.length === 0 && <li className="text-xs text-slate-400">There are no comments yet.</li>}
               <li ref={fin} />
             </ul>
             {!ticket.archivado && (
               <form onSubmit={enviar} className="mt-2 space-y-2">
-                <Field as="textarea" rows={2} aria-label="Nuevo comentario" placeholder="Escribe un comentario…" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={2000} />
+                <Field as="textarea" rows={2} aria-label="New comment" placeholder="Write a comment…" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={2000} />
                 <div className="flex justify-end">
                   <Button type="submit" variant="secondary" disabled={ocupado || !texto.trim()}>
                     Comentar
@@ -179,11 +179,11 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
           </section>
 
           <section>
-            <h3 className="text-sm font-semibold text-slate-900">Historial de actividad</h3>
+            <h3 className="text-sm font-semibold text-slate-900">Activity history</h3>
             <ul className="mt-2 max-h-56 space-y-1.5 overflow-y-auto text-xs text-slate-600">
               {historial.datos.map((h) => (
                 <li key={h.id}>
-                  {textoHistorial(h, (id, vacio = 'Alguien') => nombreCorto(nombre(id), vacio))} <span className="text-slate-400">· {fechaHora(h.created_at)}</span>
+                  {textoHistorial(h, (id, vacio = 'Someone') => nombreCorto(nombre(id), vacio))} <span className="text-slate-400">· {fechaHora(h.created_at)}</span>
                 </li>
               ))}
             </ul>

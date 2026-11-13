@@ -13,12 +13,12 @@ import { ESTADOS, PRIORIDADES, TIPOS, filtrarTickets, nombreCorto } from '../lib
 import { actualizarTicket, listarTickets, personalTickets, suscribirTickets } from '../services/tickets'
 
 const VISTAS = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'mios', label: 'Mis tickets' },
-  { id: 'creados', label: 'Creados por mí' },
-  { id: 'urgentes', label: 'Urgentes' },
-  { id: 'vencidos', label: 'Vencidos' },
-  { id: 'archivados', label: 'Archivados' },
+  { id: 'todos', label: 'All' },
+  { id: 'mios', label: 'My tickets' },
+  { id: 'creados', label: 'Created by me' },
+  { id: 'urgentes', label: 'Urgent' },
+  { id: 'vencidos', label: 'Overdue' },
+  { id: 'archivados', label: 'Archived' },
 ]
 const SIN_FILTROS = { estado: '', prioridad: '', tipo: '', responsable: '', texto: '' }
 
@@ -79,8 +79,8 @@ export default function TaskBoard({ miId, notif }) {
     }
   }
 
-  if (error) return <p className="text-sm text-red-600">No se pudo cargar el Task Board: {error}</p>
-  if (cargando || !datos) return <p className="py-4 text-sm text-slate-400">Cargando…</p>
+  if (error) return <p className="text-sm text-red-600">Could not load the Task Board: {error}</p>
+  if (cargando || !datos) return <p className="py-4 text-sm text-slate-400">Loading…</p>
 
   const ticketAbierto = tickets.find((t) => t.id === abierto)
   const setF = (k) => (e) => setFiltros((p) => ({ ...p, [k]: e.target.value }))
@@ -96,23 +96,23 @@ export default function TaskBoard({ miId, notif }) {
     <div>
       <PageHeader
         title="Task Board"
-        description="Tareas, solicitudes e incidencias del equipo administrativo."
+        description="Tasks, requests and incidents of the administrative team."
         action={
           <div className="relative flex items-center gap-2">
-            <button type="button" onClick={() => setCampana((v) => !v)} aria-label={`Notificaciones (${notif.pendientes} sin leer)`} aria-expanded={campana} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-700 hover:bg-brand-50">
+            <button type="button" onClick={() => setCampana((v) => !v)} aria-label={`Notifications (${notif.pendientes} unread)`} aria-expanded={campana} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-700 hover:bg-brand-50">
               <Icon name="alert" className="h-5 w-5" />
               {notif.pendientes > 0 && <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-peach-500 px-1.5 text-center text-xs font-semibold text-brand-900">{notif.pendientes}</span>}
             </button>
             <Button onClick={() => setNuevo(true)}>
-              <Icon name="plus" className="h-4 w-4" /> Nuevo ticket
+              <Icon name="plus" className="h-4 w-4" /> New ticket
             </Button>
             {campana && (
               <Card className="absolute right-0 top-12 z-20 w-80 max-w-[85vw] p-3 shadow-lg">
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-slate-900">Notificaciones</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
                   {notif.pendientes > 0 && (
                     <button type="button" className="text-xs font-medium text-brand-700 hover:underline" onClick={() => notif.leer().catch(() => {})}>
-                      Marcar todas como leídas
+                      Mark all as read
                     </button>
                   )}
                 </div>
@@ -121,11 +121,11 @@ export default function TaskBoard({ miId, notif }) {
                     <li key={n.id}>
                       <button type="button" onClick={() => abrirDesdeNotificacion(n)} className={`w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-50 ${n.leida ? 'text-slate-500' : 'bg-brand-50 font-medium text-brand-900'}`}>
                         {n.mensaje}
-                        <span className="block text-xs font-normal text-slate-400">{new Date(n.created_at).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })}</span>
+                        <span className="block text-xs font-normal text-slate-400">{new Date(n.created_at).toLocaleString('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })}</span>
                       </button>
                     </li>
                   ))}
-                  {notif.items.length === 0 && <li className="px-3 py-4 text-center text-xs text-slate-400">Sin notificaciones.</li>}
+                  {notif.items.length === 0 && <li className="px-3 py-4 text-center text-xs text-slate-400">No notifications.</li>}
                 </ul>
               </Card>
             )}
@@ -143,34 +143,34 @@ export default function TaskBoard({ miId, notif }) {
       </div>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-        <input type="search" aria-label="Buscar por título o código" placeholder="Buscar por título o código" className={`${inputClass} lg:col-span-2`} value={filtros.texto} onChange={setF('texto')} />
-        <select aria-label="Filtrar por estado" className={inputClass} value={filtros.estado} onChange={setF('estado')}>
-          <option value="">Todos los estados</option>
+        <input type="search" aria-label="Search by title or code" placeholder="Search by title or code" className={`${inputClass} lg:col-span-2`} value={filtros.texto} onChange={setF('texto')} />
+        <select aria-label="Filter by status" className={inputClass} value={filtros.estado} onChange={setF('estado')}>
+          <option value="">All statuses</option>
           {ESTADOS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </select>
-        <select aria-label="Filtrar por prioridad" className={inputClass} value={filtros.prioridad} onChange={setF('prioridad')}>
-          <option value="">Toda prioridad</option>
+        <select aria-label="Filter by priority" className={inputClass} value={filtros.prioridad} onChange={setF('prioridad')}>
+          <option value="">Any priority</option>
           {PRIORIDADES.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </select>
-        <select aria-label="Filtrar por tipo" className={inputClass} value={filtros.tipo} onChange={setF('tipo')}>
-          <option value="">Todos los tipos</option>
+        <select aria-label="Filter by type" className={inputClass} value={filtros.tipo} onChange={setF('tipo')}>
+          <option value="">All types</option>
           {TIPOS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </select>
-        <select aria-label="Filtrar por responsable" className={inputClass} value={filtros.responsable} onChange={setF('responsable')}>
-          <option value="">Todos los responsables</option>
-          <option value="sin">Sin asignar</option>
+        <select aria-label="Filter by assignee" className={inputClass} value={filtros.responsable} onChange={setF('responsable')}>
+          <option value="">All assignees</option>
+          <option value="sin">Unassigned</option>
           {personal.map((p) => (
             <option key={p.user_id} value={p.user_id}>
               {nombreCorto(p.correo)}
@@ -183,7 +183,7 @@ export default function TaskBoard({ miId, notif }) {
         <p className="mb-3 text-xs text-slate-500">
           {visibles.length} resultado(s).{' '}
           <button type="button" className="font-medium text-brand-700 hover:underline" onClick={() => setFiltros(SIN_FILTROS)}>
-            Quitar filtros
+            Clear filters
           </button>
         </p>
       )}
@@ -200,7 +200,7 @@ export default function TaskBoard({ miId, notif }) {
               <Badge color="slate">{ESTADOS.find((e) => e.value === t.estado)?.label}</Badge>
             </button>
           ))}
-          {visibles.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">No hay tickets archivados.</p>}
+          {visibles.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">There are no archived tickets.</p>}
         </Card>
       ) : (
         <TicketTablero tickets={visibles} nombre={nombre} onAbrir={setAbierto} onMover={mover} />

@@ -11,8 +11,8 @@ import { VENTANAS, analizarSalon, calcularIndicadores, filtrarFilas, ordenarPorF
 const filtrosIniciales = { ventana: '30', nivelId: '', estado: 'en_curso', revisar: false }
 const sinFiltros = { ventana: 'todos', nivelId: '', estado: '', revisar: false }
 
-const cortoVentana = { vencidos: 'Vencidos', 7: 'Esta semana', 15: '15 días', 30: 'Este mes', todos: 'Todos' }
-const largoVentana = { vencidos: 'Ya vencidos', 7: 'Terminan esta semana', 15: 'Terminan en 15 días', 30: 'Terminan este mes' }
+const cortoVentana = { vencidos: 'Overdue', 7: 'This week', 15: '15 days', 30: 'This month', todos: 'All' }
+const largoVentana = { vencidos: 'Already overdue', 7: 'Ending this week', 15: 'Ending in 15 days', 30: 'Ending this month' }
 
 // Colores del semáforo: rojo = ya pasó, durazno = urgente, morado = pronto, gris = sin prisa.
 const TONOS = {
@@ -52,12 +52,12 @@ function Prioridad({ ind, cargando, onVer }) {
   if (cargando) return null
   const caso =
     ind.vencidos > 0
-      ? { tono: 'rose', icono: 'alert', texto: `${ind.vencidos} ${ind.vencidos === 1 ? 'salón ya debió' : 'salones ya debieron'} terminar`, detalle: 'Confirma con el área académica si siguen activos o hay que cerrarlos.', p: { ventana: 'vencidos', estado: 'en_curso' } }
+      ? { tono: 'rose', icono: 'alert', texto: `${ind.vencidos} ${ind.vencidos === 1 ? 'classroom should' : 'classrooms should'} have already ended`, detalle: 'Check with the academic area whether they are still active or need to be closed.', p: { ventana: 'vencidos', estado: 'en_curso' } }
       : ind.en7 > 0
-        ? { tono: 'peach', icono: 'flag', texto: `${ind.en7} ${ind.en7 === 1 ? 'salón termina' : 'salones terminan'} esta semana`, detalle: 'Es el momento de contactar a sus estudiantes y proponer el siguiente nivel.', p: { ventana: '7', estado: 'en_curso' } }
+        ? { tono: 'peach', icono: 'flag', texto: `${ind.en7} ${ind.en7 === 1 ? 'classroom ends' : 'classrooms end'} this week`, detalle: 'It is time to contact their students and offer the next level.', p: { ventana: '7', estado: 'en_curso' } }
         : ind.en30 > 0
-          ? { tono: 'brand', icono: 'calendar', texto: `${ind.en30} ${ind.en30 === 1 ? 'salón termina' : 'salones terminan'} este mes`, detalle: 'Ve preparando la próxima apertura con tiempo.', p: { ventana: '30', estado: 'en_curso' } }
-          : { tono: 'slate', icono: 'check', texto: 'Todo tranquilo por ahora', detalle: 'Ningún salón en curso termina en los próximos 30 días.', p: null }
+          ? { tono: 'brand', icono: 'calendar', texto: `${ind.en30} ${ind.en30 === 1 ? 'classroom ends' : 'classrooms end'} this month`, detalle: 'Start preparing the next opening in advance.', p: { ventana: '30', estado: 'en_curso' } }
+          : { tono: 'slate', icono: 'check', texto: 'All quiet for now', detalle: 'No ongoing classroom ends in the next 30 days.', p: null }
   const t = TONOS[caso.tono]
   return (
     <div className={`mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-l-4 bg-white p-4 shadow-sm ${t.borde} border-brand-100`}>
@@ -65,11 +65,11 @@ function Prioridad({ ind, cargando, onVer }) {
         <Icon name={caso.icono} className="h-6 w-6" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Lo más importante hoy</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Most important today</p>
         <p className="text-lg font-semibold text-slate-900">{caso.texto}</p>
         <p className="text-sm text-slate-500">{caso.detalle}</p>
       </div>
-      {caso.p && <Button onClick={() => onVer(caso.p)}>Ver salones</Button>}
+      {caso.p && <Button onClick={() => onVer(caso.p)}>View classrooms</Button>}
     </div>
   )
 }
@@ -91,18 +91,18 @@ function Urgencia({ filas }) {
   const total = Object.values(grupos).reduce((n, x) => n + x, 0)
   if (total === 0) return null
   const partes = [
-    { k: 'vencidos', label: 'Ya vencidos', tono: 'rose' },
-    { k: 'semana', label: 'Esta semana', tono: 'peach' },
-    { k: 'mes', label: 'Este mes', tono: 'brand' },
-    { k: 'despues', label: 'Más adelante', tono: 'slate' },
-    { k: 'sinFecha', label: 'Sin fecha', tono: 'slate' },
+    { k: 'vencidos', label: 'Already overdue', tono: 'rose' },
+    { k: 'semana', label: 'This week', tono: 'peach' },
+    { k: 'mes', label: 'This month', tono: 'brand' },
+    { k: 'despues', label: 'Later', tono: 'slate' },
+    { k: 'sinFecha', label: 'No date', tono: 'slate' },
   ].filter((p) => grupos[p.k] > 0)
   return (
     <Card className="mt-4 p-4">
       <p className="mb-3 text-sm font-semibold text-slate-900">
-        ¿Cuándo terminan tus {total} {total === 1 ? 'salón' : 'salones'} en curso?
+        When do your {total} ongoing {total === 1 ? 'classroom' : 'classrooms'} end?
       </p>
-      <div role="img" aria-label="Reparto de salones en curso según su fecha de fin" className="flex h-4 overflow-hidden rounded-full bg-slate-100">
+      <div role="img" aria-label="Breakdown of ongoing classrooms by end date" className="flex h-4 overflow-hidden rounded-full bg-slate-100">
         {partes.map((p) => (
           <div key={p.k} className={p.k === 'sinFecha' ? 'bg-slate-200' : TONOS[p.tono].barra} style={{ width: `${(grupos[p.k] / total) * 100}%` }} title={`${p.label}: ${grupos[p.k]}`} />
         ))}
@@ -122,7 +122,7 @@ function Urgencia({ filas }) {
 // Control segmentado para la ventana de finalización.
 function Segmentado({ opciones, valor, onChange }) {
   return (
-    <div role="group" aria-label="¿Cuándo terminan?" className="grid grid-cols-5 gap-0.5 rounded-xl bg-slate-100 p-0.5 lg:inline-grid">
+    <div role="group" aria-label="When do they end?" className="grid grid-cols-5 gap-0.5 rounded-xl bg-slate-100 p-0.5 lg:inline-grid">
       {opciones.map((o) => (
         <button
           key={o.value}
@@ -143,7 +143,7 @@ function FiltroActivo({ children, onQuitar }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 py-0.5 pl-2.5 pr-1 text-xs font-medium text-brand-700">
       {children}
-      <button onClick={onQuitar} aria-label={`Quitar filtro: ${children}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-brand-100">
+      <button onClick={onQuitar} aria-label={`Remove filter: ${children}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-brand-100">
         ×
       </button>
     </span>
@@ -161,9 +161,9 @@ function Etiqueta({ tono, icono, children, ayuda }) {
 
 function Etiquetas({ a }) {
   const items = []
-  if (a.provisional) items.push(<Etiqueta key="p" tono="peach" icono="clock" ayuda="Aún faltan clases por programar, por eso la fecha de fin es una estimación.">Fecha estimada</Etiqueta>)
-  if (a.porValidar) items.push(<Etiqueta key="v" tono="peach" icono="eye" ayuda="Hay clases que ya pasaron y nadie ha marcado como realizadas o canceladas.">Clases sin confirmar</Etiqueta>)
-  if (a.sinCalendario) items.push(<Etiqueta key="c" tono="slate" icono="calendar" ayuda="Este salón aún no tiene clases programadas en el calendario.">Sin calendario</Etiqueta>)
+  if (a.provisional) items.push(<Etiqueta key="p" tono="peach" icono="clock" ayuda="Classes still need to be scheduled, so the end date is an estimate.">Estimated date</Etiqueta>)
+  if (a.porValidar) items.push(<Etiqueta key="v" tono="peach" icono="eye" ayuda="Some classes have already passed and nobody has marked them as held or cancelled.">Unconfirmed classes</Etiqueta>)
+  if (a.sinCalendario) items.push(<Etiqueta key="c" tono="slate" icono="calendar" ayuda="This classroom has no classes scheduled in the calendar yet.">No calendar</Etiqueta>)
   if (items.length === 0) return null
   return <div className="mt-2 flex flex-wrap gap-1.5">{items}</div>
 }
@@ -172,18 +172,18 @@ function Etiquetas({ a }) {
 function Plazo({ salon: s, a }) {
   let tono = 'slate'
   let icono = 'clock'
-  if (s.estado === 'finalizado') return <span className="text-xs text-slate-400">Finalizado</span>
+  if (s.estado === 'finalizado') return <span className="text-xs text-slate-400">Finished</span>
   if (a.vencido) [tono, icono] = ['rose', 'alert']
   else if (a.en7) [tono, icono] = ['peach', 'flag']
   else if (a.en30) [tono, icono] = ['brand', 'calendar']
   return (
     <div className="text-right">
       <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset ${TONOS[tono].chip}`}>
-        <Icon name={icono} className="h-4 w-4" /> {a.dias === null ? 'Sin fecha' : a.vencido ? textoDias(a, s.estado) : a.dias === 0 ? 'Termina hoy' : `Faltan ${textoDias(a, s.estado)}`}
+        <Icon name={icono} className="h-4 w-4" /> {a.dias === null ? 'No date' : a.vencido ? textoDias(a, s.estado) : a.dias === 0 ? 'Ends today' : `${textoDias(a, s.estado)} left`}
       </span>
       <p className="mt-1 text-xs text-slate-500">
-        {a.fin ? `Fin: ${formatFecha(a.fin)}` : 'Define una fecha de fin'}
-        {a.origen === 'calendario' && a.provisional ? ' (estimada)' : ''}
+        {a.fin ? `End: ${formatFecha(a.fin)}` : 'Set an end date'}
+        {a.origen === 'calendario' && a.provisional ? ' (estimated)' : ''}
       </p>
     </div>
   )
@@ -203,10 +203,10 @@ function FilaSalon({ s, a, onVer }) {
         <p className="truncate text-sm text-slate-600">{s.nombre}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1">
-            <Icon name="box" className="h-3.5 w-3.5" /> {s.nivel || <span className="text-peach-700">Sin nivel</span>}
+            <Icon name="box" className="h-3.5 w-3.5" /> {s.nivel || <span className="text-peach-700">No level</span>}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Icon name="teacher" className="h-3.5 w-3.5" /> {s.docente || <span className="text-slate-400">Sin docente</span>}
+            <Icon name="teacher" className="h-3.5 w-3.5" /> {s.docente || <span className="text-slate-400">No teacher</span>}
           </span>
         </p>
         <Etiquetas a={a} />
@@ -216,23 +216,23 @@ function FilaSalon({ s, a, onVer }) {
         {pct !== null ? (
           <>
             <p className="mb-1 flex justify-between text-xs text-slate-600">
-              <span>{p.realizadas} de {p.sesiones} clases dadas</span>
+              <span>{p.realizadas} of {p.sesiones} classes held</span>
               <strong className="text-slate-900">{pct}%</strong>
             </p>
-            <div role="progressbar" aria-label={`Avance de ${s.codigo}`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-2.5 overflow-hidden rounded-full bg-brand-50">
+            <div role="progressbar" aria-label={`Progress of ${s.codigo}`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-2.5 overflow-hidden rounded-full bg-brand-50">
               <div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-peach-500" style={{ width: `${pct}%` }} />
             </div>
-            <p className="mt-1 text-xs text-slate-400">Quedan {p.restantes} clases</p>
+            <p className="mt-1 text-xs text-slate-400">{p.restantes} classes left</p>
           </>
         ) : (
-          <p className="text-xs text-slate-400">Sin clases en el calendario todavía</p>
+          <p className="text-xs text-slate-400">No classes in the calendar yet</p>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-4 md:justify-end">
         <Plazo salon={s} a={a} />
         <Button variant="secondary" className="px-4 py-1.5" onClick={() => onVer(s.id)}>
-          Ver
+          View
         </Button>
       </div>
     </li>
@@ -266,15 +266,15 @@ export default function Dashboard({ data, onVerSalon }) {
   const es = (p) => f.ventana === p.ventana && f.estado === p.estado && f.revisar === p.revisar && !f.nivelId
   const aplicar = (p) => () => setF({ ...sinFiltros, ...p })
 
-  const nivelNombre = f.nivelId === SIN_NIVEL ? 'Sin nivel asignado' : niveles.find((n) => n.id === f.nivelId)?.nombre
+  const nivelNombre = f.nivelId === SIN_NIVEL ? 'No level assigned' : niveles.find((n) => n.id === f.nivelId)?.nombre
   const estadoNombre = estados.find((e) => e.value === f.estado)?.label
   const hayFiltros = f.ventana !== 'todos' || f.nivelId || f.estado || f.revisar
 
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-brand-700">Dashboard comercial</h1>
-        <p className="mt-1 text-sm text-slate-500">Mira qué salones están por terminar para ofrecer a tiempo el siguiente nivel.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-brand-700">Sales dashboard</h1>
+        <p className="mt-1 text-sm text-slate-500">See which classrooms are about to end so you can offer the next level on time.</p>
       </div>
 
       <Prioridad ind={ind} cargando={cargando || Boolean(error)} onVer={(p) => setF({ ...sinFiltros, ...p })} />
@@ -283,59 +283,59 @@ export default function Dashboard({ data, onVerSalon }) {
         <Indicador
           icono="building"
           tono="brand"
-          label="Salones activos"
+          label="Active classrooms"
           valor={v(ind.enCurso)}
-          nota={ind.vencidos > 0 && !cargando ? `${ind.vencidos} ya debieron terminar` : 'Clases dándose ahora'}
+          nota={ind.vencidos > 0 && !cargando ? `${ind.vencidos} should have already ended` : 'Classes running now'}
           activo={es({ ventana: 'todos', estado: 'en_curso', revisar: false })}
           onClick={aplicar({ estado: 'en_curso' })}
         />
         <Indicador
           icono="flag"
           tono="peach"
-          label="Terminan esta semana"
+          label="Ending this week"
           valor={v(ind.en7)}
-          nota={ind.en7 > 0 ? 'Contacta a sus estudiantes ya' : 'Ninguno por ahora'}
+          nota={ind.en7 > 0 ? 'Contact their students now' : 'None for now'}
           activo={es({ ventana: '7', estado: 'en_curso', revisar: false })}
           onClick={aplicar({ ventana: '7', estado: 'en_curso' })}
         />
         <Indicador
           icono="calendar"
           tono="brand"
-          label="Terminan este mes"
+          label="Ending this month"
           valor={v(ind.en30)}
-          nota="Próximos 30 días (incluye los de esta semana)"
+          nota="Next 30 days (includes this week's)"
           activo={es({ ventana: '30', estado: 'en_curso', revisar: false })}
           onClick={aplicar({ ventana: '30', estado: 'en_curso' })}
         />
         <Indicador
           icono="clock"
           tono="slate"
-          label="Por empezar"
+          label="About to start"
           valor={v(ind.pendientes)}
-          nota="Aún no inician clases"
+          nota="Classes have not started yet"
           activo={es({ ventana: 'todos', estado: 'pendiente', revisar: false })}
           onClick={aplicar({ estado: 'pendiente' })}
         />
         <Indicador
           icono="info"
           tono={ind.revisar > 0 ? 'peach' : 'slate'}
-          label="Datos por revisar"
+          label="Data to review"
           valor={v(ind.revisar)}
-          nota="Falta calendario o confirmar clases"
+          nota="Calendar missing or classes to confirm"
           activo={es({ ventana: 'todos', estado: '', revisar: true })}
           onClick={aplicar({ revisar: true })}
           className="col-span-2 lg:col-span-1"
         />
       </div>
-      <p className="mt-2 text-xs text-slate-400">Toca una tarjeta para ver esos salones en la lista.</p>
+      <p className="mt-2 text-xs text-slate-400">Tap a card to see those classrooms in the list.</p>
 
       {!cargando && !error && <Urgencia filas={filas} />}
 
       <Card className="mt-6 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-100 p-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Lista de salones</h2>
-            <p className="text-xs text-slate-500">Ordenados por quién termina primero</p>
+            <h2 className="text-base font-semibold text-slate-900">Classroom list</h2>
+            <p className="text-xs text-slate-500">Sorted by who ends first</p>
           </div>
           <Segmentado opciones={VENTANAS} valor={f.ventana} onChange={cambiarVentana} />
           <button
@@ -344,23 +344,23 @@ export default function Dashboard({ data, onVerSalon }) {
             aria-expanded={verFiltros}
             className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
           >
-            <Icon name="filter" className="h-4 w-4" /> Más filtros
+            <Icon name="filter" className="h-4 w-4" /> More filters
           </button>
         </div>
 
         {verFiltros && (
           <div className="grid gap-3 border-b border-brand-100 bg-brand-50/40 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-            <select value={f.nivelId} onChange={(e) => set({ nivelId: e.target.value })} className={inputClass} aria-label="Filtrar por nivel académico">
-              <option value="">Todos los niveles</option>
+            <select value={f.nivelId} onChange={(e) => set({ nivelId: e.target.value })} className={inputClass} aria-label="Filter by academic level">
+              <option value="">All levels</option>
               {niveles.map((n) => (
                 <option key={n.id} value={n.id}>
                   {n.nombre}
                 </option>
               ))}
-              <option value={SIN_NIVEL}>Sin nivel asignado</option>
+              <option value={SIN_NIVEL}>No level assigned</option>
             </select>
-            <select value={f.estado} onChange={(e) => cambiarEstado(e.target.value)} className={inputClass} aria-label="Filtrar por estado">
-              <option value="">Todos los estados</option>
+            <select value={f.estado} onChange={(e) => cambiarEstado(e.target.value)} className={inputClass} aria-label="Filter by status">
+              <option value="">All statuses</option>
               {estados.map((e) => (
                 <option key={e.value} value={e.value}>
                   {e.label}
@@ -369,7 +369,7 @@ export default function Dashboard({ data, onVerSalon }) {
             </select>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" checked={f.revisar} onChange={(e) => cambiarRevisar(e.target.checked)} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
-              Solo datos por revisar
+              Only data to review
             </label>
           </div>
         )}
@@ -381,39 +381,39 @@ export default function Dashboard({ data, onVerSalon }) {
               {f.ventana !== 'todos' && <FiltroActivo onQuitar={() => set({ ventana: 'todos' })}>{largoVentana[f.ventana]}</FiltroActivo>}
               {f.nivelId && <FiltroActivo onQuitar={() => set({ nivelId: '' })}>{nivelNombre}</FiltroActivo>}
               {f.estado && <FiltroActivo onQuitar={() => set({ estado: '' })}>{estadoNombre}</FiltroActivo>}
-              {f.revisar && <FiltroActivo onQuitar={() => set({ revisar: false })}>Datos por revisar</FiltroActivo>}
+              {f.revisar && <FiltroActivo onQuitar={() => set({ revisar: false })}>Data to review</FiltroActivo>}
               <button onClick={() => setF(sinFiltros)} className="ml-1 font-medium text-brand-700 hover:underline">
-                Ver todos
+                Show all
               </button>
             </>
           ) : (
-            <span>Mostrando todos los salones.</span>
+            <span>Showing all classrooms.</span>
           )}
         </div>
 
         {cargando ? (
-          <p className="px-4 py-12 text-center text-sm text-slate-500">Cargando salones…</p>
+          <p className="px-4 py-12 text-center text-sm text-slate-500">Loading classrooms…</p>
         ) : error ? (
           <div className="px-4 py-12 text-center text-sm">
-            <p className="text-red-600">No se pudieron cargar los salones: {error}</p>
+            <p className="text-red-600">Could not load the classrooms: {error}</p>
             <Button variant="secondary" className="mt-3" onClick={recargar}>
-              Reintentar
+              Retry
             </Button>
           </div>
         ) : salones.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="font-medium text-slate-900">Aún no hay salones registrados</p>
-            <p className="mt-1 text-sm text-slate-500">Cuando el área académica cree salones, aparecerán aquí.</p>
+            <p className="font-medium text-slate-900">No classrooms registered yet</p>
+            <p className="mt-1 text-sm text-slate-500">When the academic area creates classrooms, they will appear here.</p>
           </div>
         ) : visibles.length === 0 ? (
           <div className="px-4 py-12 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
               <Icon name="check" className="h-6 w-6" />
             </span>
-            <p className="mt-3 font-medium text-slate-900">Ningún salón coincide con lo que elegiste</p>
-            <p className="mt-1 text-sm text-slate-500">Prueba con un plazo más amplio o quita algún filtro.</p>
+            <p className="mt-3 font-medium text-slate-900">No classroom matches what you chose</p>
+            <p className="mt-1 text-sm text-slate-500">Try a wider time range or remove a filter.</p>
             <Button variant="secondary" className="mt-3" onClick={() => setF(sinFiltros)}>
-              Ver todos los salones
+              Show all classrooms
             </Button>
           </div>
         ) : (
@@ -424,7 +424,7 @@ export default function Dashboard({ data, onVerSalon }) {
               ))}
             </ul>
             <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
-              {visibles.length} {visibles.length === 1 ? 'salón' : 'salones'} · «Fecha estimada» significa que aún faltan clases por programar
+              {visibles.length} {visibles.length === 1 ? 'classroom' : 'classrooms'} · “Estimated date” means classes still need to be scheduled
             </p>
           </>
         )}

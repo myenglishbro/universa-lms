@@ -21,7 +21,7 @@ const DESCRIPCION = {
   comercial: 'Solo el dashboard.',
 }
 const etiqueta = (rol) => ROLES.find((r) => r.value === rol)?.label ?? rol
-const fecha = (iso) => (iso ? new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Nunca')
+const fecha = (iso) => (iso ? new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Nunca')
 
 function NuevoUsuario({ servicio, onClose, onCreado }) {
   const [f, setF] = useState({ correo: '', rol: 'comercial', password: generarClave() })

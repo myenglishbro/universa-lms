@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Icon from '../ui/Icon'
 import { ESTADOS, ESTILO_ESTADO, ESTILO_PRIORIDAD, colorAvatar, etiquetaPrioridad, etiquetaTipo, nombreCorto, ordenarTickets, vencido } from '../../lib/tickets'
 
-const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
+const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
 
 // Responsable: círculo con su inicial (color propio) y nombre. Sin responsable se ve como un hueco punteado, para notarlo.
 function Responsable({ id, nombre }) {
@@ -13,7 +13,7 @@ function Responsable({ id, nombre }) {
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-amber-400 bg-amber-50">
           <Icon name="user" className="h-3.5 w-3.5" />
         </span>
-        Sin asignar
+        Unassigned
       </span>
     )
   const n = nombreCorto(nombre(id))
@@ -50,7 +50,7 @@ function Tarjeta({ ticket, nombre, flotante = false }) {
           <Responsable id={ticket.responsable_id} nombre={nombre} />
           <span className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
             {ticket.n_comentarios > 0 && (
-              <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comentarios`}>
+              <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>
                 <Icon name="doc" className="h-3.5 w-3.5" /> {ticket.n_comentarios}
               </span>
             )}
@@ -106,7 +106,7 @@ function Columna({ estado, tickets, nombre, onAbrir, arrastrando }) {
           <TarjetaArrastrable key={t.id} ticket={t} nombre={nombre} onAbrir={onAbrir} />
         ))}
         {tickets.length === 0 && (
-          <p className="px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Suelta aquí para pasar a «${estado.label}»` : 'Sin tickets'}</p>
+          <p className="px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Drop here to move to “${estado.label}”` : 'No tickets'}</p>
         )}
       </div>
     </section>

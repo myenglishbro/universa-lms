@@ -3,11 +3,11 @@
 import { coincideNivel, diasParaFin, fechaFinSalon } from './salones'
 
 export const VENTANAS = [
-  { value: 'vencidos', label: 'Vencidos', dias: null },
-  { value: '7', label: '7 días', dias: 7 },
-  { value: '15', label: '15 días', dias: 15 },
-  { value: '30', label: '30 días', dias: 30 },
-  { value: 'todos', label: 'Todos', dias: null },
+  { value: 'vencidos', label: 'Overdue', dias: null },
+  { value: '7', label: '7 days', dias: 7 },
+  { value: '15', label: '15 days', dias: 15 },
+  { value: '30', label: '30 days', dias: 30 },
+  { value: 'todos', label: 'All', dias: null },
 ]
 
 // Clasifica un salón. Un salón "tiene calendario" cuando existen sesiones registradas;
@@ -85,7 +85,7 @@ export function ordenarPorFin(filas) {
 
 export function textoDias(a, estado) {
   if (estado === 'finalizado' || a.dias === null) return '—'
-  if (a.dias < 0) return `Hace ${-a.dias} ${a.dias === -1 ? 'día' : 'días'}`
-  if (a.dias === 0) return 'Hoy'
-  return `${a.dias} ${a.dias === 1 ? 'día' : 'días'}`
+  if (a.dias < 0) return `${-a.dias} ${a.dias === -1 ? 'day' : 'days'} ago`
+  if (a.dias === 0) return 'Today'
+  return `${a.dias} ${a.dias === 1 ? 'day' : 'days'}`
 }

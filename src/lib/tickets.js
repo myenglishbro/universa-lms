@@ -1,20 +1,20 @@
 // Task Board: constantes y reglas puras (sin red) para que se puedan probar.
 export const ESTADOS = [
-  { value: 'pendiente', label: 'Pendiente' },
-  { value: 'en_proceso', label: 'En proceso' },
-  { value: 'en_espera', label: 'En espera' },
-  { value: 'realizado', label: 'Realizado' },
+  { value: 'pendiente', label: 'Pending' },
+  { value: 'en_proceso', label: 'In progress' },
+  { value: 'en_espera', label: 'On hold' },
+  { value: 'realizado', label: 'Done' },
 ]
 export const PRIORIDADES = [
-  { value: 'baja', label: 'Baja' },
-  { value: 'media', label: 'Media' },
-  { value: 'alta', label: 'Alta' },
-  { value: 'urgente', label: 'Urgente' },
+  { value: 'baja', label: 'Low' },
+  { value: 'media', label: 'Medium' },
+  { value: 'alta', label: 'High' },
+  { value: 'urgente', label: 'Urgent' },
 ]
 export const TIPOS = [
-  { value: 'tarea', label: 'Tarea' },
-  { value: 'solicitud', label: 'Solicitud' },
-  { value: 'incidencia', label: 'Incidencia' },
+  { value: 'tarea', label: 'Task' },
+  { value: 'solicitud', label: 'Request' },
+  { value: 'incidencia', label: 'Incident' },
 ]
 export const COLOR_PRIORIDAD = { baja: 'slate', media: 'brand', alta: 'peach', urgente: 'rose' }
 
@@ -75,15 +75,16 @@ export const ordenarTickets = (a, b) =>
   b.updated_at.localeCompare(a.updated_at)
 
 // «juan.perez@x.com» → «juan.perez»; sin dato → texto de reemplazo.
-export const nombreCorto = (correo, vacio = 'Sin asignar') => (correo ? correo.split('@')[0] : vacio)
+export const nombreCorto = (correo, vacio = 'Unassigned') => (correo ? correo.split('@')[0] : vacio)
 
 export function textoHistorial(h, nombre) {
   const quien = nombre(h.usuario_id)
   if (h.accion === 'cambió') {
-    const valor = (v) => (h.campo === 'responsable' ? nombre(v, 'nadie') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : v || '—')
-    const campo = { titulo: 'el título', descripcion: 'la descripción', tipo: 'el tipo', prioridad: 'la prioridad', estado: 'el estado', responsable: 'el responsable', fecha_limite: 'la fecha límite' }[h.campo] ?? h.campo
-    if (h.campo === 'descripcion') return `${quien} editó la descripción`
-    return `${quien} cambió ${campo}: ${valor(h.valor_anterior)} → ${valor(h.valor_nuevo)}`
+    const valor = (v) => (h.campo === 'responsable' ? nombre(v, 'nobody') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : v || '—')
+    const campo = { titulo: 'the title', descripcion: 'the description', tipo: 'the type', prioridad: 'the priority', estado: 'the status', responsable: 'the assignee', fecha_limite: 'the due date' }[h.campo] ?? h.campo
+    if (h.campo === 'descripcion') return `${quien} edited the description`
+    return `${quien} changed ${campo}: ${valor(h.valor_anterior)} → ${valor(h.valor_nuevo)}`
   }
-  return h.accion === 'comentó' ? `${quien} comentó` : `${quien} ${h.accion} el ticket`
+  const verbo = { 'creó': 'created', 'archivó': 'archived', 'restauró': 'restored' }[h.accion] ?? h.accion
+  return h.accion === 'comentó' ? `${quien} commented` : `${quien} ${verbo} the ticket`
 }
