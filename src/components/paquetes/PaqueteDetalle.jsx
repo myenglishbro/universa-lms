@@ -3,14 +3,15 @@ import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
+import Modal from '../ui/Modal'
 import { formatFecha } from '../../lib/salones'
-import { advertenciaSaldo, dinero, estadoClase, estadoPaquete, minutosTexto, tipoMovimiento } from '../../lib/paquetes'
+import { advertenciaSaldo, estadoClase, estadoPaquete, minutosTexto, tipoMovimiento } from '../../lib/paquetes'
 import AjusteForm from './AjusteForm'
 import CancelarClaseModal from './CancelarClaseModal'
 import ClaseForm from './ClaseForm'
+import CrearSalonPaqueteModal from './CrearSalonPaqueteModal'
 import DocentePaqueteModal from './DocentePaqueteModal'
 import MotivoModal from './MotivoModal'
-import PagoForm from './PagoForm'
 
 const hora = (t) => t.slice(0, 5)
 
@@ -24,13 +25,13 @@ function Cifra({ etiqueta, valor, destacada = false, nota }) {
   )
 }
 
-// Detalle de un paquete: saldo (comprado, consumido, disponible, programado), pagos, clases y movimientos.
+// Detalle de un paquete: saldo (comprado, consumido, disponible, programado), clases y movimientos.
 // El saldo viene de Supabase; esta pantalla solo dispara las acciones y vuelve a leer el resultado.
-export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEditar, onVolver, onCambio, onRenovar, onVerAlumno }) {
-  const [detalle, setDetalle] = useState({ clases: [], pagos: [], movimientos: [] })
+export default function PaqueteDetalle({ paquete: p, servicio, docentes, niveles, catalogo, onSalonCreado, puedeEditar, onVolver, onCambio, onRenovar, onVerAlumno, onVerSalon }) {
+  const [detalle, setDetalle] = useState({ clases: [], movimientos: [] })
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(null)
-  const [modal, setModal] = useState(null) // { tipo, clase?, pago? }
+  const [modal, setModal] = useState(null) // { tipo, clase? }
   const enCurso = useRef(false) // evita enviar dos veces la misma acción (doble clic) antes de que se pinte el estado
 
   const cargar = useCallback(
@@ -98,8 +99,19 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
             {p.vigencia_hasta && ` · expires on ${formatFecha(p.vigencia_hasta)}`}
           </p>
         </div>
-        {puede && (
+        {(puede || (p.salon_id && onVerSalon)) && (
           <div className="flex flex-wrap gap-2">
+            {p.salon_id && onVerSalon && (
+              <Button variant="secondary" onClick={() => onVerSalon(p.salon_id)}>
+                <Icon name="book" className="h-4 w-4" /> Open classroom
+              </Button>
+            )}
+            {puede && !p.salon_id && catalogo && (
+              <Button onClick={() => setModal({ tipo: 'salon' })}>
+                <Icon name="plus" className="h-4 w-4" /> Create classroom
+              </Button>
+            )}
+            {puede && (<>
             <Button variant="secondary" onClick={() => setModal({ tipo: 'docente' })}>
               Teacher
             </Button>
@@ -107,6 +119,7 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
               Extend or adjust
             </Button>
             <Button onClick={() => onRenovar(p)}>Renew / buy more</Button>
+            </>)}
           </div>
         )}
       </div>
@@ -184,56 +197,6 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
           )}
         </Card>
 
-        <Card>
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">Payments</h2>
-            {puede && Number(p.pendiente) > 0 && (
-              <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'pago' })}>
-                <Icon name="plus" className="h-4 w-4" /> Record payment
-              </Button>
-            )}
-          </div>
-          <dl className="divide-y divide-slate-100 text-sm">
-            <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Price</dt>
-              <dd className="font-medium">{dinero(p.precio, p.moneda)}</dd>
-            </div>
-            <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Paid</dt>
-              <dd className="font-medium">{dinero(p.pagado, p.moneda)}</dd>
-            </div>
-            <div className="flex justify-between px-4 py-2">
-              <dt className="text-slate-500">Pending</dt>
-              <dd className={`font-semibold ${Number(p.pendiente) > 0 ? 'text-peach-700' : 'text-brand-700'}`}>
-                {Number(p.pendiente) > 0 ? dinero(p.pendiente, p.moneda) : 'Paid in full'}
-              </dd>
-            </div>
-          </dl>
-          {detalle.pagos.length > 0 && (
-            <ul className="divide-y divide-slate-100 border-t border-slate-200">
-              {detalle.pagos.map((g) => (
-                <li key={g.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
-                  <div className={g.anulado ? 'text-slate-400 line-through' : ''}>
-                    <p className="font-medium">{dinero(g.monto, p.moneda)}</p>
-                    <p className="text-xs text-slate-500">
-                      {formatFecha(g.fecha)}
-                      {g.metodo && ` · ${g.metodo}`}
-                    </p>
-                  </div>
-                  {g.anulado ? (
-                    <Badge color="rose">Voided</Badge>
-                  ) : (
-                    puede && (
-                      <Button variant="ghost" className="px-2 py-1" onClick={() => setModal({ tipo: 'anular-pago', pago: g })}>
-                        Void
-                      </Button>
-                    )
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
 
       <Card className="mt-6">
@@ -259,17 +222,19 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
         </details>
       </Card>
 
-      {puede && !cerrado && (
-        <p className="mt-4 text-right">
-          <button onClick={() => setModal({ tipo: 'anular' })} className="text-xs text-slate-400 hover:text-red-600">
-            Void this package
+      {puedeEditar && (
+        <p className="mt-4 flex justify-end gap-4">
+          {!cerrado && (
+            <button onClick={() => setModal({ tipo: 'anular' })} className="text-xs text-slate-400 hover:text-red-600">
+              Void this package
+            </button>
+          )}
+          <button onClick={() => setModal({ tipo: 'eliminar' })} className="text-xs text-slate-400 hover:text-red-600">
+            Delete package
           </button>
         </p>
       )}
 
-      {modal?.tipo === 'pago' && (
-        <PagoForm paquete={p} onClose={() => setModal(null)} onSave={(v) => enModal(() => servicio.registrarPago(p.id, v))} />
-      )}
       {modal?.tipo === 'clase' && (
         <ClaseForm
           paquete={p}
@@ -290,6 +255,19 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
       {modal?.tipo === 'cancelar' && (
         <CancelarClaseModal clase={modal.clase} onClose={() => setModal(null)} onConfirm={(v) => enModal(() => servicio.cancelarClase(modal.clase.id, v))} />
       )}
+      {modal?.tipo === 'salon' && (
+        <CrearSalonPaqueteModal
+          paquete={p}
+          niveles={niveles ?? []}
+          catalogo={catalogo}
+          onClose={() => setModal(null)}
+          onSave={async (v) => {
+            await servicio.crearSalonDePaquete(p.id, v)
+            await Promise.all([cargar(), onCambio(), onSalonCreado?.()])
+            setModal(null)
+          }}
+        />
+      )}
       {modal?.tipo === 'ajuste' && <AjusteForm onClose={() => setModal(null)} onSave={(v) => enModal(() => servicio.ajustarPaquete(p.id, v))} />}
       {modal?.tipo === 'corregir' && (
         <MotivoModal
@@ -300,19 +278,46 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, puedeEd
           onConfirm={(motivo) => enModal(() => servicio.corregirClase(modal.clase.id, motivo))}
         />
       )}
-      {modal?.tipo === 'anular-pago' && (
-        <MotivoModal
-          titulo="Void payment"
-          texto={`The payment of ${dinero(modal.pago.monto, p.moneda)} will be voided. It will be recorded as voided.`}
-          confirmar="Void payment"
-          onClose={() => setModal(null)}
-          onConfirm={(motivo) => enModal(() => servicio.anularPago(modal.pago.id, motivo))}
-        />
+      {modal?.tipo === 'eliminar' && (
+        <Modal title="Delete package" onClose={() => setModal(null)}>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-700">
+              The package of <strong>{p.alumno}</strong> will be deleted with its whole history (hours, classes and movements). This cannot be undone.
+            </p>
+            {p.salon_id && (
+              <p className="rounded-lg bg-peach-50 px-3 py-2 text-sm text-peach-700">
+                Its private classroom will also be deleted (or closed as Finished if it has exercises or archived history). The teacher&apos;s schedule is freed.
+              </p>
+            )}
+            {!p.salon_id && <p className="text-sm text-slate-500">Its scheduled classes are removed, so the teacher&apos;s schedule is freed.</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
+              <Button
+                disabled={ocupado === 'eliminar'}
+                onClick={async () => {
+                  setOcupado('eliminar')
+                  setError('')
+                  try {
+                    await servicio.eliminarPaquete(p.id)
+                    await Promise.all([onCambio(), onSalonCreado?.()])
+                    onVolver()
+                  } catch (e) {
+                    setError(e.message)
+                    setOcupado(null)
+                  }
+                }}
+              >
+                {ocupado === 'eliminar' ? 'Deleting…' : 'Delete package'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
       {modal?.tipo === 'anular' && (
         <MotivoModal
           titulo="Void package"
-          texto="The package will be voided, with no new classes or payments. Its history is kept."
+          texto="The package will be voided, with no new classes. Its history is kept."
           confirmar="Void package"
           onClose={() => setModal(null)}
           onConfirm={(motivo) => enModal(() => servicio.anularPaquete(p.id, motivo))}

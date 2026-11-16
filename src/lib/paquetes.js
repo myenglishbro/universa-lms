@@ -16,8 +16,6 @@ export const duracionMinutos = (inicio, fin) => {
   return h2 * 60 + m2 - (h1 * 60 + m1)
 }
 
-const simbolo = { PEN: 'S/', USD: 'US$' }
-export const dinero = (monto, moneda = 'PEN') => `${simbolo[moneda] ?? moneda} ${Number(monto ?? 0).toFixed(2)}`
 
 export const estadoPaquete = {
   activo: { color: 'brand', label: 'Active' },
@@ -48,7 +46,6 @@ export const tipoMovimiento = {
   reversion: 'Correction (refund)',
 }
 
-export const metodosPago = ['Cash', 'Yape / Plin', 'Bank transfer', 'Card', 'Other']
 
 // Advertencia cuando lo programado supera lo disponible (programar se permite; confirmar no).
 export const advertenciaSaldo = (s) =>

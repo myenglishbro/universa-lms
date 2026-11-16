@@ -53,7 +53,26 @@ export async function listarSalones() {
       )
       .order('fecha_inicio', { ascending: false }),
   )
-  return filas.map(aSalon)
+  const paquetes = await paquetesPorSalon()
+  return filas.map((r) => ({ ...aSalon(r), paquete: paquetes[r.id] ?? null }))
+}
+
+// Salones que pertenecen a un paquete de horas, con sus horas (en minutos), indexado por id de salón.
+// Es un extra: si no se puede leer (permisos), los salones se muestran igual, sin marca de paquete.
+async function paquetesPorSalon() {
+  try {
+    const filas = datos(await supabase.from('paquete_saldos').select('salon_id, compradas, ajustes, consumidas, disponibles, anulado').not('salon_id', 'is', null))
+    const por = {}
+    for (const f of filas.filter((x) => !x.anulado)) {
+      const a = (por[f.salon_id] ??= { contratadas: 0, consumidas: 0, disponibles: 0 })
+      a.contratadas += f.compradas + f.ajustes
+      a.consumidas += f.consumidas
+      a.disponibles += f.disponibles
+    }
+    return por
+  } catch {
+    return {}
+  }
 }
 
 // Progreso académico por salón (solo salones con total de sesiones), indexado por id.

@@ -3,7 +3,7 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 
-// Confirmación con motivo obligatorio (corregir una clase, anular un pago o un paquete).
+// Confirmación con motivo obligatorio (corregir una clase, anular un paquete).
 export default function MotivoModal({ titulo, texto, confirmar, onConfirm, onClose }) {
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState('')

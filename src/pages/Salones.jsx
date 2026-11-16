@@ -14,26 +14,28 @@ import { descargarCompendio } from '../services/compendio'
 import Tile from '../components/ui/Tile'
 import { SIN_NIVEL, coincideNivel, estados, proximoAFinalizar } from '../lib/salones'
 
-// Fila de filtros tipo botón con el número de salones que dejaría cada opción.
-function Chips({ etiqueta, valor, onCambiar, opciones }) {
+// Filtro segmentado: una sola barra con todas las opciones y el número de salones que dejaría cada una.
+function Segmentado({ etiqueta, valor, onCambiar, opciones }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="w-14 shrink-0 pt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{etiqueta}</span>
-      <div role="group" aria-label={`Filter by ${etiqueta.toLowerCase()}`} className="flex flex-wrap gap-1.5">
-        {opciones.map((o) => (
+    <div role="group" aria-label={`Filter by ${etiqueta.toLowerCase()}`} className="inline-flex max-w-full flex-wrap gap-0.5 rounded-xl bg-slate-100 p-0.5">
+      {opciones.map((o) => {
+        const activo = valor === o.value
+        return (
           <button
             key={o.value}
             type="button"
-            aria-pressed={valor === o.value}
+            aria-pressed={activo}
             onClick={() => onCambiar(o.value)}
-            className={`rounded-full border px-3 py-1 text-sm transition ${
-              valor === o.value ? 'border-brand-600 bg-brand-600 text-white' : o.n === 0 ? 'border-slate-200 bg-white text-slate-300' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+              activo ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {o.label} <span className="opacity-70">{o.n}</span>
+            {o.icono && <Icon name={o.icono} className="h-3.5 w-3.5" />}
+            {o.label}
+            <span className={`rounded-full px-1.5 text-xs ${activo ? 'bg-brand-50 text-brand-700' : 'text-slate-400'}`}>{o.n}</span>
           </button>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }
@@ -43,6 +45,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [busqueda, setBusqueda] = useState('')
   const [nivel, setNivel] = useState('')
   const [estado, setEstado] = useState('')
+  const [tipo, setTipo] = useState('') // '' = todos · 'grupal' · 'paquete'
   const [vista, setVista] = useState('tarjetas')
   const [menuMas, setMenuMas] = useState(false)
   const [detalleId, setDetalleId] = useState(salonInicialId)
@@ -55,8 +58,10 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const texto = busqueda.trim().toLowerCase()
   const coincideTexto = (s) => !texto || `${s.nombre} ${s.codigo} ${s.docente}`.toLowerCase().includes(texto)
   // Los contadores de cada filtro respetan al otro: así se ve cuántos salones habría al elegirlo.
-  const sinEstado = salones.filter((s) => coincideNivel(s, nivel) && coincideTexto(s))
-  const sinNivel = salones.filter((s) => (!estado || s.estado === estado) && coincideTexto(s))
+  const coincideTipo = (s) => !tipo || (tipo === 'paquete' ? Boolean(s.paquete) : !s.paquete)
+  const sinEstado = salones.filter((s) => coincideNivel(s, nivel) && coincideTexto(s) && coincideTipo(s))
+  const sinNivel = salones.filter((s) => (!estado || s.estado === estado) && coincideTexto(s) && coincideTipo(s))
+  const sinTipo = salones.filter((s) => coincideNivel(s, nivel) && (!estado || s.estado === estado) && coincideTexto(s))
   const visibles = sinEstado.filter((s) => !estado || s.estado === estado)
 
   const activos = salones.filter((s) => s.estado === 'en_curso').length
@@ -203,26 +208,52 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             </div>
 
             {!cargando && !error && salones.length > 0 && (
-              <div className="space-y-2 border-b border-brand-100 px-4 py-3">
-                <Chips
-                  etiqueta="Level"
-                  valor={nivel}
-                  onCambiar={setNivel}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-brand-100 px-4 py-3">
+                <Segmentado
+                  etiqueta="Type"
+                  valor={tipo}
+                  onCambiar={setTipo}
                   opciones={[
-                    { value: '', label: 'All', n: sinNivel.length },
-                    ...niveles.map((n) => ({ value: n.id, label: n.nombre, n: sinNivel.filter((s) => s.nivelId === n.id).length })),
-                    { value: SIN_NIVEL, label: 'No level', n: sinNivel.filter((s) => !s.nivelId).length },
+                    { value: '', label: 'All', n: sinTipo.length },
+                    { value: 'grupal', label: 'Group', icono: 'users', n: sinTipo.filter((s) => !s.paquete).length },
+                    { value: 'paquete', label: 'Hour package', icono: 'clock', n: sinTipo.filter((s) => s.paquete).length },
                   ]}
                 />
-                <Chips
+                <Segmentado
                   etiqueta="Status"
                   valor={estado}
                   onCambiar={setEstado}
                   opciones={[
-                    { value: '', label: 'All', n: sinEstado.length },
+                    { value: '', label: 'Any status', n: sinEstado.length },
                     ...estados.map((e) => ({ value: e.value, label: e.label, n: sinEstado.filter((s) => s.estado === e.value).length })),
                   ]}
                 />
+                <select value={nivel} onChange={(e) => setNivel(e.target.value)} aria-label="Filter by level" className={`${inputClass} w-auto min-w-40`}>
+                  <option value="">All levels ({sinNivel.length})</option>
+                  {niveles.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.nombre} ({sinNivel.filter((s) => s.nivelId === n.id).length})
+                    </option>
+                  ))}
+                  <option value={SIN_NIVEL}>No level ({sinNivel.filter((s) => !s.nivelId).length})</option>
+                </select>
+                <span className="ml-auto flex items-center gap-3 text-sm text-slate-500">
+                  {visibles.length} {visibles.length === 1 ? 'classroom' : 'classrooms'}
+                  {(tipo || estado || nivel || texto) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTipo('')
+                        setEstado('')
+                        setNivel('')
+                        setBusqueda('')
+                      }}
+                      className="font-medium text-brand-700 hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </span>
               </div>
             )}
 
@@ -245,7 +276,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
               (vista === 'tabla' ? (
                 <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ) : (
-                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
+                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto) || Boolean(tipo)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ))
             )}
           </Card>

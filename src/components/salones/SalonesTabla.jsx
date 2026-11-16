@@ -2,6 +2,8 @@ import Avatar from '../ui/Avatar'
 import Button from '../ui/Button'
 import useFotosDocentes from '../../hooks/useFotosDocentes'
 import Badge from '../ui/Badge'
+import Icon from '../ui/Icon'
+import { minutosTexto } from '../../lib/paquetes'
 import EstadoBadge from './EstadoBadge'
 import { textoCiclos } from '../../lib/catalogo'
 import { fechaFinSalon, formatFecha, formatHorario, proximoAFinalizar } from '../../lib/salones'
@@ -30,7 +32,14 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
             <tr key={s.id} className="hover:bg-slate-50">
               <td className="px-4 py-2.5">
                 <div className="font-medium text-slate-900">{s.nombre}</div>
-                <div className="text-xs text-slate-500">{s.codigo}</div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  {s.codigo}
+                  {s.paquete && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-peach-100 px-2 py-0.5 text-[11px] font-semibold text-peach-700">
+                      <Icon name="clock" className="h-3 w-3" /> Hour package
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-2.5">
                 <div>{s.nivel || <span className="text-peach-700">No level assigned</span>}</div>
@@ -61,7 +70,11 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                 )}
               </td>
               <td className="whitespace-nowrap px-4 py-2.5">
-                {s.progreso && s.progreso.sesiones > 0 ? (
+                {s.paquete ? (
+                  <span title="Hours used of the package">
+                    {minutosTexto(s.paquete.consumidas)}/{minutosTexto(s.paquete.contratadas)}
+                  </span>
+                ) : s.progreso && s.progreso.sesiones > 0 ? (
                   <span title={`${s.progreso.realizadas} held of ${s.progreso.total}`}>
                     {s.progreso.realizadas}/{s.progreso.total}
                   </span>

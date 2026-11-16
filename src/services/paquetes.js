@@ -13,36 +13,44 @@ export async function listarAlumnos() {
 }
 
 export async function detallePaquete(id) {
-  const [clases, pagos, movimientos] = await Promise.all([
+  const [clases, movimientos] = await Promise.all([
     supabase.from('paquete_clases').select('*').eq('paquete_id', id).order('fecha').order('hora_inicio'),
-    supabase.from('paquete_pagos').select('*').eq('paquete_id', id).order('fecha', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('paquete_movimientos').select('*').eq('paquete_id', id).order('created_at', { ascending: false }),
   ])
-  return { clases: datos(clases), pagos: datos(pagos), movimientos: datos(movimientos) }
+  return { clases: datos(clases), movimientos: datos(movimientos) }
 }
 
 export const crearAlumno = (a) => rpc('guardar_alumno', { p_id: null, p_datos: a })
 
+// Paquete nuevo (con `salon`): crea además su salón individual en la misma transacción. Renovación (sin `salon`): reutiliza el salón anterior.
 export const registrarPaquete = (p) =>
-  rpc('registrar_paquete', {
-    p_datos: {
+  rpc('registrar_paquete_salon', {
+    p_paquete: {
       alumno_id: p.alumnoId,
       horas: p.horas,
-      precio: p.precio,
-      moneda: p.moneda,
       docente_id: p.docenteId,
       nivel_id: p.nivelId,
       vigencia_hasta: p.vigenciaHasta,
       paquete_origen_id: p.origenId,
       notas: p.notas,
-      pago_monto: p.pagoMonto,
-      pago_metodo: p.pagoMetodo,
     },
+    p_salon: p.salon
+      ? {
+          nombre: p.salon.nombre,
+          nivel_id: p.nivelId,
+          docente_id: p.docenteId,
+          fecha_inicio: p.salon.fechaInicio,
+          total_sesiones: p.salon.totalSesiones,
+          estado: 'pendiente',
+          observaciones: p.notas,
+          plan_id: p.salon.planId,
+          frecuencia_id: p.salon.frecuenciaId,
+          ciclo_desde: p.salon.planId ? p.salon.cicloDesde : '',
+          ciclo_hasta: p.salon.planId ? p.salon.cicloHasta : '',
+        }
+      : null,
+    p_horarios: (p.salon?.horarios ?? []).map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
   })
-
-export const registrarPago = (paqueteId, p) =>
-  rpc('registrar_pago', { p_paquete: paqueteId, p_monto: p.monto, p_fecha: p.fecha || null, p_metodo: p.metodo || null, p_nota: p.nota || null })
-export const anularPago = (pagoId, motivo) => rpc('anular_pago', { p_pago: pagoId, p_motivo: motivo })
 
 export const programarClase = (paqueteId, c) =>
   rpc('programar_clase', { p_paquete: paqueteId, p_fecha: c.fecha, p_inicio: c.horaInicio, p_fin: c.horaFin, p_docente: c.docenteId || null, p_nota: c.nota || null })
@@ -59,3 +67,24 @@ export const corregirClase = (claseId, motivo) => rpc('corregir_clase', { p_clas
 export const ajustarPaquete = (paqueteId, { horas, tipo, motivo, clave }) =>
   rpc('ajustar_paquete', { p_paquete: paqueteId, p_horas: horas, p_tipo: tipo, p_motivo: motivo, p_clave: clave })
 export const anularPaquete = (id, motivo) => rpc('anular_paquete', { p_id: id, p_motivo: motivo })
+
+// Crea el salón de un paquete que no lo tiene (registrado antes de que los paquetes tuvieran salón).
+export const crearSalonDePaquete = (paqueteId, s) =>
+  rpc('crear_salon_paquete', {
+    p_paquete: paqueteId,
+    p_salon: {
+      nombre: s.nombre,
+      nivel_id: s.nivelId,
+      fecha_inicio: s.fechaInicio,
+      total_sesiones: s.totalSesiones === '' ? '' : Number(s.totalSesiones),
+      estado: 'pendiente',
+      plan_id: s.planId,
+      frecuencia_id: s.frecuenciaId,
+      ciclo_desde: s.planId ? s.cicloDesde : '',
+      ciclo_hasta: s.planId ? s.cicloHasta : '',
+    },
+    p_horarios: s.horarios.map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
+  })
+
+// Elimina el paquete con su historial y libera al docente. Devuelve 'eliminado' o 'finalizado' (si su salón no se pudo borrar).
+export const eliminarPaquete = (id) => rpc('eliminar_paquete', { p_id: id })

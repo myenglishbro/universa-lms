@@ -2,6 +2,7 @@ import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import { Anillo } from '../ui/Anillo'
 import { NOTA_PROGRESO, porcentajeAsistencia, porcentajeAvance } from '../../lib/asistencia'
+import { minutosTexto } from '../../lib/paquetes'
 import { diaMes } from '../../lib/agenda'
 import { horariosTexto } from '../../lib/recursos'
 import { cuando } from '../../lib/calendario'
@@ -32,7 +33,8 @@ function Dato({ icono, etiqueta, children, pie }) {
 
 // Pestaña «Resumen»: avance del curso en gráficos, datos clave y accesos rápidos a las demás pestañas.
 export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxima, secciones, vistas, onIrA }) {
-  const pct = progreso ? porcentajeAvance(progreso.realizadas, progreso.total) : null
+  const horas = progreso?.horas ?? null // salón de un paquete de horas: el avance se mide en horas, no en clases
+  const pct = horas ? porcentajeAvance(horas.consumidas, horas.contratadas) : progreso ? porcentajeAvance(progreso.realizadas, progreso.total) : null
   const asist = porcentajeAsistencia(conteoAsistencia)
   const ciclos = progreso?.ciclos ?? []
   const lecciones = secciones.flatMap((s) => s.lecciones)
@@ -63,9 +65,15 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
         <Dato icono="check" etiqueta="Lessons watched" pie={lecciones.length ? `${Math.round((nVistas / lecciones.length) * 100)}% of the content` : undefined}>
           {nVistas} / {lecciones.length}
         </Dato>
-        <Dato icono="users" etiqueta="Classes held" pie={progreso?.programadas ? `${progreso.programadas} scheduled` : undefined}>
-          {progreso ? progreso.realizadas : '—'}
-        </Dato>
+        {horas ? (
+          <Dato icono="clock" etiqueta="Hours remaining" pie={horas.programadas ? `${minutosTexto(horas.programadas)} scheduled` : undefined}>
+            {minutosTexto(Math.max(horas.disponibles, 0))}
+          </Dato>
+        ) : (
+          <Dato icono="users" etiqueta="Classes held" pie={progreso?.programadas ? `${progreso.programadas} scheduled` : undefined}>
+            {progreso ? progreso.realizadas : '—'}
+          </Dato>
+        )}
         <Dato icono="clock" etiqueta="To be recorded">{progreso ? progreso.por_registrar : '—'}</Dato>
       </div>
 
@@ -76,9 +84,13 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
             <Anillo valor={pct} size={112} grosor={12} etiqueta="Course progress" />
             <div className="min-w-0 flex-1 space-y-1">
               <p className="text-sm font-medium text-slate-900">
-                {progreso?.total ? `${progreso.realizadas} of ${progreso.total} sessions held` : 'Total sessions to be defined'}
+                {horas
+                  ? `${minutosTexto(horas.consumidas)} of ${minutosTexto(horas.contratadas)} used`
+                  : progreso?.total
+                    ? `${progreso.realizadas} of ${progreso.total} sessions held`
+                    : 'Total sessions to be defined'}
               </p>
-              <p className="text-xs text-slate-500">{progreso?.programadas ?? 0} programadas</p>
+              <p className="text-xs text-slate-500">{horas ? `${minutosTexto(Math.max(horas.disponibles, 0))} remaining` : `${progreso?.programadas ?? 0} programadas`}</p>
             </div>
           </div>
           {ciclos.length > 0 && (
@@ -96,7 +108,7 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
               ))}
             </ul>
           )}
-          <p className="mt-4 text-xs text-slate-400">{NOTA_PROGRESO}</p>
+          <p className="mt-4 text-xs text-slate-400">{horas ? 'Progress by hours of your package, deducted each time a class is held.' : NOTA_PROGRESO}</p>
         </Card>
 
         <Card className="p-5">

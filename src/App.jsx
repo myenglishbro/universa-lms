@@ -117,8 +117,11 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
           data={paquetes}
           docentes={data.docentes}
           niveles={data.niveles}
+          catalogo={data.catalogo}
           puedeEditar={admin}
           onVerAlumno={verEstudiante}
+          onVerSalon={verSalon}
+          onRecargarSalones={data.recargar}
         />
       )}
       {ve('estudiantes') && (

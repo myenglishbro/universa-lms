@@ -6,6 +6,7 @@ import BotonCompendio from './BotonCompendio'
 import EstadoBadge from './EstadoBadge'
 import { portadaDe } from '../../lib/recursos'
 import { porcentajeAvance } from '../../lib/asistencia'
+import { minutosTexto } from '../../lib/paquetes'
 import { diasParaFin, formatFecha, formatHorario } from '../../lib/salones'
 
 const CHIP = {
@@ -34,14 +35,15 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
   return (
     <ul className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
       {salones.map((s) => {
-        const pct = s.progreso ? porcentajeAvance(s.progreso.realizadas, s.progreso.total) : null
+        const paq = s.paquete // salón de un paquete de horas: el avance se mide en horas
+        const pct = paq ? porcentajeAvance(paq.consumidas, paq.contratadas) : s.progreso ? porcentajeAvance(s.progreso.realizadas, s.progreso.total) : null
         const pl = plazo(s)
         const faltantes = [!s.docente && 'teacher', !s.nivel && 'level'].filter(Boolean)
         const sinAsistencia = s.progreso?.porRegistrar ?? 0
         const sinGrabacion = s.pendientes?.sinGrabacion ?? 0
         return (
-          <li key={s.id} className="group flex flex-col overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-sm transition hover:shadow-md">
-            <div className={`h-1.5 bg-gradient-to-r ${portadaDe(s.nombre)}`} />
+          <li key={s.id} className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${paq ? 'border-peach-200' : 'border-brand-100'}`}>
+            <div className={`h-1.5 bg-gradient-to-r ${paq ? 'from-peach-200 to-peach-500' : portadaDe(s.nombre)}`} />
             <button type="button" onClick={() => onVer(s.id)} className="flex flex-1 flex-col gap-2.5 p-3.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500">
               <div className="flex items-center gap-3">
                 <Avatar nombre={s.docente || '?'} fotoUrl={fotos.get(s.docenteId)} tamano="md" className={s.docente ? '' : 'opacity-40'} />
@@ -54,7 +56,7 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
                   </h3>
                   <p className="truncate text-xs text-slate-500">{s.docente || <span className="text-peach-700">No teacher</span>}</p>
                 </div>
-                <Anillo valor={pct} size={44} grosor={5} etiqueta={`Progress of ${s.nombre}`} />
+                <Anillo valor={pct} size={44} grosor={5} color={paq ? 'var(--color-peach-700)' : undefined} fondo={paq ? 'var(--color-peach-100)' : undefined} etiqueta={`Progress of ${s.nombre}`} />
               </div>
 
               <p className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -66,6 +68,11 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
               </p>
 
               <div className="flex flex-wrap items-center gap-1.5">
+                {paq && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-peach-100 px-2 py-0.5 text-[11px] font-semibold text-peach-700 ring-1 ring-inset ring-peach-200">
+                    <Icon name="clock" className="h-3 w-3" /> Hour package · {minutosTexto(Math.max(paq.disponibles, 0))} left
+                  </span>
+                )}
                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${CHIP[pl.tono]}`}>
                   <Icon name={pl.icono} className="h-3 w-3" /> {pl.texto}
                 </span>
@@ -86,7 +93,8 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
             </button>
             <div className="flex items-center justify-between gap-2 border-t border-brand-100 bg-brand-50/40 px-3.5 py-1.5 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1 truncate">
-                <Icon name="users" className="h-3.5 w-3.5" /> {s.capacidad} · {s.progreso?.total ? `${s.progreso.realizadas}/${s.progreso.total} classes` : 'No calendar'}
+                <Icon name="users" className="h-3.5 w-3.5" /> {s.capacidad} ·{' '}
+                {paq ? `${minutosTexto(paq.consumidas)} of ${minutosTexto(paq.contratadas)} used` : s.progreso?.total ? `${s.progreso.realizadas}/${s.progreso.total} classes` : 'No calendar'}
               </span>
               <div className="flex shrink-0 items-center">
                 {puedeEditar && <BotonCompendio salon={s} variant="ghost" className="px-2 py-1 text-xs" etiqueta="Excel" />}

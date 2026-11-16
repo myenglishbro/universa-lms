@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import PaqueteDetalle from '../components/paquetes/PaqueteDetalle'
 import PaqueteForm from '../components/paquetes/PaqueteForm'
-import Ayuda, { Paso } from '../components/ui/Ayuda'
+import { Anillo } from '../components/ui/Anillo'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
-import Card from '../components/ui/Card'
 import { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import PageHeader from '../components/ui/PageHeader'
-import { advertenciaSaldo, dinero, estadoPaquete, estadosFiltro, minutosTexto, nivelSaldo } from '../lib/paquetes'
+import { advertenciaSaldo, estadoPaquete, estadosFiltro, minutosTexto, nivelSaldo } from '../lib/paquetes'
 import * as servicioReal from '../services/paquetes'
 
 const TONOS = {
@@ -33,7 +32,7 @@ function Resumen({ icono, tono, valor, etiqueta }) {
 }
 
 // Paquetes de horas de clases privadas. `data` viene de usePaquetes; `servicio` es inyectable para pruebas.
-export default function Paquetes({ data, docentes, niveles, puedeEditar, paqueteInicialId = null, onVerAlumno, servicio = servicioReal }) {
+export default function Paquetes({ data, docentes, niveles, catalogo, puedeEditar, paqueteInicialId = null, onVerAlumno, onVerSalon, onRecargarSalones, servicio = servicioReal }) {
   const { paquetes, alumnos, cargando, error, recargar } = data
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('')
@@ -47,11 +46,10 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
   const activos = paquetes.filter((p) => p.estado === 'activo').length
   const porRenovar = vigentes.filter((p) => nivelSaldo(p).tono !== 'brand').length
   const horasAgendadas = vigentes.reduce((n, p) => n + (p.programadas ?? 0), 0)
-  const conDeuda = paquetes.filter((p) => p.estado !== 'anulado' && Number(p.pendiente) > 0).length
 
   const guardar = async (valores) => {
     const id = await servicio.registrarPaquete(valores)
-    await recargar()
+    await Promise.all([recargar(), onRecargarSalones?.()])
     setForm(null)
     setDetalleId(id)
   }
@@ -69,8 +67,12 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
           paquete={detalle}
           servicio={servicio}
           docentes={docentes}
+          niveles={niveles}
+          catalogo={catalogo}
+          onSalonCreado={onRecargarSalones}
           puedeEditar={puedeEditar}
           onVerAlumno={onVerAlumno}
+          onVerSalon={onVerSalon}
           onVolver={() => setDetalleId(null)}
           onCambio={recargar}
           onRenovar={(p) => setForm({ origen: p })}
@@ -79,7 +81,7 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
         <>
           <PageHeader
             title="Hour packages"
-            description="Private classes (1-on-1): how many hours each student bought and how many are left"
+            description="Prepaid hours for private classes: see how many hours each student has left"
             action={
               puedeEditar && (
                 <Button onClick={() => setForm({ origen: null })} disabled={cargando || Boolean(error)}>
@@ -89,144 +91,135 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
             }
           />
 
-          <Ayuda id="paquetes" titulo="What are hour packages for?">
-            <p>
-              A <strong>package</strong> is like a <strong>prepaid card</strong> for private classes: the student buys, for example, 10 hours and uses them one by one. Here you track their hours and payment.
-            </p>
-            <div className="space-y-1.5">
-              <Paso n={1}>
-                <strong>Sell the package</strong> with “New package” and record what they pay.
-              </Paso>
-              <Paso n={2}>
-                <strong>Schedule their classes</strong> in the <strong>Agenda</strong> (“Schedule a private class” button).
-              </Paso>
-              <Paso n={3}>
-                When the class is given, <strong>mark it as taught</strong>: the package deducts that hour automatically.
-              </Paso>
-              <Paso n={4}>
-                If it runs out, use <strong>Renew</strong> inside the package to sell them another.
-              </Paso>
-            </div>
-            <p className="text-slate-600">
-              Colors show the balance: <strong className="text-brand-700">purple</strong> = has hours, <strong className="text-peach-700">peach</strong> = few hours (time to offer a renewal), <strong className="text-rose-700">red</strong> = no hours.
-            </p>
-          </Ayuda>
-
           {!cargando && !error && (
-            <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Resumen icono="box" tono="brand" valor={activos} etiqueta={activos === 1 ? 'Active package' : 'Active packages'} />
               <Resumen icono="clock" tono={porRenovar > 0 ? 'peach' : 'slate'} valor={porRenovar} etiqueta="To renew (few or no hours)" />
-              <Resumen icono="calendar" tono="slate" valor={minutosTexto(horasAgendadas)} etiqueta="Already scheduled in the Agenda" />
-              <Resumen icono="alert" tono={conDeuda > 0 ? 'peach' : 'slate'} valor={conDeuda} etiqueta={conDeuda === 1 ? 'Student with pending payment' : 'Students with pending payment'} />
+              <Resumen icono="calendar" tono="slate" valor={minutosTexto(horasAgendadas)} etiqueta="Scheduled to teach" />
             </div>
           )}
 
-          <Card>
-            <div className="flex flex-wrap gap-3 border-b border-brand-100 p-4">
-              <div className="relative min-w-56 flex-1 sm:max-w-xs">
-                <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by student or teacher" className={`${inputClass} pl-9`} />
-              </div>
-              <select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${inputClass} w-auto`} aria-label="Filter by status">
-                {estadosFiltro.map((e) => (
-                  <option key={e.value} value={e.value}>
-                    {e.label}
-                  </option>
-                ))}
-              </select>
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <div className="relative min-w-56 flex-1 sm:max-w-xs">
+              <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by student or teacher" className={`${inputClass} pl-9`} />
             </div>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
+              {estadosFiltro.map((e) => {
+                const n = e.value ? paquetes.filter((p) => p.estado === e.value).length : paquetes.length
+                const activo = estado === e.value
+                return (
+                  <button
+                    key={e.value}
+                    type="button"
+                    onClick={() => setEstado(e.value)}
+                    aria-pressed={activo}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                      activo ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-inset ring-brand-100 hover:bg-brand-50'
+                    }`}
+                  >
+                    {e.value ? e.label : 'All'} <span className={activo ? 'text-white/80' : 'text-slate-400'}>{n}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
-            {cargando ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">Loading packages…</p>
-            ) : error ? (
-              <p className="px-4 py-10 text-center text-sm text-red-600">Could not load packages: {error}</p>
-            ) : visibles.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-500">
-                {paquetes.length === 0 ? 'No packages yet. Register the first one with “New package”.' : 'No package matches the filters.'}
+          {cargando ? (
+            <p className="py-16 text-center text-sm text-slate-500">Loading packages…</p>
+          ) : error ? (
+            <p className="py-16 text-center text-sm text-red-600">Could not load packages: {error}</p>
+          ) : visibles.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-16 text-center">
+              <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                <Icon name="box" className="h-6 w-6" />
+              </span>
+              <p className="font-medium text-slate-900">{paquetes.length === 0 ? 'No packages yet' : 'No package matches the filters'}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {paquetes.length === 0 ? 'Create the first one: it also creates the private classroom of the student.' : 'Try another search or status.'}
               </p>
-            ) : (
-              <ul className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
-                {visibles.map((p) => {
-                  const e = estadoPaquete[p.estado]
-                  const nivel = nivelSaldo(p)
-                  const t = TONOS[nivel.tono]
-                  const total = Math.max(p.compradas + p.ajustes, 1)
-                  const usado = Math.min(100, (p.consumidas / total) * 100)
-                  const agendado = Math.min(100 - usado, (p.programadas / total) * 100)
-                  const debe = Number(p.pendiente) > 0
-                  return (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => setDetalleId(p.id)}
-                        className="flex h-full w-full flex-col gap-3 rounded-2xl border border-brand-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-base font-bold text-brand-700">{p.alumno.trim().charAt(0).toUpperCase()}</span>
-                            <div className="min-w-0">
-                              <p className="truncate font-semibold text-slate-900">{p.alumno}</p>
-                              <p className="flex items-center gap-1 truncate text-xs text-slate-500">
-                                <Icon name="teacher" className="h-3.5 w-3.5 shrink-0" /> {p.docente || 'No teacher'}
-                              </p>
-                            </div>
+              {paquetes.length === 0 && puedeEditar && (
+                <Button className="mt-4" onClick={() => setForm({ origen: null })}>
+                  <Icon name="plus" className="h-4 w-4" /> New package
+                </Button>
+              )}
+            </div>
+          ) : (
+            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibles.map((p) => {
+                const e = estadoPaquete[p.estado]
+                const nivel = nivelSaldo(p)
+                const t = TONOS[nivel.tono]
+                const total = Math.max(p.compradas + p.ajustes, 1)
+                const usado = Math.min(100, (p.consumidas / total) * 100)
+                const agendado = Math.min(100 - usado, (p.programadas / total) * 100)
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => setDetalleId(p.id)}
+                      className="group flex h-full w-full flex-col gap-4 rounded-2xl border border-brand-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-base font-bold text-brand-700">{p.alumno.trim().charAt(0).toUpperCase()}</span>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-900 group-hover:text-brand-700">{p.alumno}</p>
+                            <p className="flex items-center gap-1 truncate text-xs text-slate-500">
+                              <Icon name="teacher" className="h-3.5 w-3.5 shrink-0" /> {p.docente || 'No teacher'}
+                            </p>
                           </div>
-                          {p.estado !== 'activo' && <Badge color={e.color}>{e.label}</Badge>}
                         </div>
+                        {p.estado !== 'activo' && <Badge color={e.color}>{e.label}</Badge>}
+                      </div>
 
-                        <div>
-                          <div className="flex items-end justify-between">
-                            <div>
-                              <p className="text-xs text-slate-500">Remaining</p>
-                              <p className="text-2xl font-bold leading-tight text-slate-900">{minutosTexto(Math.max(p.disponibles, 0))}</p>
-                            </div>
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${t.chip}`}>
-                              <Icon name={nivel.icono} className="h-3.5 w-3.5" /> {nivel.texto}
-                            </span>
-                          </div>
+                      <div className="flex items-center gap-4">
+                        <Anillo valor={100 - usado} size={84} grosor={9} etiqueta={`Hours left for ${p.alumno}`}>
+                          <span className="text-base font-bold leading-none text-slate-900">{minutosTexto(Math.max(p.disponibles, 0))}</span>
+                        </Anillo>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${t.chip}`}>
+                            <Icon name={nivel.icono} className="h-3.5 w-3.5" /> {nivel.texto}
+                          </span>
+                          <p className="text-xs text-slate-500">
+                            Used {minutosTexto(p.consumidas)} of {minutosTexto(total)}
+                          </p>
                           <div
                             role="img"
                             aria-label={`Used ${minutosTexto(p.consumidas)} of ${minutosTexto(total)}`}
-                            className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-brand-50"
+                            className="flex h-2 overflow-hidden rounded-full bg-brand-50"
                           >
                             <div className="h-full bg-brand-500" style={{ width: `${usado}%` }} />
                             <div className="h-full bg-peach-200" style={{ width: `${agendado}%` }} />
                           </div>
-                          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
-                            <span className="inline-flex items-center gap-1">
-                              <span className="h-2 w-2 rounded-full bg-brand-500" /> Used {minutosTexto(p.consumidas)}
-                            </span>
-                            {p.programadas > 0 && (
-                              <span className="inline-flex items-center gap-1">
-                                <span className="h-2 w-2 rounded-full bg-peach-200" /> Scheduled {minutosTexto(p.programadas)}
-                              </span>
-                            )}
-                            <span>of {minutosTexto(total)}</span>
-                          </p>
-                          {advertenciaSaldo(p) && <p className="mt-1 text-xs text-peach-700">Has more classes scheduled than hours available.</p>}
-                        </div>
-
-                        <div className="mt-auto flex items-center justify-between border-t border-brand-100 pt-3 text-xs">
-                          {debe ? (
-                            <span className="inline-flex items-center gap-1 font-medium text-peach-700">
-                              <Icon name="alert" className="h-3.5 w-3.5" /> Owes {dinero(p.pendiente, p.moneda)}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-slate-500">
-                              <Icon name="check" className="h-3.5 w-3.5 text-brand-500" /> Paid
-                            </span>
+                          {p.programadas > 0 && (
+                            <p className="flex items-center gap-1 text-xs text-slate-500">
+                              <span className="h-2 w-2 rounded-full bg-peach-200" /> {minutosTexto(p.programadas)} scheduled
+                            </p>
                           )}
-                          <span className="inline-flex items-center gap-1 font-semibold text-brand-700">
-                            View details <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
-                          </span>
                         </div>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </Card>
+                      </div>
+                      {advertenciaSaldo(p) && <p className="text-xs text-peach-700">Has more classes scheduled than hours available.</p>}
+
+                      <div className="mt-auto flex items-center justify-between border-t border-brand-100 pt-3 text-xs">
+                        <span className="inline-flex min-w-0 items-center gap-1.5 text-slate-500">
+                          {p.nivel && (
+                            <>
+                              <Icon name="book" className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{p.nivel}</span>
+                            </>
+                          )}
+                          {!p.salon_id && <span className="rounded-full bg-peach-50 px-2 py-0.5 font-medium text-peach-700">No classroom yet</span>}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-brand-700">
+                          View details <Icon name="back" className="h-3.5 w-3.5 rotate-180 transition group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </>
       )}
 
@@ -236,6 +229,7 @@ export default function Paquetes({ data, docentes, niveles, puedeEditar, paquete
           alumnos={alumnos}
           docentes={docentes}
           niveles={niveles}
+          catalogo={catalogo}
           onSave={guardar}
           onCrearAlumno={crearAlumno}
           onClose={() => setForm(null)}

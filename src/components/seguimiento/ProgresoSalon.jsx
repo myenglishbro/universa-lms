@@ -1,4 +1,5 @@
 import { NOTA_PROGRESO, porcentajeAvance } from '../../lib/asistencia'
+import { minutosTexto } from '../../lib/paquetes'
 
 function Barra({ valor, total, etiqueta }) {
   const pct = total ? Math.min(100, Math.round((valor / total) * 100)) : 0
@@ -13,6 +14,27 @@ function Barra({ valor, total, etiqueta }) {
 export default function ProgresoSalon({ progreso }) {
   const { total, realizadas, programadas, por_registrar: porRegistrar, ciclos = [] } = progreso
   const pct = porcentajeAvance(realizadas, total)
+  const horas = progreso.horas
+  if (horas) {
+    const pctH = porcentajeAvance(horas.consumidas, horas.contratadas)
+    return (
+      <div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm font-medium text-slate-900">
+            {minutosTexto(horas.consumidas)} of {minutosTexto(horas.contratadas)} used
+            {pctH !== null && <span className="ml-2 text-brand-700">{pctH}%</span>}
+          </p>
+          <p className="text-xs text-slate-500">
+            {minutosTexto(Math.max(horas.disponibles, 0))} remaining
+            {horas.programadas > 0 && ` · ${minutosTexto(horas.programadas)} scheduled`}
+            {porRegistrar > 0 && ` · ${porRegistrar} to record`}
+          </p>
+        </div>
+        <div className="mt-2"><Barra valor={horas.consumidas} total={horas.contratadas} etiqueta="Package hours used" /></div>
+        <p className="mt-3 text-xs text-slate-400">Hours are deducted from the package each time a class is held.</p>
+      </div>
+    )
+  }
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">

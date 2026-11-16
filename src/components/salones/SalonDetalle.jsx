@@ -1,4 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import useCarga from '../../hooks/useCarga'
+import * as asistenciaReal from '../../services/asistencia'
+import { minutosTexto } from '../../lib/paquetes'
 import Button from '../ui/Button'
 import { Anillo } from '../ui/Anillo'
 import { inputClass } from '../ui/Field'
@@ -31,7 +34,7 @@ export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEd
   const eliminar = async () => {
     if (!window.confirm(`Delete classroom “${salon.nombre}”?
 
-Its schedule and calendar will be deleted and the teacher will be freed up. This cannot be undone.`)) return
+Its schedule and calendar will be deleted and the teacher will be freed up.${horas ? ' Its hour package and history will also be deleted.' : ''} This cannot be undone.`)) return
     setError('')
     try {
       await onEliminar(salon.id)
@@ -55,7 +58,10 @@ Its schedule and calendar will be deleted and the teacher will be freed up. This
   }
 
   const p = salon.progreso
-  const pct = p ? porcentajeAvance(p.realizadas, p.total) : null
+  // Salón de un paquete de horas: el progreso se mide en horas (la base lo devuelve solo si el salón tiene paquete).
+  const cargarHoras = useCallback(() => asistenciaReal.progresoDelSalon(salon.id).then((r) => r.horas ?? null), [salon.id])
+  const { datos: horas } = useCarga(cargarHoras, null, puedeEditar)
+  const pct = horas ? porcentajeAvance(horas.consumidas, horas.contratadas) : p ? porcentajeAvance(p.realizadas, p.total) : null
   const cupos = estudiantes && !estudiantes.cargando ? cuposSalon(salon, estudiantes.matriculas) : null
   const dias = diasParaFin(salon)
   const alertas = useMemo(() => alertasSalon(salon, estudiantes, puedeEditar), [salon, estudiantes, puedeEditar])
@@ -105,6 +111,7 @@ Its schedule and calendar will be deleted and the teacher will be freed up. This
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">{salon.codigo}</span>
               <EstadoBadge estado={salon.estado} />
+              {horas && <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">Hour package</span>}
             </div>
             <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{salon.nombre}</h1>
             <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/90">
@@ -143,7 +150,9 @@ Its schedule and calendar will be deleted and the teacher will be freed up. This
             <Anillo valor={pct} size={72} grosor={8} etiqueta="Classroom progress" />
             <div>
               <p className="text-xs text-slate-500">Classroom progress</p>
-              <p className="text-sm font-semibold text-brand-800">{p?.total ? `${p.realizadas} of ${p.total} classes` : 'No total defined'}</p>
+              <p className="text-sm font-semibold text-brand-800">
+                {horas ? `${minutosTexto(horas.consumidas)} of ${minutosTexto(horas.contratadas)} used` : p?.total ? `${p.realizadas} of ${p.total} classes` : 'No total defined'}
+              </p>
             </div>
           </div>
         </div>
@@ -152,7 +161,11 @@ Its schedule and calendar will be deleted and the teacher will be freed up. This
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile icono="users" tono="brand" valor={cupos ? `${cupos.ocupados}/${cupos.capacidad}` : '…'} etiqueta="Enrolled students" onClick={() => ir('estudiantes')} />
-        <Tile icono="check" tono="brand" valor={p ? p.realizadas : '—'} etiqueta="Classes held" nota={p?.restantes != null ? `${p.restantes} remaining` : undefined} onClick={() => ir('calendario')} />
+        {horas ? (
+          <Tile icono="clock" tono="brand" valor={minutosTexto(Math.max(horas.disponibles, 0))} etiqueta="Hours remaining" nota={`${p?.realizadas ?? 0} classes held`} onClick={() => ir('calendario')} />
+        ) : (
+          <Tile icono="check" tono="brand" valor={p ? p.realizadas : '—'} etiqueta="Classes held" nota={p?.restantes != null ? `${p.restantes} remaining` : undefined} onClick={() => ir('calendario')} />
+        )}
         <Tile
           icono="flag"
           tono={dias !== null && dias <= 14 ? 'peach' : 'slate'}

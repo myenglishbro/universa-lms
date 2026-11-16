@@ -3,7 +3,7 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 
-// Asigna el docente habitual de un paquete. No toca saldos, pagos ni movimientos.
+// Asigna el docente habitual de un paquete. No toca saldos ni movimientos.
 export default function DocentePaqueteModal({ actualId, docentes, onSave, onClose }) {
   const [docenteId, setDocenteId] = useState(actualId ?? '')
   const [error, setError] = useState('')

@@ -4,6 +4,7 @@ import Icon from '../ui/Icon'
 import { Anillo } from '../ui/Anillo'
 import useCarga from '../../hooks/useCarga'
 import { porcentajeAvance } from '../../lib/asistencia'
+import { minutosTexto } from '../../lib/paquetes'
 import { horariosTexto, portadaDe } from '../../lib/recursos'
 import { diaMes } from '../../lib/agenda'
 import { cuando } from '../../lib/calendario'
@@ -13,7 +14,8 @@ import * as asistenciaReal from '../../services/asistencia'
 export default function TarjetaCursoEstudiante({ curso, proxima, onAbrir, asistencia = asistenciaReal }) {
   const cargar = useCallback(() => asistencia.progresoDelSalon(curso.salon_id), [asistencia, curso.salon_id])
   const { datos: progreso } = useCarga(cargar, null)
-  const pct = progreso ? porcentajeAvance(progreso.realizadas, progreso.total) : null
+  const horas = progreso?.horas ?? null
+  const pct = horas ? porcentajeAvance(horas.consumidas, horas.contratadas) : progreso ? porcentajeAvance(progreso.realizadas, progreso.total) : null
   const inicial = (curso.nombre ?? '?').trim().charAt(0).toUpperCase()
 
   return (
@@ -60,7 +62,7 @@ export default function TarjetaCursoEstudiante({ curso, proxima, onAbrir, asiste
 
         <div className="mt-auto flex items-center justify-between border-t border-brand-100 pt-3 text-xs">
           <span className="text-slate-500">
-            {progreso?.total ? `${progreso.realizadas} of ${progreso.total} classes` : curso.lecciones > 0 ? `${curso.lecciones} ${curso.lecciones === 1 ? 'lesson' : 'lessons'}` : 'Content coming soon'}
+            {horas ? `${minutosTexto(horas.consumidas)} of ${minutosTexto(horas.contratadas)} used` : progreso?.total ? `${progreso.realizadas} of ${progreso.total} classes` : curso.lecciones > 0 ? `${curso.lecciones} ${curso.lecciones === 1 ? 'lesson' : 'lessons'}` : 'Content coming soon'}
           </span>
           <span className="inline-flex items-center gap-1 font-semibold text-brand-700">
             Continue <Icon name="back" className="h-3.5 w-3.5 rotate-180 transition group-hover:translate-x-0.5" />
