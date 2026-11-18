@@ -1,4 +1,4 @@
-import { fmtNota } from './evaluaciones'
+import { clasificarNota, fmtNota } from './evaluaciones'
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -17,13 +17,12 @@ const vacio = '<span class="mut">—</span>'
 const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v))
 
 // Escala del ciclo sobre 100 (la del modelo de Coordinación sobre 50, duplicada): aprueba con 70.
+// Política oficial: se redondea UNA vez (0,5 o más sube) y se clasifica 0–59 / 60–69 / 70–84 / 85–100 (mismo cálculo que eval_clasificar en SQL).
 export const APRUEBA_CICLO = 70
 export function nivelDesempeno(nota) {
-  if (nota == null) return null
-  if (nota >= 86) return 'Outstanding'
-  if (nota >= APRUEBA_CICLO) return 'Achieved'
-  if (nota >= 60) return 'Developing'
-  return 'Beginning'
+  const c = clasificarNota(nota)
+  if (!c) return null
+  return { excelencia: 'Outstanding', aprobo: 'Achieved', reforzamiento: 'Developing', desaprobo: 'Beginning' }[c.resultado]
 }
 
 // Nota de un componente en un módulo: promedio de sus notas publicadas (null si no hay).
@@ -139,7 +138,7 @@ function hojaCiclo(d, h, extra) {
   const parcial = !ev || h.info.parcial || h.mods.some((m) => m.parcial || m.sin_plantilla)
   const completo = s100 != null && !parcial
   const nivel = extra.desempeno || (completo ? nivelDesempeno(s100) : '')
-  const resultado = extra.estado || (completo ? (s100 >= APRUEBA_CICLO ? 'PASSED' : 'NOT PASSED') : 'IN PROGRESS')
+  const resultado = extra.estado || (completo ? (clasificarNota(s100).oficial >= APRUEBA_CICLO ? 'PASSED' : 'NOT PASSED') : 'IN PROGRESS')
 
   const a = Object.fromEntries(['programadas', 'presentes', 'tardanzas', 'ausencias', 'justificadas'].map((k) => [k, num(extra[k])]))
   const sinConteo = a.presentes == null && a.tardanzas == null && a.ausencias == null
@@ -182,7 +181,7 @@ ${matriz(h.mods)}${remed}
 </div>
 <h2>Teacher's comments and recommendations</h2>
 <div class="texto">${comentarios}</div>
-<div class="escala">Scale (/100): 0–59 Beginning · 60–69 Developing · 70–85 Achieved · 86–100 Outstanding</div>
+<div class="escala">Scale (/100): 0–59 Beginning · 60–69 Developing · 70–84 Achieved · 85–100 Outstanding (rounded once, 0.5 rounds up)</div>
 </div>
 <div class="firmas"><div>${d.docente ? esc(d.docente) : 'Teacher'}<span>Teacher's signature</span></div><div>Academic Coordination<span>Signature and stamp</span></div></div>
 <p class="pie">Only published grades are included. A component without a published grade is not counted as zero.</p>

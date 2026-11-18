@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import Badge from '../ui/Badge'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { ELEMENTOS, leerSpark, nota2 } from '../../lib/formativeBanco'
+import { ELEMENTOS, descriptorSpark, leerSpark, nota2 } from '../../lib/formativeBanco'
 import { formativeDeAlumno, guardarFormativeManual } from '../../services/ejercicios'
 import { fmtNota } from '../../lib/evaluaciones'
 import * as servicioReal from '../../services/evaluaciones'
@@ -69,9 +69,9 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
     const filas = []
     for (const k of claves) {
       const [u, elemento] = k.split('|')
-      const v = leerSpark(editado[k], 5)
-      if (v === undefined) return setFalla('Grades must be between 0 and 5')
-      filas.push({ alumno_id: alumnoId, unidad: u, elemento, puntaje: v })
+      const v = leerSpark(editado[k], 100)
+      if (v === undefined) return setFalla('Grades must be between 0 and 100')
+      filas.push({ alumno_id: alumnoId, unidad: u, elemento, puntaje: v == null ? null : v / 20 })
     }
     setOcupado(true)
     try {
@@ -105,25 +105,34 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
       {ELEMENTOS.map((h) => {
         const el = actual.elementos?.[h.id]
         const k = `${actual.unidad}|${h.id}`
-        const valor = k in editado ? editado[k] : el?.valor == null ? '' : String(Number(Number(el.valor).toFixed(2)))
+        // Todo de 0 a 100 (como lo dan las plataformas). Listening, Reading, Writing y Speaking vienen del banco: solo lectura. SPARK se escribe.
+        const valor = k in editado ? editado[k] : el?.valor == null ? '' : String(Number((Number(el.valor) * 20).toFixed(2)))
+        const editable = h.id === 'spark'
         const origen = k in editado ? 'unsaved' : el?.valor == null ? 'pending' : el.es_manual ? 'manual' : 'automatic'
         return (
           <label key={h.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
             <span className="font-medium text-slate-800">
               {h.label} <span className="block text-[11px] font-normal text-slate-400">{origen}</span>
+              {editable && descriptorSpark(valor === '' ? '' : Number(valor) / 20) && (
+                <span className="mt-0.5 block max-w-xs text-[11px] font-normal leading-snug text-slate-600" aria-live="polite">
+                  <strong>{descriptorSpark(Number(valor) / 20).nivel} · {descriptorSpark(Number(valor) / 20).etiqueta}:</strong> {descriptorSpark(Number(valor) / 20).texto}
+                </span>
+              )}
             </span>
             <span className="flex items-center gap-1.5">
               <input
                 type="number"
                 min="0"
-                max="5"
+                max="100"
                 step="any"
                 aria-label={`${h.label} for ${actual.unidad}`}
-                className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100 disabled:text-slate-600"
+                disabled={!editable}
+                title={editable ? 'SPARK platform grade (0–100)' : 'Comes from the activity bank'}
                 value={valor}
                 onChange={(ev) => setEditado((e) => ({ ...e, [k]: ev.target.value }))}
               />
-              <span className="text-xs text-slate-400">/5</span>
+              <span className="text-xs text-slate-400">/100</span>
             </span>
           </label>
         )

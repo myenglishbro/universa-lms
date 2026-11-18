@@ -114,3 +114,12 @@ test('SPARK manual: 0 a 5; vacío = pendiente (no cero); fuera de rango o no num
   assert.equal(leerSpark('abc'), undefined)
   assert.equal(leerSpark('7', 10), 7)
 })
+
+import { DESCRIPTORES_SPARK, descriptorSpark } from './formativeBanco.js'
+test('SPARK: seis descriptores y el de un valor libre es el del nivel entero más cercano', () => {
+  assert.equal(DESCRIPTORES_SPARK.length, 6)
+  assert.equal(descriptorSpark('4.4').nivel, 4)
+  assert.equal(descriptorSpark('4.5').nivel, 5)
+  assert.equal(descriptorSpark(''), null)
+  assert.equal(descriptorSpark('6'), null)
+})

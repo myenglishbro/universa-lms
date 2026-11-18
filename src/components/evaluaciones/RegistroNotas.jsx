@@ -5,7 +5,7 @@ import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { claveNota, fmtNota, notaRubrica } from '../../lib/evaluaciones'
+import { claveNota, criteriosDeUnidad, fmtNota, notaRubrica, pesoUnidad, totalPorTareas } from '../../lib/evaluaciones'
 import * as servicioReal from '../../services/evaluaciones'
 
 // Valores iniciales de la rúbrica a partir de la copia guardada con la nota (se empareja por nombre de criterio).
@@ -15,8 +15,31 @@ function valoresDe(fila, criterios) {
   return v
 }
 
-function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
-  const criterios = rubrica?.criterios ?? []
+// Writing Assessment: puntos de cada tarea y total sobre 100. Sin una de las dos tareas no hay total definitivo.
+function ResumenTareas({ info }) {
+  if (!info) return null
+  const ESTADO = { publicada: 'Published', borrador: 'Draft' }
+  return (
+    <div className="mt-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-900" role="status">
+      <ul className="flex flex-wrap gap-x-4 gap-y-1">
+        {info.tareas.map((t) => (
+          <li key={t.unidad}>
+            <strong>
+              {t.unidad} — {fmtNota(t.max)} points
+            </strong>
+            : {t.completo ? fmtNota(t.puntos) : `${fmtNota(t.parcial)} so far`} / {fmtNota(t.max)} · {t.estado ? ESTADO[t.estado] : 'not saved'}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-sm">
+        <strong>Writing Total — {fmtNota(info.max)} points</strong>:{' '}
+        {info.completo ? <strong>{fmtNota(info.puntos)}</strong> : <span>pending ({info.tareas.filter((t) => !t.completo).map((t) => t.unidad).join(', ')} incomplete)</span>}
+      </p>
+    </div>
+  )
+}
+
+function FilaNota({ alumno, fila, criterios, resumenTareas, edicion, onCambiar, onCorregir }) {
   const [abierta, setAbierta] = useState(false)
   const publicada = fila?.estado === 'publicada'
   const corrigiendo = edicion.corrigiendo
@@ -58,6 +81,8 @@ function FilaNota({ alumno, fila, rubrica, edicion, onCambiar, onCorregir }) {
           )}
         </div>
       </div>
+
+      <ResumenTareas info={resumenTareas} />
 
       {criterios.length > 0 && abierta && (
         <div className="mt-2">
@@ -120,6 +145,12 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
       }
     return e
   })
+  // Vista previa de Task 1 + Task 2 de un estudiante con lo escrito en pantalla (el total que cuenta lo calcula el servidor al guardar).
+  const resumenDe = (a) => {
+    const valores = Object.assign({}, ...unidades.map((u) => edits[claveNota(a.alumno_id, u)]?.valores ?? {}))
+    const r = totalPorTareas(criterios, unidades, valores)
+    return { ...r, tareas: r.tareas.map((t) => ({ ...t, estado: filaDe(a, t.unidad)?.estado ?? null })) }
+  }
   const [textoUnidades, setTextoUnidades] = useState(unidades.join(', '))
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
@@ -128,13 +159,16 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
   const cambiar = (alumnoId, u, parche) => setEdits((prev) => ({ ...prev, [claveNota(alumnoId, u)]: { ...prev[claveNota(alumnoId, u)], ...parche } }))
 
   // Convierte lo escrito en la fila que entiende el servidor. Con rúbrica exige completar todos los criterios.
+  // Writing por tareas: cada unidad (Task 1, Task 2) se califica solo con sus propios criterios.
+  const porTareas = !!evaluacion.por_tareas
   const payload = (alumno, u) => {
     const ed = edits[claveNota(alumno.alumno_id, u)]
     if (criterios.length) {
-      const algun = criterios.some((c) => ed.valores[c.id] !== '' && ed.valores[c.id] != null)
+      const cu = criteriosDeUnidad(criterios, u)
+      const algun = cu.some((c) => ed.valores[c.id] !== '' && ed.valores[c.id] != null)
       if (!algun) return { alumnoId: alumno.alumno_id, unidad: u, puntaje: '', comentario: ed.comentario }
-      if (notaRubrica(criterios, ed.valores) == null) throw new Error(`Complete all rubric criteria for ${alumno.nombre}`)
-      return { alumnoId: alumno.alumno_id, unidad: u, comentario: ed.comentario, detalle: criterios.map((c) => ({ criterio_id: c.id, puntaje: Number(ed.valores[c.id]) })) }
+      if (notaRubrica(cu, ed.valores) == null) throw new Error(`Complete all criteria of ${u || 'the rubric'} for ${alumno.nombre}`)
+      return { alumnoId: alumno.alumno_id, unidad: u, comentario: ed.comentario, detalle: cu.map((c) => ({ criterio_id: c.id, puntaje: Number(ed.valores[c.id]) })) }
     }
     return { alumnoId: alumno.alumno_id, unidad: u, puntaje: ed.puntaje, comentario: ed.comentario }
   }
@@ -190,6 +224,7 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
         {evaluacion.modulo} · {evaluacion.componente} · weight {evaluacion.peso}. The student only sees published grades.
       </p>
 
+      {!porTareas && (
       <details className="rounded-lg border border-slate-200 px-3 py-2">
         <summary className="cursor-pointer text-sm font-medium text-slate-700">Units of this assessment ({unidades.length || 'a single grade'})</summary>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -199,9 +234,10 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
           </Button>
         </div>
       </details>
+      )}
 
       {unidades.length > 0 && (
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Units">
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label={porTareas ? 'Writing tasks' : 'Units'}>
           {unidades.map((u) => (
             <button
               key={u}
@@ -214,6 +250,7 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
               className={`rounded-full px-3 py-1 text-xs font-medium ${unidad === u ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               {u}
+              {porTareas && pesoUnidad(criterios, u) != null ? ` · ${fmtNota(pesoUnidad(criterios, u))} pts` : ''}
             </button>
           ))}
         </div>
@@ -228,7 +265,8 @@ function Cuerpo({ detalle, unidadInicial, onUnidad, servicio, onRefrescar, onClo
               key={a.alumno_id + unidad}
               alumno={a}
               fila={filaDe(a, unidad)}
-              rubrica={rubrica}
+              criterios={criteriosDeUnidad(criterios, unidad)}
+              resumenTareas={porTareas ? resumenDe(a) : null}
               edicion={edits[claveNota(a.alumno_id, unidad)]}
               onCambiar={(parche) => cambiar(a.alumno_id, unidad, parche)}
               onCorregir={() => corregir(a)}

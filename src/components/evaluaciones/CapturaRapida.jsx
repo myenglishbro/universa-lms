@@ -3,7 +3,7 @@ import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
 import useCarga from '../../hooks/useCarga'
-import { fmtNota, notaRubrica } from '../../lib/evaluaciones'
+import { NIVELES_RUBRICA, criteriosDeUnidad, esPorNiveles, fmtNota, nivelDePuntaje, notaRubrica, puntajeDeNivel } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
@@ -33,8 +33,9 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
   if (detalle.error) return <p className="text-sm text-red-600">Could not open the assessment: {detalle.error}</p>
   if (detalle.cargando || !detalle.datos) return <p className="py-3 text-sm text-slate-400">Loading…</p>
   const { evaluacion, rubrica, alumnos } = detalle.datos
-  const criterios = rubrica?.criterios ?? []
   const u = unidad ?? ''
+  // Writing por tareas: la captura de una tarea (Task 1 o Task 2) usa solo sus criterios.
+  const criterios = criteriosDeUnidad(rubrica?.criterios ?? [], u)
   const filaDe = (a) => a.filas.find((f) => f.unidad === u)
   const base = (a) => {
     const f = filaDe(a)
@@ -108,7 +109,7 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
           <thead className="bg-slate-50 text-left text-xs text-slate-600">
             <tr>
               <th className="px-3 py-2">Student</th>
-              {criterios.length > 0 ? criterios.map((c) => <th key={c.id} className="px-2 py-2 text-right">{c.nombre} <span className="font-normal text-slate-400">/{c.max_puntaje}</span></th>) : <th className="px-2 py-2 text-right">Grade (0–100)</th>}
+              {criterios.length > 0 ? criterios.map((c) => <th key={c.id} className="px-2 py-2 text-right">{u && String(c.nombre).startsWith(`${u} · `) ? String(c.nombre).slice(u.length + 3) : c.nombre} <span className="font-normal text-slate-400">/{c.max_puntaje}</span></th>) : <th className="px-2 py-2 text-right">Grade (0–100)</th>}
               <th className="px-3 py-2 text-right">Total /100</th>
               <th className="px-3 py-2 text-right">{evaluacion.tipo === 'formative' ? 'Unit' : 'Contribution'}</th>
               <th className="px-3 py-2">Estado</th>
@@ -124,20 +125,41 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
                   {criterios.length > 0 ? (
                     criterios.map((c, j) => (
                       <td key={c.id} className="px-2 py-1 text-right">
-                        <input
-                          type="number"
-                          min="0"
-                          max={c.max_puntaje}
-                          step="0.5"
-                          className={claseInput}
-                          data-col={`c${j}`}
-                          data-fila={i}
-                          aria-label={`${c.nombre} for ${a.nombre}`}
-                          disabled={bloqueada || ocupado}
-                          value={actual(a).valores[c.id] ?? ''}
-                          onChange={(e) => poner(a, { valores: { ...actual(a).valores, [c.id]: e.target.value } })}
-                          onKeyDown={(e) => irAlSiguiente(e, tabla)}
-                        />
+                        {esPorNiveles(c) ? (
+                          // Criterio por niveles 0–5: la captura rápida elige el nivel; los puntos salen solos (nivel ÷ 5 × peso).
+                          <select
+                            className={claseInput}
+                            data-col={`c${j}`}
+                            data-fila={i}
+                            aria-label={`${c.nombre} for ${a.nombre}`}
+                            disabled={bloqueada || ocupado}
+                            value={nivelDePuntaje(c, actual(a).valores[c.id]) ?? ''}
+                            onChange={(e) => poner(a, { valores: { ...actual(a).valores, [c.id]: e.target.value === '' ? '' : puntajeDeNivel(c, e.target.value) } })}
+                            onKeyDown={(e) => irAlSiguiente(e, tabla)}
+                          >
+                            <option value="">—</option>
+                            {NIVELES_RUBRICA.map((n) => (
+                              <option key={n.nivel} value={n.nivel}>
+                                {n.nivel} · {n.etiqueta}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="number"
+                            min="0"
+                            max={c.max_puntaje}
+                            step="0.5"
+                            className={claseInput}
+                            data-col={`c${j}`}
+                            data-fila={i}
+                            aria-label={`${c.nombre} for ${a.nombre}`}
+                            disabled={bloqueada || ocupado}
+                            value={actual(a).valores[c.id] ?? ''}
+                            onChange={(e) => poner(a, { valores: { ...actual(a).valores, [c.id]: e.target.value } })}
+                            onKeyDown={(e) => irAlSiguiente(e, tabla)}
+                          />
+                        )}
                       </td>
                     ))
                   ) : (

@@ -18,7 +18,7 @@ export const listarPlantillas = async () =>
       .map((v) => ({ ...v, componentes: [...v.eval_componentes].sort((a, b) => a.orden - b.orden) })),
   }))
 export const listarRubricas = async () =>
-  datos(await supabase.from('eval_rubricas').select('id, nombre, tipo, descripcion, activa, eval_rubrica_criterios(id, nombre, descripcion, max_puntaje, orden, bandas)').order('nombre')).map((r) => ({
+  datos(await supabase.from('eval_rubricas').select('id, nombre, tipo, descripcion, activa, eval_rubrica_criterios(id, nombre, descripcion, max_puntaje, orden, bandas, niveles_mcer)').order('nombre')).map((r) => ({
     ...r,
     criterios: [...r.eval_rubrica_criterios].sort((a, b) => a.orden - b.orden),
   }))

@@ -46,7 +46,9 @@ export const asignarEjercicioFormative = ({ ejercicioId, salonId, limite, evalua
     p_rubrica: rubricaId || null,
   })
 // detalle: [{ criterio_id, puntaje }] con todos los criterios de la rúbrica de la actividad.
-export const calificarEntregaRubrica = (entregaId, detalle, feedback) => rpc('calificar_entrega_rubrica', { p_entrega: entregaId, p_detalle: detalle, p_feedback: feedback })
+// Writing / Speaking tomado en vivo: califica con la rúbrica del vínculo sin que el estudiante haya enviado nada.
+export const calificarEnVivo = (asignacionId, alumnoId, detalle, feedback) => rpc('calificar_en_vivo', { p_asignacion: asignacionId, p_alumno: alumnoId, p_detalle: detalle, p_feedback: feedback })
+export const calificarEntregaRubrica =(entregaId, detalle, feedback) => rpc('calificar_entrega_rubrica', { p_entrega: entregaId, p_detalle: detalle, p_feedback: feedback })
 export const propuestaFormative = (evaluacionId) => rpc('formative_propuesta', { p_evaluacion: evaluacionId })
 // filas: [{ alumno_id, unidad, puntaje }]; puntaje vacío borra la nota (queda pendiente, no cero).
 export const guardarSparkManual = (evaluacionId, filas) => rpc('guardar_spark_manual', { p_evaluacion: evaluacionId, p_filas: filas })

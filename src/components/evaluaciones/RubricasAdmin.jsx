@@ -13,7 +13,7 @@ const vacia = { nombre: '', tipo: 'otra', descripcion: '', activa: true, criteri
 function RubricaForm({ rubrica, onClose, onSave }) {
   const [v, setV] = useState(() =>
     rubrica
-      ? { nombre: rubrica.nombre, tipo: rubrica.tipo, descripcion: rubrica.descripcion ?? '', activa: rubrica.activa, criterios: rubrica.criterios.map((c) => ({ nombre: c.nombre, descripcion: c.descripcion ?? '', max_puntaje: String(c.max_puntaje), bandas: c.bandas ?? [] })) }
+      ? { nombre: rubrica.nombre, tipo: rubrica.tipo, descripcion: rubrica.descripcion ?? '', activa: rubrica.activa, criterios: rubrica.criterios.map((c) => ({ nombre: c.nombre, descripcion: c.descripcion ?? '', max_puntaje: String(c.max_puntaje), bandas: c.bandas ?? [], niveles_mcer: c.niveles_mcer ?? null })) }
       : vacia,
   )
   const [error, setError] = useState('')

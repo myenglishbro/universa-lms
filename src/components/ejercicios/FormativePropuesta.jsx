@@ -6,13 +6,20 @@ import Field from '../ui/Field'
 import Icon from '../ui/Icon'
 import useCarga from '../../hooks/useCarga'
 import { formatFecha } from '../../lib/salones'
-import { ELEMENTOS, ESTADOS_FILA, agruparPorUnidad, estadoFila, leerSpark, nota2 } from '../../lib/formativeBanco'
+import { ELEMENTOS, ESTADOS_FILA, agruparPorUnidad, descriptorSpark, estadoFila, leerSpark, nota2 } from '../../lib/formativeBanco'
 
 const ESTADO_ACTIVIDAD = { sin_entrega: 'not submitted', por_revisar: 'to review' }
 
 // Un elemento: valor de 0 a max. Viene del promedio de las actividades oficiales calificadas o de la nota manual del docente (que prevalece).
+// Todo se ve y se captura de 0 a 100 (como lo dan las plataformas); la conversión a la escala interna (0–max) se hace solo al guardar.
+// Listening, Reading, Writing y Speaking son SOLO LECTURA: la nota llega del banco. El reemplazo manual queda detrás de «Override».
+// SPARK Homework es el único campo que se escribe (la nota sale de la plataforma SPARK, que aquí no está conectada).
 function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) {
-  const valorManual = manual !== undefined ? manual : el?.es_manual && el.valor != null ? String(el.valor) : ''
+  const [reemplazar, setReemplazar] = useState(false)
+  const aPct = (v) => String(Math.round((Number(v) * 100 * 100) / Number(max)) / 100)
+  const valorManual = manual !== undefined ? manual : el?.es_manual && el.valor != null ? aPct(el.valor) : ''
+  const verInput = !conActividades || reemplazar || manual !== undefined || el?.es_manual
+  const spark = !conActividades ? descriptorSpark(valorManual === '' ? '' : (Number(valorManual) * 5) / 100) : null
   return (
     <div className="space-y-1">
       {conActividades && (
@@ -21,27 +28,39 @@ function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) 
             <span className="text-slate-300">no activities</span>
           ) : (
             <>
-              {el.promedio == null ? <span className="italic text-slate-400">pending</span> : <strong>{nota2((Number(el.promedio) * max) / 100)}</strong>}
+              {el.promedio == null ? <span className="italic text-slate-400">pending</span> : <strong>{nota2(el.promedio)}</strong>}
               <span className="text-xs text-slate-400">
                 {' '}
-                / {max} · {el.n_calificadas} de {el.n_asignadas}
+                / 100 · {el.n_calificadas} de {el.n_asignadas}
               </span>
             </>
           )}
         </span>
       )}
-      <input
-        type="number"
-        min="0"
-        max={max}
-        step="any"
-        aria-label={etiqueta}
-        placeholder={conActividades ? 'manual' : `0–${max}`}
-        title={conActividades ? 'Manual grade: it overrides the activities. Empty = automatic.' : undefined}
-        className={`w-20 rounded-lg border px-2 py-1 text-sm ${el?.es_manual || manual !== undefined ? 'border-brand-400 bg-brand-50' : 'border-slate-300'}`}
-        value={valorManual}
-        onChange={(ev) => onManual(ev.target.value)}
-      />
+      {conActividades && !verInput && (
+        <button type="button" onClick={() => setReemplazar(true)} className="block text-[11px] text-slate-500 underline">
+          Override
+        </button>
+      )}
+      {verInput && (
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="any"
+          aria-label={etiqueta}
+          placeholder={conActividades ? 'override' : '0–100'}
+          title={conActividades ? 'Manual override of the bank grade (0–100). Empty = automatic.' : 'SPARK platform grade (0–100)'}
+          className={`w-20 rounded-lg border px-2 py-1 text-sm ${el?.es_manual || manual !== undefined ? 'border-brand-400 bg-brand-50' : 'border-slate-300'}`}
+          value={valorManual}
+          onChange={(ev) => onManual(ev.target.value)}
+        />
+      )}
+      {spark && (
+        <p className="max-w-[14rem] text-[11px] leading-snug text-slate-600" aria-live="polite">
+          <strong>{spark.nivel} · {spark.etiqueta}:</strong> {spark.texto}
+        </p>
+      )}
     </div>
   )
 }
@@ -61,9 +80,9 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
     const filas = []
     for (const k of claves) {
       const [alumno, elemento] = k.split('|')
-      const v = leerSpark(manual[k], max)
-      if (v === undefined) return setError(`Grades must be between 0 and ${max}`)
-      filas.push({ alumno_id: alumno, unidad: grupo.unidad, elemento, puntaje: v })
+      const v = leerSpark(manual[k], 100)
+      if (v === undefined) return setError('Grades must be between 0 and 100')
+      filas.push({ alumno_id: alumno, unidad: grupo.unidad, elemento, puntaje: v == null ? null : (v * max) / 100 })
     }
     setOcupado(true)
     try {
@@ -175,10 +194,10 @@ function PropuestaModulo({ evaluacionId, servicio }) {
   return (
     <>
       <p className="mb-2 text-sm text-slate-500">
-        La nota de cada unidad se calcula y se publica sola cuando el estudiante tiene sus 5 elementos (16 % del Formative cada uno): Listening / Lessons, Writing, Reading y Speaking salen del promedio de las actividades oficiales; SPARK Homework lo anotas tú de 0 a {datos.max}. La participación por clase (20 %) sale de los checks de las sesiones.
+        La nota de cada unidad se calcula y se publica sola cuando el estudiante tiene sus 5 elementos (16 % del Formative cada uno): Listening / Lessons, Writing, Reading y Speaking salen del promedio de las actividades oficiales; SPARK Homework es lo único que anotas tú, de 0 a 100 como lo da la plataforma SPARK. La participación por clase (20 %) sale de los checks de las sesiones.
       </p>
       <p className="mb-4 text-sm text-slate-500">
-        ¿Olvidaste asignar una actividad o la tomaste de forma oral? Escribe la nota en el cuadro «manual» del elemento (0 a {datos.max}): prevalece sobre las actividades y, si lo vacías, vuelve el cálculo automático. Si falta algún elemento, la unidad queda en avance: no se publica y no cuenta como cero.
+        ¿Olvidaste asignar una actividad o la tomaste de forma oral? Usa «Override» en ese elemento y escribe la nota (0 a 100): prevalece sobre las actividades y, si lo vacías, vuelve el cálculo automático. Si falta algún elemento, la unidad queda en avance: no se publica y no cuenta como cero.
       </p>
       {datos.actividades.length === 0 && (
         <p className="mb-4 rounded-xl bg-peach-50 px-3 py-2 text-sm text-peach-700">This module has no official activities from the bank yet. In “Exercises” choose “Count toward Formative” on an assigned exercise, or assign a new one as an official activity.</p>

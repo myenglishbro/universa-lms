@@ -9,8 +9,9 @@ export const TIPOS_COMPONENTE = [
   { value: 'otro', label: 'Other' },
 ]
 export const TIPOS_RUBRICA = [
-  { value: 'speaking', label: 'Speaking' },
-  { value: 'writing', label: 'Writing' },
+  { value: 'speaking', label: 'Speaking (activity bank)' },
+  { value: 'writing', label: 'Writing (activity bank)' },
+  { value: 'writing_task', label: 'Writing Assessment (Task 1 / Task 2)' },
   { value: 'project', label: 'Project' },
   { value: 'formative', label: 'Formative' },
   { value: 'otra', label: 'Other' },
@@ -143,6 +144,81 @@ export function totalCriterios(criterios, valores) {
 
 // Etiqueta de la fila de unidad vacía: en el Formative es la participación por clase.
 export const etiquetaUnidad = (unidad, tipo) => unidad || (tipo === 'formative' ? 'Participation' : '')
+
+// ---- Rúbricas por niveles 0–5 -------------------------------------------------------------------------------------------------------------
+// Un criterio es «por niveles» cuando sus bandas llevan «nivel». El docente elige el nivel; los puntos son nivel ÷ 5 × peso del criterio.
+// La nota que cuenta la calcula SQL (eval_resolver_nota); estas funciones solo preparan lo que se envía y la vista previa.
+export const NIVELES_RUBRICA = [
+  { nivel: 0, etiqueta: 'No demostrado' },
+  { nivel: 1, etiqueta: 'Inicial' },
+  { nivel: 2, etiqueta: 'Básico' },
+  { nivel: 3, etiqueta: 'En desarrollo' },
+  { nivel: 4, etiqueta: 'Logrado' },
+  { nivel: 5, etiqueta: 'Destacado' },
+]
+export const esPorNiveles = (criterio) => Array.isArray(criterio?.bandas) && criterio.bandas.some((b) => b?.nivel != null)
+
+// Puntos (texto) de un nivel para un criterio: nivel 3 de un criterio de 14 → «8.4».
+export const puntajeDeNivel = (criterio, nivel) => String(Math.round((Number(nivel) * Number(criterio.max_puntaje) * 100) / 5) / 100)
+
+// Nivel (0–5) que corresponde a los puntos escritos; null si está vacío o no es un nivel exacto.
+export function nivelDePuntaje(criterio, valor) {
+  if (valor === '' || valor == null || Number.isNaN(Number(valor))) return null
+  const n = (Number(valor) * 5) / Number(criterio.max_puntaje)
+  const r = Math.round(n)
+  return Math.abs(n - r) < 1e-6 && r >= 0 && r <= 5 ? r : null
+}
+export const bandaDeNivel = (criterio, nivel) => (criterio.bandas ?? []).find((b) => nivel != null && Number(b.nivel) === Number(nivel)) ?? null
+
+// Writing Assessment: los criterios «Task 1 · …» / «Task 2 · …» pertenecen a una unidad. Sin criterios con ese prefijo, son todos.
+export function criteriosDeUnidad(criterios = [], unidad = '') {
+  if (!unidad) return criterios
+  const propios = criterios.filter((c) => String(c.nombre).startsWith(`${unidad} · `))
+  return propios.length ? propios : criterios
+}
+export function pesoUnidad(criterios = [], unidad = '') {
+  const propios = criterios.filter((c) => unidad && String(c.nombre).startsWith(`${unidad} · `))
+  return propios.length ? propios.reduce((s, c) => s + Number(c.max_puntaje), 0) : null
+}
+
+// Vista previa del total de una evaluación por tareas: puntos de cada tarea y total sobre la suma de sus pesos (Task 1 35 + Task 2 65 = 100).
+// El total solo existe si TODAS las tareas están completas; nunca se completa con ceros. El valor que cuenta lo calcula SQL.
+export function totalPorTareas(criterios = [], unidades = [], valores = {}) {
+  const tareas = unidades.map((u) => {
+    const cs = criteriosDeUnidad(criterios, u)
+    const t = totalCriterios(cs, valores)
+    return { unidad: u, puntos: t.completo ? t.suma : null, parcial: t.suma, max: t.max, completo: t.completo }
+  })
+  const completo = tareas.length > 0 && tareas.every((t) => t.completo)
+  const max = tareas.reduce((s, t) => s + t.max, 0)
+  const puntos = completo ? Math.round(tareas.reduce((s, t) => s + t.puntos, 0) * 100) / 100 : null
+  return { tareas, completo, max, puntos, nota: completo && max > 0 ? Math.round((puntos / max) * 10000) / 100 : null }
+}
+
+// Expectativas por nivel MCER de un criterio para el salón: «A2.2 – B1.1» → A2 y B1. Sin nivel de salón, se muestran los cinco niveles.
+export function expectativasMcer(criterio, mcer) {
+  const todas = criterio?.niveles_mcer
+  if (!todas || typeof todas !== 'object') return []
+  const pedidos = [...new Set(String(mcer ?? '').match(/[ABC][12]/g) ?? [])]
+  const niveles = pedidos.length ? pedidos : ['A1', 'A2', 'B1', 'B2', 'C1']
+  return niveles.filter((n) => todas[n]).map((n) => ({ nivel: n, texto: todas[n] }))
+}
+
+// ---- Nota oficial ---------------------------------------------------------------------------------------------------------------------------
+// Espejo de eval_clasificar (SQL), que es el cálculo oficial: se usa solo donde llega un número sin el resultado del servidor (p. ej. el Excel).
+// Redondeo único (0,5 o más sube) y tramos 0–59 / 60–69 / 70–84 / 85–100.
+export const RESULTADOS = {
+  desaprobo: 'Did not pass',
+  reforzamiento: 'Needs reinforcement',
+  aprobo: 'Passed',
+  excelencia: 'Passed with excellence',
+}
+export function clasificarNota(nota) {
+  if (nota == null || nota === '' || Number.isNaN(Number(nota))) return null
+  const oficial = Math.min(100, Math.max(0, Math.floor(Number(nota) + 0.5)))
+  const resultado = oficial >= 85 ? 'excelencia' : oficial >= 70 ? 'aprobo' : oficial >= 60 ? 'reforzamiento' : 'desaprobo'
+  return { oficial, resultado, etiqueta: RESULTADOS[resultado] }
+}
 
 // Texto corto de lo que contiene una celda: «80», «5/10 clases», «—».
 export function textoCelda(c) {

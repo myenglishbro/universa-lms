@@ -5,7 +5,7 @@ import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { claveNota, fmtNota, notaRubrica, totalCriterios } from '../../lib/evaluaciones'
+import { claveNota, criteriosDeUnidad, fmtNota, notaRubrica, pesoUnidad, totalCriterios, totalPorTareas } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
@@ -21,16 +21,20 @@ const aporte = (peso, nota) => (nota == null ? null : Math.round(Number(peso) * 
 function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, setMensaje }) {
   const { evaluacion, rubrica } = detalle
   const alumno = detalle.alumnos.find((a) => a.alumno_id === alumnoId)
-  const criterios = rubrica?.criterios ?? []
+  const todos = rubrica?.criterios ?? []
   const unidades = evaluacion.unidades
   const lista = unidades.length ? unidades : ['']
   const [unidad, setUnidad] = useState(lista[0])
+  // Writing por tareas: cada tarea (Task 1, Task 2) se califica solo con sus propios criterios.
+  const porTareas = !!evaluacion.por_tareas
+  const criteriosDe = (u) => criteriosDeUnidad(todos, u)
+  const criterios = criteriosDe(unidad)
   const filaDe = (u) => alumno.filas.find((f) => f.unidad === u)
   const [edits, setEdits] = useState(() => {
     const e = {}
     for (const u of lista) {
       const f = filaDe(u)
-      e[claveNota(alumnoId, u)] = { puntaje: f?.puntaje ?? '', comentario: f?.comentario ?? '', valores: valoresDe(f, criterios), corrigiendo: false, motivo: '' }
+      e[claveNota(alumnoId, u)] = { puntaje: f?.puntaje ?? '', comentario: f?.comentario ?? '', valores: valoresDe(f, todos), corrigiendo: false, motivo: '' }
     }
     return e
   })
@@ -49,7 +53,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   // Nota 0–100 de una unidad según lo que hay escrito (rúbrica: suma ÷ máximos × 100; si no, la nota directa).
   const notaDe = (u) => {
     const x = edits[clave(u)]
-    if (criterios.length) return notaRubrica(criterios, x.valores)
+    if (todos.length) return notaRubrica(criteriosDe(u), x.valores)
     return x.puntaje === '' || x.puntaje == null || Number.isNaN(Number(x.puntaje)) ? null : Number(x.puntaje)
   }
   const notaActual = notaDe(unidad)
@@ -58,14 +62,18 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
   const notasUnidades = lista.map(notaDe).filter((n) => n != null)
   const promedio = notasUnidades.length ? Math.round((notasUnidades.reduce((s, n) => s + n, 0) / notasUnidades.length) * 100) / 100 : null
   const completa = notasUnidades.length === lista.length
+  // Writing por tareas: total de Task 1 + Task 2 (vista previa; el total que cuenta lo calcula el servidor).
+  const valoresTodos = Object.assign({}, ...lista.map((u) => edits[clave(u)]?.valores ?? {}))
+  const totalTareas = porTareas ? totalPorTareas(todos, lista, valoresTodos) : null
 
   const payload = (u) => {
     const x = edits[clave(u)]
-    if (criterios.length) {
-      const algun = criterios.some((c) => x.valores[c.id] !== '' && x.valores[c.id] != null)
+    const cu = criteriosDe(u)
+    if (cu.length) {
+      const algun = cu.some((c) => x.valores[c.id] !== '' && x.valores[c.id] != null)
       if (!algun) return { alumnoId, unidad: u, puntaje: '', comentario: x.comentario }
-      if (notaRubrica(criterios, x.valores) == null) throw new Error('Complete all rubric criteria')
-      return { alumnoId, unidad: u, comentario: x.comentario, detalle: criterios.map((c) => ({ criterio_id: c.id, puntaje: Number(x.valores[c.id]) })) }
+      if (notaRubrica(cu, x.valores) == null) throw new Error(`Complete all criteria of ${u || 'the rubric'}`)
+      return { alumnoId, unidad: u, comentario: x.comentario, detalle: cu.map((c) => ({ criterio_id: c.id, puntaje: Number(x.valores[c.id]) })) }
     }
     return { alumnoId, unidad: u, puntaje: x.puntaje, comentario: x.comentario }
   }
@@ -134,6 +142,7 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
               className={`rounded-full px-3 py-1 text-xs font-medium ${unidad === u ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               {u}
+              {porTareas && pesoUnidad(todos, u) != null ? ` · ${fmtNota(pesoUnidad(todos, u))} pts` : ''}
               {filaDe(u)?.estado === 'publicada' ? ' ✓' : ''}
             </button>
           ))}
@@ -182,13 +191,37 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
           <p>
             Average of the graded units: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} of {lista.length} units. The Formative grade combines this average with class participation.
           </p>
-        ) : (
+        ) : porTareas ? null : (
           <p>
             Contribution to the module: <strong>{notaActual == null ? '—' : `${fmtNota(aporte(evaluacion.peso, notaActual))} of ${fmtNota(evaluacion.peso)} points`}</strong>
             {unidades.length > 0 && <span className="text-xs"> (with this unit alone)</span>}
           </p>
         )}
-        {!esFormative && unidades.length > 1 && (
+        {porTareas && totalTareas && (
+          <>
+            <p>
+              {totalTareas.tareas.map((t) => (
+                <span key={t.unidad} className="mr-4">
+                  <strong>
+                    {t.unidad} — {fmtNota(t.max)} points
+                  </strong>
+                  : {t.completo ? fmtNota(t.puntos) : `${fmtNota(t.parcial)} so far`} / {fmtNota(t.max)}
+                </span>
+              ))}
+            </p>
+            <p>
+              <strong>Writing Total — {fmtNota(totalTareas.max)} points</strong>:{' '}
+              {totalTareas.completo ? (
+                <>
+                  <strong>{fmtNota(totalTareas.puntos)}</strong> · contribution {fmtNota(aporte(evaluacion.peso, totalTareas.nota))} of {fmtNota(evaluacion.peso)} points
+                </>
+              ) : (
+                <span>pending: both tasks must be complete before a Writing grade exists.</span>
+              )}
+            </p>
+          </>
+        )}
+        {!esFormative && !porTareas && unidades.length > 1 && (
           <p>
             Accumulated component result: <strong>{promedio == null ? '—' : fmtNota(promedio)}</strong> · {notasUnidades.length} of {lista.length} graded units
             {completa && promedio != null && <> · aporte {fmtNota(aporte(evaluacion.peso, promedio))} de {fmtNota(evaluacion.peso)}</>}

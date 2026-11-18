@@ -298,7 +298,7 @@ async function hojaAlumno(wb, logoId, d, a, i, est, usados) {
       { type: 'cellIs', operator: 'greaterThan', formulae: [0], style: { font: { color: { argb: 'FF15803D' } } } },
     ],
   })
-  ws.getCell(f + 1, 1).value = 'Escala: Outstanding ≥ 86 · Achieved ≥ 70 · Developing ≥ 60 · Beginning < 60.'
+  ws.getCell(f + 1, 1).value = 'Escala: Outstanding ≥ 85 · Achieved ≥ 70 · Developing ≥ 60 · Beginning < 60 (grade rounded once, 0.5 rounds up).'
   ws.getCell(f + 1, 1).font = { name: FUENTE, size: 9, italic: true, color: { argb: MARCA.gris } }
 
   // Gráfico: el estudiante frente al promedio del salón, módulo por módulo (a la derecha de las tablas)

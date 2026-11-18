@@ -92,6 +92,21 @@ export function valoresDesdeDetalle(criterios, detalle) {
   return Object.fromEntries((criterios ?? []).map((c) => [c.id, porNombre.has(c.nombre) ? String(porNombre.get(c.nombre)) : '']))
 }
 
+// Descriptores de SPARK Homework (0–5). La nota sigue siendo manual y libre de 0 a 5; el descriptor que se muestra es el del nivel entero más cercano.
+export const DESCRIPTORES_SPARK = [
+  { nivel: 0, etiqueta: 'No demostrado', texto: 'No existe evidencia evaluable de las actividades requeridas.' },
+  { nivel: 1, etiqueta: 'Inicial', texto: 'Presenta evidencia mínima y no demuestra aplicación suficiente de los contenidos.' },
+  { nivel: 2, etiqueta: 'Básico', texto: 'Completa parcialmente las actividades, con omisiones importantes y aplicación limitada.' },
+  { nivel: 3, etiqueta: 'En desarrollo', texto: 'Cumple buena parte de los requisitos y aplica contenidos principales, aunque presenta errores relevantes.' },
+  { nivel: 4, etiqueta: 'Logrado', texto: 'Completa las actividades requeridas y demuestra aplicación adecuada y consistente.' },
+  { nivel: 5, etiqueta: 'Destacado', texto: 'Completa las actividades con calidad y demuestra aplicación precisa, autónoma y consistente.' },
+]
+export function descriptorSpark(valor) {
+  if (valor === '' || valor == null || Number.isNaN(Number(valor))) return null
+  const n = Math.round(Number(valor))
+  return n < 0 || n > 5 ? null : DESCRIPTORES_SPARK[n]
+}
+
 // Valida la nota manual de SPARK (0 a max). Vacío = pendiente (null). Fuera de rango o no numérico → undefined.
 export function leerSpark(texto, max = 5) {
   if (texto === '' || texto == null) return null
