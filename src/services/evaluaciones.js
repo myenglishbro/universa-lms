@@ -73,6 +73,9 @@ export const registrarRemedial = (salonId, { alumnoId, ambito, moduloId, ciclo, 
 
 // ---- Estudiante ----
 export const informeAlumno = (salonId, alumnoId) => rpc('informe_alumno', { p_salon: salonId, p_alumno: alumnoId })
+// Borradores del reporte del ciclo (lo que escribe quien lo emite): se leen todos los ciclos del estudiante y se guarda uno por ciclo.
+export const leerReportes = (salonId, alumnoId) => rpc('leer_reportes_alumno', { p_salon: salonId, p_alumno: alumnoId })
+export const guardarReporte = (salonId, alumnoId, ciclo, datos) => rpc('guardar_reporte_alumno', { p_salon: salonId, p_alumno: alumnoId, p_ciclo: ciclo == null ? '' : String(ciclo), p_datos: datos })
 export const misCalificaciones = (salonId) => rpc('portal_mis_calificaciones', { p_salon: salonId })
 
 // Nivel MCER (p. ej. «A2.2 – B1.1») de un nivel académico, por su nombre; null si no se encuentra.

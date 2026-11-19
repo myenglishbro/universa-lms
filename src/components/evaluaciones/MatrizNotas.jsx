@@ -5,6 +5,7 @@ import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import useCarga from '../../hooks/useCarga'
 import { ESTADOS_CELDA, agruparPorCiclo, fmtNota, notaSobreEvaluado, textoCelda } from '../../lib/evaluaciones'
+import { borradorDe } from '../../lib/borradorReporte'
 import { descargarInforme } from '../../lib/informeNotas'
 import InformeDialogo from './InformeDialogo'
 import MisHabilidades from './MisHabilidades'
@@ -391,6 +392,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
     return () => { vivo = false }
   }, [nivelSalon])
   const [informeListo, setInformeListo] = useState(null)
+  const [informeCtx, setInformeCtx] = useState({ alumnoId: null, guardados: {} }) // borradores guardados del reporte de ese estudiante
   const [seguimiento, setSeguimiento] = useState(null)
   const [fallo, setFallo] = useState('')
   const [busqueda, setBusqueda] = useState('')
@@ -419,7 +421,9 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
   const informe = async (a) => {
     setFallo('')
     try {
-      setInformeListo(await servicio.informeAlumno(salonId, a.alumno_id))
+      const [inf, guardados] = await Promise.all([servicio.informeAlumno(salonId, a.alumno_id), servicio.leerReportes ? servicio.leerReportes(salonId, a.alumno_id).catch(() => ({})) : {}])
+      setInformeCtx({ alumnoId: a.alumno_id, guardados: guardados ?? {} })
+      setInformeListo(inf)
     } catch (e) {
       setFallo(`Could not generate the report: ${e.message}`)
     }
@@ -458,9 +462,12 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       {informeListo && (
         <InformeDialogo
           datos={informeListo}
+          guardados={informeCtx.guardados}
           onClose={() => setInformeListo(null)}
-          onGenerar={(extra) => {
+          onGenerar={(extra, idiomas) => {
             descargarInforme(informeListo, extra)
+            // Se guarda lo escrito para no repetirlo la próxima vez; si falla, el reporte ya se generó y solo se avisa.
+            servicio.guardarReporte?.(salonId, informeCtx.alumnoId, extra.ciclo, borradorDe(extra, idiomas)).catch((e) => setFallo(`The report was generated, but your comments could not be saved: ${e.message}`))
             setInformeListo(null)
           }}
         />
