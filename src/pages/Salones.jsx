@@ -12,7 +12,7 @@ import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
 import { descargarCompendio } from '../services/compendio'
-import Tile from '../components/ui/Tile'
+import FranjaAtencion from '../components/salones/FranjaAtencion'
 import { SIN_NIVEL, coincideNivel, estados, proximoAFinalizar } from '../lib/salones'
 
 // Filtro segmentado: una sola barra con todas las opciones y el número de salones que dejaría cada una.
@@ -54,6 +54,8 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [asignando, setAsignando] = useState(false)
   const [importando, setImportando] = useState(false)
   const [respaldando, setRespaldando] = useState(false)
+  const [foco, setFoco] = useState('') // pendiente elegido en «Needs attention» ('' = ninguno)
+  const [verFiltros, setVerFiltros] = useState(false)
   const todosLosSalones = useMemo(() => [...salones, ...archivados], [salones, archivados])
   const [form, setForm] = useState(null) // null = cerrado, { salon } = abierto (salon null = crear)
 
@@ -61,17 +63,22 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const coincideTexto = (s) => !texto || `${s.nombre} ${s.codigo} ${s.docente}`.toLowerCase().includes(texto)
   // Los contadores de cada filtro respetan al otro: así se ve cuántos salones habría al elegirlo.
   const coincideTipo = (s) => !tipo || (tipo === 'paquete' ? Boolean(s.paquete) : !s.paquete)
-  const sinEstado = salones.filter((s) => coincideNivel(s, nivel) && coincideTexto(s) && coincideTipo(s))
-  const sinNivel = salones.filter((s) => (!estado || s.estado === estado) && coincideTexto(s) && coincideTipo(s))
-  const sinTipo = salones.filter((s) => coincideNivel(s, nivel) && (!estado || s.estado === estado) && coincideTexto(s))
+  // Pendientes que muestra la franja «Needs attention»; cada uno cuenta sobre todos los salones y, al elegirlo, filtra la lista.
+  const GRUPOS_ATENCION = [
+    { clave: 'asistencia', etiqueta: 'Attendance missing', tono: 'peach', ayuda: 'Past classes with no attendance recorded', prueba: (s) => s.progreso?.porRegistrar > 0 },
+    { clave: 'sin_docente', etiqueta: 'No teacher', tono: 'rose', ayuda: 'Classrooms without an assigned teacher', prueba: (s) => s.estado !== 'finalizado' && !s.docente },
+    { clave: 'por_finalizar', etiqueta: 'Ending soon', tono: 'peach', ayuda: 'Ending in the next 14 days', prueba: proximoAFinalizar },
+    { clave: 'sin_nivel', etiqueta: 'No level', tono: 'rose', ayuda: 'Classrooms without an academic level', prueba: (s) => s.estado !== 'finalizado' && !s.nivel },
+    { clave: 'grabacion', etiqueta: 'No recording', tono: 'peach', ayuda: 'Past classes with no recording', prueba: (s) => s.pendientes?.sinGrabacion > 0 },
+  ].map((g) => ({ ...g, n: salones.filter(g.prueba).length }))
+  const coincideFoco = (s) => !foco || Boolean(GRUPOS_ATENCION.find((g) => g.clave === foco)?.prueba(s))
+  const sinEstado = salones.filter((s) => coincideNivel(s, nivel) && coincideTexto(s) && coincideTipo(s) && coincideFoco(s))
+  const sinNivel = salones.filter((s) => (!estado || s.estado === estado) && coincideTexto(s) && coincideTipo(s) && coincideFoco(s))
+  const sinTipo = salones.filter((s) => coincideNivel(s, nivel) && (!estado || s.estado === estado) && coincideTexto(s) && coincideFoco(s))
   const visibles = sinEstado.filter((s) => !estado || s.estado === estado)
 
-  const activos = salones.filter((s) => s.estado === 'en_curso').length
-  const porFinalizar = salones.filter(proximoAFinalizar).length
-  const pendientes = salones.filter((s) => s.estado === 'pendiente').length
-  const incompletos = salones.filter((s) => s.estado !== 'finalizado' && (!s.docente || !s.nivel)).length
   const nPorAsignar = porAsignar(salones).length
-  const sinRegistrar = salones.filter((s) => s.progreso?.porRegistrar > 0 || s.pendientes?.sinGrabacion > 0).length
+  const nFiltros = (tipo ? 1 : 0) + (nivel ? 1 : 0)
 
   const guardar = async (valores) => {
     await guardarSalon(form.salon?.id ?? null, valores)
@@ -180,91 +187,117 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
             )}
           </header>
 
-          {!cargando && !error && salones.length > 0 && (
-            <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Tile icono="building" tono="brand" valor={activos} etiqueta="In progress" nota={pendientes > 0 ? `${pendientes} not started` : undefined} />
-              <Tile icono="flag" tono={porFinalizar > 0 ? 'peach' : 'slate'} valor={porFinalizar} etiqueta="Ending soon (14 days)" />
-              <Tile icono="eye" tono={sinRegistrar > 0 ? 'peach' : 'slate'} valor={sinRegistrar} etiqueta="Attendance or recording pending" />
-              <Tile icono="info" tono={incompletos > 0 ? 'peach' : 'slate'} valor={incompletos} etiqueta="Missing teacher or level" />
-            </div>
-          )}
+          {!cargando && !error && salones.length > 0 && <FranjaAtencion grupos={GRUPOS_ATENCION} activo={foco} onElegir={setFoco} />}
 
           <Card>
             <div className="flex flex-wrap items-center gap-3 border-b border-brand-100 p-4">
-              <div className="relative min-w-56 flex-1 sm:max-w-xs">
-                <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Search by name, code or teacher"
-                  className={`${inputClass} pl-9`}
-                />
-              </div>
-              <div role="group" aria-label="How to view classrooms" className="ml-auto inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
-                {[
-                  ['tarjetas', 'Cards'],
-                  ['tabla', 'Table'],
-                ].map(([v, t]) => (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={vista === v}
-                    onClick={() => setVista(v)}
-                    className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${vista === v ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {!cargando && !error && salones.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-brand-100 px-4 py-3">
-                <Segmentado
-                  etiqueta="Type"
-                  valor={tipo}
-                  onCambiar={setTipo}
-                  opciones={[
-                    { value: '', label: 'All', n: sinTipo.length },
-                    { value: 'grupal', label: 'Group', icono: 'users', n: sinTipo.filter((s) => !s.paquete).length },
-                    { value: 'paquete', label: 'Hour package', icono: 'clock', n: sinTipo.filter((s) => s.paquete).length },
-                  ]}
-                />
+              {!cargando && !error && salones.length > 0 && (
                 <Segmentado
                   etiqueta="Status"
                   valor={estado}
                   onCambiar={setEstado}
                   opciones={[
-                    { value: '', label: 'Any status', n: sinEstado.length },
+                    { value: '', label: 'All', n: sinEstado.length },
                     ...estados.map((e) => ({ value: e.value, label: e.label, n: sinEstado.filter((s) => s.estado === e.value).length })),
                   ]}
                 />
-                <select value={nivel} onChange={(e) => setNivel(e.target.value)} aria-label="Filter by level" className={`${inputClass} w-auto min-w-40`}>
-                  <option value="">All levels ({sinNivel.length})</option>
-                  {niveles.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.nombre} ({sinNivel.filter((s) => s.nivelId === n.id).length})
-                    </option>
-                  ))}
-                  <option value={SIN_NIVEL}>No level ({sinNivel.filter((s) => !s.nivelId).length})</option>
-                </select>
-                <span className="ml-auto flex items-center gap-3 text-sm text-slate-500">
-                  {visibles.length} {visibles.length === 1 ? 'classroom' : 'classrooms'}
-                  {(tipo || estado || nivel || texto) && (
+              )}
+              <div className="relative min-w-48 flex-1 sm:max-w-xs">
+                <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Search by name, code or teacher"
+                  aria-label="Search classrooms"
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                {!cargando && !error && salones.length > 0 && (
+                  <div className="relative">
                     <button
                       type="button"
-                      onClick={() => {
-                        setTipo('')
-                        setEstado('')
-                        setNivel('')
-                        setBusqueda('')
-                      }}
-                      className="font-medium text-brand-700 hover:underline"
+                      aria-haspopup="dialog"
+                      aria-expanded={verFiltros}
+                      onClick={() => setVerFiltros((v) => !v)}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
                     >
-                      Clear filters
+                      <Icon name="filter" className="h-4 w-4" /> Filters
+                      {nFiltros > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-xs font-bold text-white">{nFiltros}</span>}
                     </button>
-                  )}
+                    {verFiltros && (
+                      <>
+                        <button type="button" aria-label="Close filters" className="fixed inset-0 z-20 cursor-default" onClick={() => setVerFiltros(false)} />
+                        <div role="dialog" aria-label="Filters" className="absolute right-0 z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+                          <div>
+                            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Type</p>
+                            <Segmentado
+                              etiqueta="Type"
+                              valor={tipo}
+                              onCambiar={setTipo}
+                              opciones={[
+                                { value: '', label: 'All', n: sinTipo.length },
+                                { value: 'grupal', label: 'Group', icono: 'users', n: sinTipo.filter((s) => !s.paquete).length },
+                                { value: 'paquete', label: 'Hour package', icono: 'clock', n: sinTipo.filter((s) => s.paquete).length },
+                              ]}
+                            />
+                          </div>
+                          <div>
+                            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Level</p>
+                            <select value={nivel} onChange={(e) => setNivel(e.target.value)} aria-label="Filter by level" className={`${inputClass} w-full`}>
+                              <option value="">All levels ({sinNivel.length})</option>
+                              {niveles.map((n) => (
+                                <option key={n.id} value={n.id}>
+                                  {n.nombre} ({sinNivel.filter((s) => s.nivelId === n.id).length})
+                                </option>
+                              ))}
+                              <option value={SIN_NIVEL}>No level ({sinNivel.filter((s) => !s.nivelId).length})</option>
+                            </select>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                <div role="group" aria-label="How to view classrooms" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
+                  {[
+                    ['tarjetas', 'Cards'],
+                    ['tabla', 'Table'],
+                  ].map(([v, t]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={vista === v}
+                      onClick={() => setVista(v)}
+                      className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${vista === v ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {!cargando && !error && salones.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 border-b border-brand-100 px-4 py-2 text-sm text-slate-500">
+                <span>
+                  {visibles.length} {visibles.length === 1 ? 'classroom' : 'classrooms'}
                 </span>
+                {(tipo || estado || nivel || texto || foco) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipo('')
+                      setEstado('')
+                      setNivel('')
+                      setBusqueda('')
+                      setFoco('')
+                    }}
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             )}
 
@@ -287,7 +320,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
               (vista === 'tabla' ? (
                 <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ) : (
-                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto) || Boolean(tipo)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
+                <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto) || Boolean(tipo) || Boolean(foco)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ))
             )}
           </Card>

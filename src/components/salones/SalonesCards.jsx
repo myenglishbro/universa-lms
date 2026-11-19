@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Avatar from '../ui/Avatar'
 import useFotosDocentes from '../../hooks/useFotosDocentes'
 import { Anillo } from '../ui/Anillo'
@@ -29,7 +30,50 @@ function plazo(s) {
   return { tono: 'slate', icono: 'calendar', texto: `Ends on ${formatFecha(s.fechaFin)}` }
 }
 
-// Lista de salones en tarjetas compactas: foto del docente, nombre, avance y lo que falta, en el menor espacio posible.
+// La alerta más grave del salón (una sola: el resto se ve en el detalle). Sin alertas devuelve null.
+function alertaPrincipal(s, pl) {
+  if (s.estado !== 'finalizado') {
+    if (!s.docente) return { tono: 'rose', icono: 'alert', texto: 'No teacher assigned' }
+    if (!s.nivel) return { tono: 'rose', icono: 'alert', texto: 'No level set' }
+  }
+  if (pl.tono === 'rose') return { ...pl }
+  const sinAsistencia = s.progreso?.porRegistrar ?? 0
+  if (sinAsistencia > 0) return { tono: 'peach', icono: 'check', texto: `${sinAsistencia} ${sinAsistencia === 1 ? 'class' : 'classes'} without attendance`, ayuda: 'Past classes with no attendance recorded' }
+  const sinGrabacion = s.pendientes?.sinGrabacion ?? 0
+  if (sinGrabacion > 0) return { tono: 'peach', icono: 'play', texto: `${sinGrabacion} without recording`, ayuda: 'Past classes with no recording' }
+  if (pl.tono === 'peach') return { ...pl }
+  return null
+}
+
+// Menú «⋯» de la tarjeta: ver, editar y descargar el Excel del salón.
+function MenuTarjeta({ salon, puedeEditar, onVer, onEditar }) {
+  const [abierto, setAbierto] = useState(false)
+  return (
+    <div className="relative shrink-0">
+      <button type="button" aria-label={`More actions for ${salon.nombre}`} aria-haspopup="menu" aria-expanded={abierto} onClick={() => setAbierto((v) => !v)} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg leading-none text-slate-500 hover:bg-brand-50 hover:text-brand-700">
+        ⋯
+      </button>
+      {abierto && (
+        <>
+          <button type="button" aria-label="Close menu" className="fixed inset-0 z-20 cursor-default" onClick={() => setAbierto(false)} />
+          <div role="menu" className="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+            <button role="menuitem" type="button" onClick={() => { setAbierto(false); onVer(salon.id) }} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-brand-700 hover:bg-brand-50">
+              View
+            </button>
+            {puedeEditar && (
+              <button role="menuitem" type="button" onClick={() => { setAbierto(false); onEditar(salon.id) }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-brand-50">
+                Edit
+              </button>
+            )}
+            {puedeEditar && <BotonCompendio salon={salon} variant="ghost" className="w-full justify-start px-3 py-2 text-sm" etiqueta="Download Excel" />}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Lista de salones en tarjetas: docente, nombre, horario y avance, con una sola alerta. Las acciones están en el menú «⋯».
 export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) {
   const fotos = useFotosDocentes()
   return (
@@ -38,75 +82,59 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
         const paq = s.paquete // salón de un paquete de horas: el avance se mide en horas
         const pct = paq ? porcentajeAvance(paq.consumidas, paq.contratadas) : s.progreso ? porcentajeAvance(s.progreso.realizadas, s.progreso.total) : null
         const pl = plazo(s)
-        const faltantes = [!s.docente && 'teacher', !s.nivel && 'level'].filter(Boolean)
-        const sinAsistencia = s.progreso?.porRegistrar ?? 0
-        const sinGrabacion = s.pendientes?.sinGrabacion ?? 0
+        const alerta = alertaPrincipal(s, pl)
         return (
-          <li key={s.id} className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${paq ? 'border-peach-200' : 'border-brand-100'}`}>
+          <li key={s.id} className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${paq ? 'border-peach-200' : 'border-brand-100'}`}>
             <div className={`h-1.5 bg-gradient-to-r ${paq ? 'from-peach-200 to-peach-500' : portadaDe(s.nombre)}`} />
-            <button type="button" onClick={() => onVer(s.id)} className="flex flex-1 flex-col gap-2.5 p-3.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500">
-              <div className="flex items-center gap-3">
-                <Avatar nombre={s.docente || '?'} fotoUrl={fotos.get(s.docenteId)} tamano="md" className={s.docente ? '' : 'opacity-40'} />
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                    {s.codigo} <EstadoBadge estado={s.estado} />
-                  </p>
-                  <h3 className="truncate text-sm font-semibold text-slate-900" title={s.nombre}>
-                    {s.nombre}
-                  </h3>
-                  <p className="truncate text-xs text-slate-500">{s.docente || <span className="text-peach-700">No teacher</span>}</p>
-                </div>
-                <Anillo valor={pct} size={44} grosor={5} color={paq ? 'var(--color-peach-700)' : undefined} fondo={paq ? 'var(--color-peach-100)' : undefined} etiqueta={`Progress of ${s.nombre}`} />
-              </div>
-
-              <p className="flex items-center gap-1.5 text-xs text-slate-600">
-                <Icon name="box" className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="truncate">{s.nivel || <span className="text-peach-700">No level</span>}</span>
-                <span className="text-slate-300">·</span>
-                <Icon name="clock" className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="truncate">{formatHorario(s.horarios)}</span>
-              </p>
-
-              <div className="flex flex-wrap items-center gap-1.5">
-                {paq && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-peach-100 px-2 py-0.5 text-[11px] font-semibold text-peach-700 ring-1 ring-inset ring-peach-200">
-                    <Icon name="clock" className="h-3 w-3" /> Hour package · {minutosTexto(Math.max(paq.disponibles, 0))} left
+            <div className="flex flex-1 flex-col gap-3 p-4">
+              <div className="flex items-start gap-3">
+                <button type="button" onClick={() => onVer(s.id)} aria-label={`Open ${s.nombre}`} className="flex min-w-0 flex-1 items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                  <Avatar nombre={s.docente || '?'} fotoUrl={fotos.get(s.docenteId)} tamano="md" className={s.docente ? '' : 'opacity-40'} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                      {s.codigo} <EstadoBadge estado={s.estado} />
+                    </span>
+                    <span className="block truncate text-base font-semibold text-slate-900" title={s.nombre}>
+                      {s.nombre}
+                    </span>
+                    <span className="block truncate text-sm text-slate-500">
+                      {s.docente || 'No teacher'}
+                      {s.nivel ? ` · ${s.nivel}` : ''}
+                    </span>
                   </span>
-                )}
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${CHIP[pl.tono]}`}>
-                  <Icon name={pl.icono} className="h-3 w-3" /> {pl.texto}
-                </span>
-                {sinAsistencia > 0 && (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${CHIP.peach}`} title="Past classes with no attendance recorded">
-                    <Icon name="check" className="h-3 w-3" /> {sinAsistencia} without attendance
-                  </span>
-                )}
-                {sinGrabacion > 0 && (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${CHIP.peach}`} title="Past classes with no recording">
-                    <Icon name="play" className="h-3 w-3" /> {sinGrabacion} without recording
-                  </span>
-                )}
-                {faltantes.length > 0 && s.estado !== 'finalizado' && (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${CHIP.peach}`}>Missing {faltantes.join(' and ')}</span>
-                )}
-              </div>
-            </button>
-            <div className="flex items-center justify-between gap-2 border-t border-brand-100 bg-brand-50/40 px-3.5 py-1.5 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1 truncate">
-                <Icon name="users" className="h-3.5 w-3.5" /> {s.capacidad} ·{' '}
-                {paq ? `${minutosTexto(paq.consumidas)} of ${minutosTexto(paq.contratadas)} used` : s.progreso?.total ? `${s.progreso.realizadas}/${s.progreso.total} classes` : 'No calendar'}
-              </span>
-              <div className="flex shrink-0 items-center">
-                {puedeEditar && <BotonCompendio salon={s} variant="ghost" className="px-2 py-1 text-xs" etiqueta="Excel" />}
-                {puedeEditar && (
-                  <button type="button" onClick={() => onEditar(s.id)} className="rounded-lg px-2 py-1 font-medium text-slate-600 hover:bg-white hover:text-brand-700">
-                    Edit
-                  </button>
-                )}
-                <button type="button" onClick={() => onVer(s.id)} className="rounded-lg px-2 py-1 font-semibold text-brand-700 hover:bg-white">
-                  View
                 </button>
+                <MenuTarjeta salon={s} puedeEditar={puedeEditar} onVer={onVer} onEditar={onEditar} />
               </div>
+
+              <button type="button" onClick={() => onVer(s.id)} tabIndex={-1} className="flex flex-col gap-3 text-left">
+                <span className="flex items-center gap-1.5 text-sm text-slate-600">
+                  <Icon name="clock" className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="truncate">{formatHorario(s.horarios)}</span>
+                </span>
+                <span className="flex items-center gap-3">
+                  <Anillo valor={pct} size={44} grosor={5} color={paq ? 'var(--color-peach-700)' : undefined} fondo={paq ? 'var(--color-peach-100)' : undefined} etiqueta={`Progress of ${s.nombre}`} />
+                  <span className="min-w-0 text-sm text-slate-600">
+                    {paq ? (
+                      <>
+                        <span className="font-medium text-peach-700">Hour package</span> · {minutosTexto(paq.consumidas)} of {minutosTexto(paq.contratadas)} used
+                        <span className="block text-xs text-slate-500">{minutosTexto(Math.max(paq.disponibles, 0))} left</span>
+                      </>
+                    ) : s.progreso?.total ? (
+                      <>
+                        {s.progreso.realizadas} of {s.progreso.total} classes
+                        <span className="block text-xs text-slate-500">{pl.texto}</span>
+                      </>
+                    ) : (
+                      'No calendar'
+                    )}
+                  </span>
+                </span>
+                {alerta && (
+                  <span className={`inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${CHIP[alerta.tono]}`} title={alerta.ayuda}>
+                    <Icon name={alerta.icono} className="h-3.5 w-3.5" /> {alerta.texto}
+                  </span>
+                )}
+              </button>
             </div>
           </li>
         )
