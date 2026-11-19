@@ -6,6 +6,7 @@ import { etiquetaUnidad, fmtNota, textoFaltan } from '../../lib/evaluaciones'
 import { descargarInforme } from '../../lib/informeNotas'
 import Button from '../ui/Button'
 import ComoMeEvaluan from './ComoMeEvaluan'
+import MisHabilidades from './MisHabilidades'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
@@ -96,6 +97,7 @@ export default function MisCalificaciones({ salonId, servicio = servicioReal }) 
               </p>
             </div>
           )}
+          <MisHabilidades modulos={datos.modulos} />
           {ciclos.length > 0 && (
             <section>
               <h3 className="text-sm font-semibold text-slate-900">Result per cycle</h3>
