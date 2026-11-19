@@ -8,7 +8,8 @@ import EstadoBadge from './EstadoBadge'
 import { textoCiclos } from '../../lib/catalogo'
 import { fechaFinSalon, formatFecha, formatHorario, proximoAFinalizar } from '../../lib/salones'
 
-export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) {
+import { SIN_COLOR } from '../../lib/coloresNivel'
+export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puedeEditar, onVer, onEditar }) {
   const fotos = useFotosDocentes()
   return (
     <div className="overflow-x-auto">
@@ -42,7 +43,7 @@ export default function SalonesTabla({ salones, puedeEditar, onVer, onEditar }) 
                 </div>
               </td>
               <td className="px-4 py-2.5">
-                <div>{s.nivel || <span className="text-peach-700">No level assigned</span>}</div>
+                <div>{s.nivel ? <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${colorDe(s.nivelId).chip}`}>{s.nivel}</span> : <span className="text-peach-700">No level assigned</span>}</div>
                 {s.curso && <div className="text-xs text-slate-500">{s.curso}</div>}
                 {s.plan && (
                   <div className="text-xs text-slate-500">

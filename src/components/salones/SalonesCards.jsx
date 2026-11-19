@@ -5,9 +5,9 @@ import { Anillo } from '../ui/Anillo'
 import Icon from '../ui/Icon'
 import BotonCompendio from './BotonCompendio'
 import EstadoBadge from './EstadoBadge'
-import { portadaDe } from '../../lib/recursos'
 import { porcentajeAvance } from '../../lib/asistencia'
 import { minutosTexto } from '../../lib/paquetes'
+import { SIN_COLOR } from '../../lib/coloresNivel'
 import { diasParaFin, formatFecha, formatHorario } from '../../lib/salones'
 
 const CHIP = {
@@ -74,7 +74,7 @@ function MenuTarjeta({ salon, puedeEditar, onVer, onEditar }) {
 }
 
 // Lista de salones en tarjetas: docente, nombre, horario y avance, con una sola alerta. Las acciones están en el menú «⋯».
-export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) {
+export default function SalonesCards({ salones, colorDe = () => SIN_COLOR, puedeEditar, onVer, onEditar }) {
   const fotos = useFotosDocentes()
   return (
     <ul className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -83,9 +83,10 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
         const pct = paq ? porcentajeAvance(paq.consumidas, paq.contratadas) : s.progreso ? porcentajeAvance(s.progreso.realizadas, s.progreso.total) : null
         const pl = plazo(s)
         const alerta = alertaPrincipal(s, pl)
+        const col = colorDe(s.nivelId)
         return (
           <li key={s.id} className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${paq ? 'border-peach-200' : 'border-brand-100'}`}>
-            <div className={`h-1.5 bg-gradient-to-r ${paq ? 'from-peach-200 to-peach-500' : portadaDe(s.nombre)}`} />
+            <div className={`h-1.5 bg-gradient-to-r ${paq ? 'from-peach-200 to-peach-500' : col.barra}`} />
             <div className="flex flex-1 flex-col gap-3 p-4">
               <div className="flex items-start gap-3">
                 <button type="button" onClick={() => onVer(s.id)} aria-label={`Open ${s.nombre}`} className="flex min-w-0 flex-1 items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
@@ -99,8 +100,8 @@ export default function SalonesCards({ salones, puedeEditar, onVer, onEditar }) 
                     </span>
                     <span className="block truncate text-sm text-slate-500">
                       {s.docente || 'No teacher'}
-                      {s.nivel ? ` · ${s.nivel}` : ''}
                     </span>
+                    {s.nivel && <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${col.chip}`}>{s.nivel}</span>}
                   </span>
                 </button>
                 <MenuTarjeta salon={s} puedeEditar={puedeEditar} onVer={onVer} onEditar={onEditar} />

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Icon from '../ui/Icon'
 import SalonesCards from './SalonesCards'
 import { SIN_NIVEL, estados } from '../../lib/salones'
+import { coloresDeNiveles } from '../../lib/coloresNivel'
 
 const ORDEN_ESTADO = { en_curso: 0, pendiente: 1, finalizado: 2 }
 const PUNTO = { en_curso: 'bg-emerald-500', pendiente: 'bg-amber-400', finalizado: 'bg-slate-300' }
@@ -13,6 +14,7 @@ const conPendientes = (s) => (s.progreso?.porRegistrar ?? 0) > 0 || (s.pendiente
 // `abrirTodo`: se fuerza a mostrar todo abierto (p. ej. al elegir un nivel o buscar).
 export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirTodo = false, onVer, onEditar }) {
   const [abiertos, setAbiertos] = useState(() => new Set())
+  const colorDe = coloresDeNiveles(niveles)
   const grupos = [
     ...niveles.map((n) => ({ id: n.id, nombre: n.nombre, lista: salones.filter((s) => s.nivelId === n.id) })),
     { id: SIN_NIVEL, nombre: 'No level assigned', lista: salones.filter((s) => !s.nivelId) },
@@ -51,21 +53,22 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
           const abierto = estaAbierto(g.id)
           const nPend = g.lista.filter(conPendientes).length
           const panel = `nivel-${g.id}`
+          const col = colorDe(g.id)
           return (
-            <section key={g.id} aria-label={`Level ${g.nombre}`} className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${abierto ? 'border-brand-200 shadow-sm' : 'border-slate-200 hover:border-brand-200 hover:shadow-sm'}`}>
+            <section key={g.id} aria-label={`Level ${g.nombre}`} className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${abierto ? `${col.borde} shadow-sm` : 'border-slate-200 hover:border-brand-200 hover:shadow-sm'}`}>
               <button
                 type="button"
                 aria-expanded={abierto}
                 aria-controls={panel}
                 onClick={() => alternar(g.id)}
                 disabled={abrirTodo || grupos.length === 1}
-                className={`flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 text-left transition-colors disabled:cursor-default ${abierto ? 'bg-brand-50/70' : 'bg-white hover:bg-brand-50/40'}`}
+                className={`flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 text-left transition-colors disabled:cursor-default ${abierto ? col.fondo : 'bg-white hover:bg-slate-50'}`}
               >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${abierto ? 'bg-brand-600 text-white' : 'bg-brand-100 text-brand-700'}`}>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${abierto ? col.cajaOn : col.caja}`}>
                   <Icon name="box" className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-base font-bold text-brand-800">{g.nombre}</span>
+                  <span className={`block truncate text-base font-bold ${col.titulo}`}>{g.nombre}</span>
                   <span className="block text-xs text-slate-500">
                     {g.lista.length} {g.lista.length === 1 ? 'classroom' : 'classrooms'}
                   </span>
@@ -91,7 +94,7 @@ export default function SalonesAgrupados({ salones, niveles, puedeEditar, abrirT
               </button>
               {abierto && (
                 <div id={panel} className="border-t border-brand-100">
-                  <SalonesCards salones={ordenados} puedeEditar={puedeEditar} onVer={onVer} onEditar={onEditar} />
+                  <SalonesCards salones={ordenados} colorDe={colorDe} puedeEditar={puedeEditar} onVer={onVer} onEditar={onEditar} />
                 </div>
               )}
             </section>

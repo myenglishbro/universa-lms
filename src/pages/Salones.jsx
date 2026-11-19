@@ -12,6 +12,7 @@ import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
 import { descargarCompendio } from '../services/compendio'
+import { coloresDeNiveles } from '../lib/coloresNivel'
 import FranjaAtencion from '../components/salones/FranjaAtencion'
 import { SIN_NIVEL, coincideNivel, estados, proximoAFinalizar } from '../lib/salones'
 
@@ -318,7 +319,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
               <p className="px-4 py-10 text-center text-sm text-slate-500">No classroom matches your search.</p>
             ) : (
               (vista === 'tabla' ? (
-                <SalonesTabla salones={visibles} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
+                <SalonesTabla salones={visibles} colorDe={coloresDeNiveles(niveles)} puedeEditar={puedeEditar} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ) : (
                 <SalonesAgrupados salones={visibles} niveles={niveles} puedeEditar={puedeEditar} abrirTodo={Boolean(nivel) || Boolean(texto) || Boolean(tipo) || Boolean(foco)} onVer={setDetalleId} onEditar={(id) => setForm({ salon: salones.find((s) => s.id === id) })} />
               ))
