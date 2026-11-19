@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import CambiarClave from './components/portal/CambiarClave'
 import Layout from './components/layout/Layout'
 import PageHeader from './components/ui/PageHeader'
 import Card from './components/ui/Card'
@@ -26,9 +27,10 @@ function MiCuenta({ email }) {
           <Icon name="mail" className="h-4 w-4" /> Email
         </p>
         <p className="mt-1 text-base font-semibold text-slate-900">{email}</p>
+        <CambiarClave email={email} />
         <p className="mt-5 flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
           <Icon name="lock" className="mt-0.5 h-4 w-4 shrink-0" />
-          Your password is managed by Universa. If you forgot it or want to change it, write to administration.
+          If you forgot your current password, write to administration and they will help you recover access.
         </p>
       </Card>
     </div>
