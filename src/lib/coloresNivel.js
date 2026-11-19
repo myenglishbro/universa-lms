@@ -1,16 +1,15 @@
-// Un color por nivel académico para distinguirlos de un vistazo. Se evitan rosa, durazno y ámbar: son los colores de las alertas.
-// Las clases van completas (Tailwind no detecta nombres armados), y el color sigue el orden de la lista de niveles.
+// Una variante por nivel académico para distinguirlos de un vistazo, SOLO con la paleta de la marca (morado en intensidades, durazno y gris pizarra).
+// Siguen el orden de la lista de niveles: del morado claro al más profundo, luego durazno, pizarra y la mezcla morado-durazno.
+// Las clases van completas (Tailwind no detecta nombres armados).
 const PALETA = [
-  { barra: 'from-sky-400 to-sky-600', chip: 'bg-sky-50 text-sky-700 ring-sky-200', caja: 'bg-sky-100 text-sky-700', cajaOn: 'bg-sky-600 text-white', titulo: 'text-sky-800', fondo: 'bg-sky-50/70', borde: 'border-sky-200' },
-  { barra: 'from-emerald-400 to-emerald-600', chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', caja: 'bg-emerald-100 text-emerald-700', cajaOn: 'bg-emerald-600 text-white', titulo: 'text-emerald-800', fondo: 'bg-emerald-50/70', borde: 'border-emerald-200' },
-  { barra: 'from-violet-400 to-violet-600', chip: 'bg-violet-50 text-violet-700 ring-violet-200', caja: 'bg-violet-100 text-violet-700', cajaOn: 'bg-violet-600 text-white', titulo: 'text-violet-800', fondo: 'bg-violet-50/70', borde: 'border-violet-200' },
-  { barra: 'from-teal-400 to-teal-600', chip: 'bg-teal-50 text-teal-700 ring-teal-200', caja: 'bg-teal-100 text-teal-700', cajaOn: 'bg-teal-600 text-white', titulo: 'text-teal-800', fondo: 'bg-teal-50/70', borde: 'border-teal-200' },
-  { barra: 'from-indigo-400 to-indigo-600', chip: 'bg-indigo-50 text-indigo-700 ring-indigo-200', caja: 'bg-indigo-100 text-indigo-700', cajaOn: 'bg-indigo-600 text-white', titulo: 'text-indigo-800', fondo: 'bg-indigo-50/70', borde: 'border-indigo-200' },
-  { barra: 'from-fuchsia-400 to-fuchsia-600', chip: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200', caja: 'bg-fuchsia-100 text-fuchsia-700', cajaOn: 'bg-fuchsia-600 text-white', titulo: 'text-fuchsia-800', fondo: 'bg-fuchsia-50/70', borde: 'border-fuchsia-200' },
-  { barra: 'from-lime-400 to-lime-600', chip: 'bg-lime-50 text-lime-800 ring-lime-300', caja: 'bg-lime-100 text-lime-800', cajaOn: 'bg-lime-600 text-white', titulo: 'text-lime-900', fondo: 'bg-lime-50/70', borde: 'border-lime-300' },
-  { barra: 'from-cyan-400 to-cyan-600', chip: 'bg-cyan-50 text-cyan-700 ring-cyan-200', caja: 'bg-cyan-100 text-cyan-700', cajaOn: 'bg-cyan-600 text-white', titulo: 'text-cyan-800', fondo: 'bg-cyan-50/70', borde: 'border-cyan-200' },
+  { barra: 'from-brand-200 to-brand-500', chip: 'bg-brand-50 text-brand-700 ring-brand-200', caja: 'bg-brand-100 text-brand-700', cajaOn: 'bg-brand-500 text-white', titulo: 'text-brand-700', fondo: 'bg-brand-50/70', borde: 'border-brand-200' },
+  { barra: 'from-brand-500 to-brand-700', chip: 'bg-brand-600 text-white ring-brand-600', caja: 'bg-brand-200 text-brand-800', cajaOn: 'bg-brand-600 text-white', titulo: 'text-brand-800', fondo: 'bg-brand-50/70', borde: 'border-brand-200' },
+  { barra: 'from-brand-800 to-brand-900', chip: 'bg-brand-900 text-white ring-brand-900', caja: 'bg-brand-200 text-brand-900', cajaOn: 'bg-brand-900 text-white', titulo: 'text-brand-900', fondo: 'bg-brand-50/70', borde: 'border-brand-200' },
+  { barra: 'from-peach-200 to-peach-500', chip: 'bg-peach-100 text-peach-700 ring-peach-200', caja: 'bg-peach-100 text-peach-700', cajaOn: 'bg-peach-700 text-white', titulo: 'text-peach-700', fondo: 'bg-peach-50', borde: 'border-peach-200' },
+  { barra: 'from-slate-600 to-slate-800', chip: 'bg-slate-700 text-white ring-slate-700', caja: 'bg-slate-200 text-slate-800', cajaOn: 'bg-slate-700 text-white', titulo: 'text-slate-800', fondo: 'bg-slate-50', borde: 'border-slate-300' },
+  { barra: 'from-brand-600 to-peach-500', chip: 'bg-white text-brand-700 ring-brand-500', caja: 'bg-peach-100 text-brand-700', cajaOn: 'bg-gradient-to-br from-brand-600 to-peach-500 text-white', titulo: 'text-brand-700', fondo: 'bg-peach-50', borde: 'border-peach-200' },
 ]
-export const SIN_COLOR = { barra: 'from-slate-300 to-slate-400', chip: 'bg-slate-50 text-slate-500 ring-slate-200', caja: 'bg-slate-100 text-slate-500', cajaOn: 'bg-slate-500 text-white', titulo: 'text-slate-700', fondo: 'bg-slate-50', borde: 'border-slate-200' }
+export const SIN_COLOR = { barra: 'from-slate-200 to-slate-300', chip: 'bg-slate-50 text-slate-500 ring-slate-200', caja: 'bg-slate-100 text-slate-500', cajaOn: 'bg-slate-400 text-white', titulo: 'text-slate-600', fondo: 'bg-slate-50', borde: 'border-slate-200' }
 
 // Devuelve una función nivel (id o nombre) → colores. Un nivel desconocido o vacío usa el gris.
 export function coloresDeNiveles(niveles = []) {

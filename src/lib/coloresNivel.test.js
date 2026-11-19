@@ -9,9 +9,9 @@ test('cada nivel tiene su color, por id o por nombre, y se repite igual', () => 
   assert.equal(de('a'), coloresDeNiveles([{ id: 'a', nombre: 'Basic' }])('a'))
 })
 test('con más niveles que colores se reutiliza la paleta y lo desconocido va en gris', () => {
-  const niv = Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, nombre: `L${i}` }))
+  const niv = Array.from({ length: 12 }, (_, i) => ({ id: `n${i}`, nombre: `L${i}` }))
   const de = coloresDeNiveles(niv)
-  assert.equal(de('n0'), de('n8'))
+  assert.equal(de('n0'), de('n6'))
   assert.equal(de(''), SIN_COLOR)
   assert.equal(de(undefined), SIN_COLOR)
 })
