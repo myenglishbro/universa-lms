@@ -21,9 +21,28 @@ Si las tareas rinden distinto (T1 = 35/35 y T2 = 39/65), la suma da 74 y un prom
 
 - Un texto con ideas completas pero errores constantes: Content 4–5, Language 2, Mechanics 2. El perfil no se aplana.
 - Un texto correcto en forma pero que omite la mitad de la consigna: Language 4, Content 2. La nota baja por la consigna, no por la gramática.
-- Project: un estudiante con mucha pronunciación nativa pero que no responde preguntas: Pronunciation 5 (15) e Interaction 1 (3).
+- Project: un estudiante con mucha pronunciación nativa pero que no responde preguntas: Pronunciation 5 (20) e Interaction 1 (2).
   La pronunciación mide inteligibilidad, no acento; Interaction mide respuesta pertinente.
-- Speaking (banco) y Project comparten el estilo de descriptores; los pesos difieren (Fluency 20 en Project y 10 en Speaking; Pronunciation 15 y 10).
+- Speaking (banco) y Project comparten el estilo de descriptores; los pesos difieren (Fluency 15 en Project y 10 en Speaking; Pronunciation 20 y 10).
+
+## Project (100): Task 25 · Grammar 12,5 + Vocabulary 12,5 · Fluency 15 · Pronunciation 20 · Interaction 10 · Visual 5
+
+| Criterio (peso) | Un nivel vale | Perfil A | Perfil B | Perfil C |
+|---|---|---|---|---|
+| Task Achievement & Communication (25) | 5 | 4 → 20 | 3 → 15 | 5 → 25 |
+| Grammar (12,5) | 2,5 | 4 → 10 | 2 → 5 | 5 → 12,5 |
+| Vocabulary (12,5) | 2,5 | 2 → 5 | 4 → 10 | 5 → 12,5 |
+| Fluency & Coherence (15) | 3 | 3 → 9 | 3 → 9 | 5 → 15 |
+| Pronunciation & Intelligibility (20) | 4 | 3 → 12 | 1 → 4 | 5 → 20 |
+| Interaction & Q&A (10) | 2 | 3 → 6 | 2 → 4 | 5 → 10 |
+| Visual Support & Delivery (5) | 1 | 4 → 4 | 3 → 3 | 5 → 5 |
+| **Total** | | **66** | **50** | **100** |
+
+Perfil A: Grammar y Vocabulary desiguales (4 / 2) suman 15 de 25; si fueran (2 / 4) también 15: ambas dimensiones pesan igual.
+Una lectura continua se descuenta en Visual Support (no en Fluency); un desliz aislado (una palabra en una diapositiva) baja Visual como máximo un nivel.
+
+**Nota ya publicada con la rúbrica anterior (20/25/20/15/15/5, todo en nivel 4 = 80):** se conserva tal cual. Al abrirla, la pantalla muestra los mismos
+niveles con los pesos actuales (80 de 100) y un aviso de que se guardó con una versión anterior. Limitación: al guardar una *corrección* se aplica la rúbrica actual.
 
 ## Ejemplo de Grade Chart (Test 28 · Writing 24 · Project 28 · Formative 20)
 

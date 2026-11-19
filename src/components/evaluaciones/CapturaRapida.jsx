@@ -3,7 +3,7 @@ import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
 import useCarga from '../../hooks/useCarga'
-import { NIVELES_RUBRICA, criteriosDeUnidad, esPorNiveles, fmtNota, nivelDePuntaje, notaRubrica, puntajeDeNivel } from '../../lib/evaluaciones'
+import { NIVELES_RUBRICA, criteriosDeUnidad, esPorNiveles, fmtNota, nivelDePuntaje, notaRubrica, puntajeDeNivel, valoresDeDetalleRubrica } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
@@ -40,9 +40,7 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
   const base = (a) => {
     const f = filaDe(a)
     if (criterios.length) {
-      const v = {}
-      for (const c of criterios) v[c.id] = (f?.detalle ?? []).find((d) => d.criterio === c.nombre)?.puntaje ?? ''
-      return { valores: v }
+      return { valores: valoresDeDetalleRubrica(criterios, f?.detalle) }
     }
     return { puntaje: f?.puntaje ?? '' }
   }

@@ -145,3 +145,76 @@ test('expectativas MCER: solo los niveles del salón', () => {
   assert.deepEqual(expectativasMcer(c, 'A2.2 – B1.1').map((e) => e.nivel), ['A2', 'B1'])
   assert.equal(expectativasMcer(c, null).length, 5)
 })
+
+// ---- Project 2026 (25 / 12,5 + 12,5 / 15 / 20 / 10 / 5), etiquetas en inglés ----
+import { NIVELES_RUBRICA, valoresDeDetalleRubrica } from './evaluaciones.js'
+
+const nivelesBandas = [0, 1, 2, 3, 4, 5].map((nivel) => ({ nivel, etiqueta: 'x', descripcion: 'x' }))
+const GV = 'Grammar & Vocabulary'
+const project2026 = [
+  { id: 'p1', nombre: 'Task Achievement & Communication', max_puntaje: 25, bandas: nivelesBandas },
+  { id: 'p2', nombre: `${GV} · Grammar`, max_puntaje: 12.5, bandas: nivelesBandas },
+  { id: 'p3', nombre: `${GV} · Vocabulary`, max_puntaje: 12.5, bandas: nivelesBandas },
+  { id: 'p4', nombre: 'Fluency & Coherence', max_puntaje: 15, bandas: nivelesBandas },
+  { id: 'p5', nombre: 'Pronunciation & Intelligibility', max_puntaje: 20, bandas: nivelesBandas },
+  { id: 'p6', nombre: 'Interaction & Q&A', max_puntaje: 10, bandas: nivelesBandas },
+  { id: 'p7', nombre: 'Visual Support & Delivery', max_puntaje: 5, bandas: nivelesBandas },
+]
+test('Project 2026: seis criterios oficiales que suman 100, con Grammar & Vocabulary = 12,5 + 12,5', () => {
+  const g = agruparCriterios(project2026)
+  assert.equal(g.length, 6)
+  assert.deepEqual(g.map((x) => x.max), [25, 25, 15, 20, 10, 5])
+  assert.equal(g.reduce((s, x) => s + x.max, 0), 100)
+  assert.equal(g[1].grupo, GV)
+  assert.deepEqual(g[1].items.map((c) => nombreEnGrupo(c, GV)), ['Grammar', 'Vocabulary'])
+})
+
+test('Project 2026: Grammar 4 y Vocabulary 2 = 10 + 5 de 25; cada nivel de un subcriterio vale 2,5', () => {
+  const [, gram, voc] = project2026
+  assert.equal(puntajeDeNivel(gram, 1), '2.5')
+  assert.equal(nivelDePuntaje(gram, '10'), 4)
+  const sub = subtotalGrupo([gram, voc], { p2: puntajeDeNivel(gram, 4), p3: puntajeDeNivel(voc, 2) })
+  assert.deepEqual(sub, { suma: 15, max: 25, completo: true })
+})
+
+test('Project 2026: todo en 5 = 100, todo en 0 = 0, Fluency 5 y Pronunciation 1 = 19; sin un criterio no hay total', () => {
+  const todosEn = (n) => Object.fromEntries(project2026.map((c) => [c.id, puntajeDeNivel(c, n)]))
+  assert.equal(notaRubrica(project2026, todosEn(5)), 100)
+  assert.equal(notaRubrica(project2026, todosEn(0)), 0)
+  assert.equal(Number(puntajeDeNivel(project2026[3], 5)) + Number(puntajeDeNivel(project2026[4], 1)), 19)
+  assert.equal(notaRubrica(project2026, { ...todosEn(3), p6: '' }), null)
+})
+
+test('etiquetas de los niveles 0–5 en inglés', () => {
+  assert.deepEqual(NIVELES_RUBRICA.map((n) => n.etiqueta), ['Not demonstrated', 'Beginning', 'Basic', 'Developing', 'Achieved', 'Outstanding'])
+})
+
+test('detalle guardado (nivel dentro del criterio): se lee por nombre; sin detalle, todo queda pendiente (nunca cero)', () => {
+  const detalle = project2026.map((c) => ({ criterio: c.nombre, max: c.max_puntaje, puntaje: Number(puntajeDeNivel(c, 3)), nivel: 3 }))
+  const v = valoresDeDetalleRubrica(project2026, detalle)
+  assert.deepEqual(project2026.map((c) => nivelDePuntaje(c, v[c.id])), [3, 3, 3, 3, 3, 3, 3])
+  assert.deepEqual(valoresDeDetalleRubrica(project2026, null), { p1: '', p2: '', p3: '', p4: '', p5: '', p6: '', p7: '' })
+})
+
+test('Writing Assessment: una nota guardada se vuelve a leer igual', () => {
+  const t1 = criteriosDeUnidad(writing, 'Task 1')
+  const detalle = t1.map((c) => ({ criterio: c.nombre, max: c.max_puntaje, puntaje: Number(puntajeDeNivel(c, 4)) }))
+  const v = valoresDeDetalleRubrica(t1, detalle)
+  assert.equal(notaRubrica(t1, v), 80)
+})
+
+test('expectativas MCER según el subnivel del ciclo: A1.2→A1, A2.1→A2, A2.2→A2, B1.1→B1; sin nivel, los cinco; C2 sin expectativas', () => {
+  const c = { niveles_mcer: { A1: 'a', A2: 'b', B1: 'c', B2: 'd', C1: 'e' } }
+  const de = (m) => expectativasMcer(c, m).map((e) => e.nivel)
+  assert.deepEqual(de('A1.1'), ['A1'])
+  assert.deepEqual(de('A1.2'), ['A1'])
+  assert.deepEqual(de('A2.1'), ['A2'])
+  assert.deepEqual(de('A2.2'), ['A2'])
+  assert.deepEqual(de('B1.1'), ['B1'])
+  assert.deepEqual(de('B1.3'), ['B1'])
+  assert.deepEqual(de('C1.2'), ['C1'])
+  assert.deepEqual(de('C2.1'), [])
+  assert.deepEqual(de(null), ['A1', 'A2', 'B1', 'B2', 'C1'])
+  assert.deepEqual(de(''), ['A1', 'A2', 'B1', 'B2', 'C1'])
+  assert.deepEqual(expectativasMcer({}, 'A2.2'), [])
+})

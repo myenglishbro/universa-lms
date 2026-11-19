@@ -1,25 +1,24 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useContext, useRef, useState } from 'react'
 import Badge from '../ui/Badge'
-import CriteriosRubrica from './CriteriosRubrica'
+import CriteriosRubrica, { NivelMcerContext } from './CriteriosRubrica'
 import Button from '../ui/Button'
 import { inputClass } from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { claveNota, criteriosDeUnidad, fmtNota, notaRubrica, pesoUnidad, totalCriterios, totalPorTareas } from '../../lib/evaluaciones'
+import { claveNota, criteriosDeUnidad, fmtNota, notaRubrica, pesoUnidad, totalCriterios, totalPorTareas, valoresDeDetalleRubrica } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 
-// Valores de la rúbrica a partir de la copia guardada con la nota (se empareja por nombre de criterio).
-function valoresDe(fila, criterios) {
-  const v = {}
-  for (const c of criterios) v[c.id] = (fila?.detalle ?? []).find((d) => d.criterio === c.nombre)?.puntaje ?? ''
-  return v
-}
+// Valores de la rúbrica a partir de la copia guardada con la nota.
+const valoresDe = (fila, criterios) => valoresDeDetalleRubrica(criterios, fila?.detalle)
 
 const aporte = (peso, nota) => (nota == null ? null : Math.round(Number(peso) * Number(nota)) / 100)
 
 function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, setMensaje }) {
   const { evaluacion, rubrica } = detalle
+  // Nivel MCER objetivo del módulo (por su ciclo); sin él, el nivel del salón que provee la matriz; sin ninguno, se muestran los cinco niveles.
+  const mcerSalon = useContext(NivelMcerContext)
+  const mcer = evaluacion.mcer_objetivo ?? mcerSalon
   const alumno = detalle.alumnos.find((a) => a.alumno_id === alumnoId)
   const todos = rubrica?.criterios ?? []
   const unidades = evaluacion.unidades
@@ -150,14 +149,16 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       )}
 
       {criterios.length > 0 ? (
-        <CriteriosRubrica
-          criterios={criterios}
-          valores={ed.valores}
-          deshabilitado={!editable}
-          sinDetalle={esFormative}
-          titulo={esFormative ? '' : `${evaluacion.nombre} Assessment`}
-          onCambiar={(id, v) => cambiar(unidad, { valores: { ...ed.valores, [id]: v } })}
-        />
+        <NivelMcerContext.Provider value={mcer}>
+          <CriteriosRubrica
+            criterios={criterios}
+            valores={ed.valores}
+            deshabilitado={!editable}
+            sinDetalle={esFormative}
+            titulo={esFormative ? '' : `${evaluacion.nombre} Assessment`}
+            onCambiar={(id, v) => cambiar(unidad, { valores: { ...ed.valores, [id]: v } })}
+          />
+        </NivelMcerContext.Provider>
       ) : (
         <div className="flex items-center gap-3">
           <label htmlFor="nota-directa" className="text-sm font-medium text-slate-700">

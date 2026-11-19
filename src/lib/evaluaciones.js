@@ -149,12 +149,12 @@ export const etiquetaUnidad = (unidad, tipo) => unidad || (tipo === 'formative' 
 // Un criterio es «por niveles» cuando sus bandas llevan «nivel». El docente elige el nivel; los puntos son nivel ÷ 5 × peso del criterio.
 // La nota que cuenta la calcula SQL (eval_resolver_nota); estas funciones solo preparan lo que se envía y la vista previa.
 export const NIVELES_RUBRICA = [
-  { nivel: 0, etiqueta: 'No demostrado' },
-  { nivel: 1, etiqueta: 'Inicial' },
-  { nivel: 2, etiqueta: 'Básico' },
-  { nivel: 3, etiqueta: 'En desarrollo' },
-  { nivel: 4, etiqueta: 'Logrado' },
-  { nivel: 5, etiqueta: 'Destacado' },
+  { nivel: 0, etiqueta: 'Not demonstrated' },
+  { nivel: 1, etiqueta: 'Beginning' },
+  { nivel: 2, etiqueta: 'Basic' },
+  { nivel: 3, etiqueta: 'Developing' },
+  { nivel: 4, etiqueta: 'Achieved' },
+  { nivel: 5, etiqueta: 'Outstanding' },
 ]
 export const esPorNiveles = (criterio) => Array.isArray(criterio?.bandas) && criterio.bandas.some((b) => b?.nivel != null)
 
@@ -167,6 +167,13 @@ export function nivelDePuntaje(criterio, valor) {
   const n = (Number(valor) * 5) / Number(criterio.max_puntaje)
   const r = Math.round(n)
   return Math.abs(n - r) < 1e-6 && r >= 0 && r <= 5 ? r : null
+}
+// Valores de la rúbrica (puntos por criterio) a partir de la copia de criterios guardada con la nota. Se empareja por nombre; sin copia, vacío (pendiente).
+export function valoresDeDetalleRubrica(criterios = [], detalle = []) {
+  const items = Array.isArray(detalle) ? detalle : []
+  const v = {}
+  for (const c of criterios) v[c.id] = items.find((d) => d?.criterio === c.nombre)?.puntaje ?? ''
+  return v
 }
 export const bandaDeNivel = (criterio, nivel) => (criterio.bandas ?? []).find((b) => nivel != null && Number(b.nivel) === Number(nivel)) ?? null
 

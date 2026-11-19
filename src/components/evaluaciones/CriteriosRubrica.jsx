@@ -36,6 +36,10 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
   const banda = bandaDeNivel(c, mostrado)
   const expectativas = expectativasMcer(c, mcer)
   const puntos = nivel == null ? null : Number(puntajeDeNivel(c, nivel))
+  // Misma etiqueta en pantalla para todas las rúbricas por niveles (la de la base puede estar en otro idioma).
+  const etiquetaNivel = (n) => NIVELES_RUBRICA.find((x) => x.nivel === Number(n))?.etiqueta ?? ''
+  // Hay expectativas escritas, pero no para el nivel pedido (p. ej. C2): se avisa en vez de esconder la ayuda.
+  const sinExpectativas = !!mcer && !!c.niveles_mcer && expectativas.length === 0
   const elegir = (n) => onCambiar(c.id, nivel === n ? '' : puntajeDeNivel(c, n))
   const teclas = (ev, n) => {
     const paso = ev.key === 'ArrowRight' || ev.key === 'ArrowDown' ? 1 : ev.key === 'ArrowLeft' || ev.key === 'ArrowUp' ? -1 : 0
@@ -91,7 +95,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         {banda ? (
           <>
             <span className="font-semibold text-brand-800">
-              {mostrado} · {banda.etiqueta}
+              {mostrado} · {etiquetaNivel(mostrado)}
               {previo != null && previo !== nivel ? ' (preview — click to choose)' : ''}:
             </span>{' '}
             {adaptarNivel(banda.descripcion, mcer)}
@@ -101,6 +105,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         )}
       </p>
 
+      {sinExpectativas && <p className="mt-1.5 text-xs text-slate-500">No expectations are written for {mcer}; use the closest CEFR level.</p>}
       {expectativas.length > 0 && (
         <button type="button" onClick={() => setAbierto((a) => !a)} aria-expanded={abierto} className="mt-1.5 text-xs font-medium text-brand-700 underline">
           {abierto ? 'Hide' : 'See'} expectations{mcer ? ` for ${mcer}` : ' by CEFR level'} and all levels
@@ -122,7 +127,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
             {(c.bandas ?? []).map((b) => (
               <li key={b.nivel} className={`text-xs ${nivel === Number(b.nivel) ? 'font-semibold text-brand-800' : 'text-slate-600'}`}>
                 <span className="font-semibold">
-                  {b.nivel} · {b.etiqueta}
+                  {b.nivel} · {etiquetaNivel(b.nivel)}
                 </span>
                 {b.descripcion ? `: ${adaptarNivel(b.descripcion, mcer)}` : ''}
               </li>
