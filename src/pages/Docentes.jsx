@@ -3,6 +3,13 @@ import BuscarDocenteLibre from '../components/docentes/BuscarDocenteLibre'
 import DocenteForm from '../components/docentes/DocenteForm'
 import CuentaAcceso from '../components/portal/CuentaAcceso'
 import GrillaDisponibilidad from '../components/disponibilidad/GrillaDisponibilidad'
+import CamposDocenteModal from '../components/docentes/CamposDocenteModal'
+import FiltroCaracteristicas from '../components/docentes/FiltroCaracteristicas'
+import PerfilInternoForm from '../components/docentes/PerfilInternoForm'
+import usePerfilInterno from '../hooks/usePerfilInterno'
+import { coincidePerfil, filtrosVacios, hayFiltros, valoresDe } from '../lib/perfilDocente'
+import { guardarDisponibilidadDocente } from '../services/docentesPerfil'
+import { aLista } from '../lib/disponibilidad'
 import Avatar from '../components/ui/Avatar'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -31,6 +38,14 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
   const [proximas, setProximas] = useState(null) // null = cargando
   const [perfiles, setPerfiles] = useState(new Map()) // docenteId -> { foto_url, celular }
   const [disp, setDisp] = useState(new Map()) // docenteId -> Set de franjas
+  const interno = usePerfilInterno() // campos y descripciones solo para administración
+  const [filtrosPerfil, setFiltrosPerfil] = useState(filtrosVacios)
+  const [verFiltroPerfil, setVerFiltroPerfil] = useState(false)
+  const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [gestionandoCampos, setGestionandoCampos] = useState(false)
+  const [editDisp, setEditDisp] = useState(null) // Set en edición (null = solo lectura)
+  const [guardandoDisp, setGuardandoDisp] = useState(false)
+  const [errorDisp, setErrorDisp] = useState('')
 
   // Foto, celular y disponibilidad que dejó cada docente (si la migración de registros aún no está, la ficha funciona igual).
   useEffect(() => {
@@ -65,7 +80,7 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
 
   const texto = busqueda.trim().toLowerCase()
   const visibles = docentes.filter(
-    (d) => (filtro === 'todos' || (filtro === 'activos' ? d.activo : !d.activo)) && (!texto || `${d.nombre} ${d.correo ?? ''}`.toLowerCase().includes(texto)),
+    (d) => (filtro === 'todos' || (filtro === 'activos' ? d.activo : !d.activo)) && (!texto || `${d.nombre} ${d.correo ?? ''}`.toLowerCase().includes(texto)) && coincidePerfil(interno.perfiles.get(d.id), filtrosPerfil),
   )
   const salonesDe = (id) => salones.filter((s) => s.docenteId === id)
 
@@ -77,6 +92,19 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
     }
     await onCambio()
     setForm(null)
+  }
+
+  const guardarDisp = async () => {
+    setGuardandoDisp(true)
+    setErrorDisp('')
+    try {
+      await guardarDisponibilidadDocente(detalle.id, aLista(editDisp))
+      setDisp((m) => new Map(m).set(detalle.id, editDisp))
+      setEditDisp(null)
+    } catch (e) {
+      setErrorDisp(e.message)
+    }
+    setGuardandoDisp(false)
   }
 
   const misSalones = detalle ? salonesDe(detalle.id) : []
@@ -135,15 +163,66 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
             )}
           </Card>
 
+          {puedeEditar && (
+            <Card className="mt-6 p-6">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-semibold text-slate-900">
+                  Internal profile <Badge color="slate">Admin only</Badge>
+                </h2>
+                <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => setEditandoPerfil(true)}>
+                  Edit profile
+                </Button>
+              </div>
+              {interno.perfiles.get(detalle.id)?.descripcion ? (
+                <p className="whitespace-pre-line text-sm text-slate-700">{interno.perfiles.get(detalle.id).descripcion}</p>
+              ) : (
+                <p className="text-sm text-slate-400">No internal description yet.</p>
+              )}
+              <div className="mt-3 space-y-1.5">
+                {valoresDe(interno.perfiles.get(detalle.id), interno.campos).map((x) => (
+                  <div key={x.campo} className="flex flex-wrap items-center gap-1.5 text-sm">
+                    <span className="w-32 text-xs font-medium text-slate-500">{x.campo}</span>
+                    {x.opciones.map((o) => (
+                      <Badge key={o} color="brand">
+                        {o}
+                      </Badge>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <Card className="mt-6 p-6">
-            <h2 className="mb-1 text-base font-semibold text-slate-900">Weekly availability</h2>
-            {disp.get(detalle.id)?.size ? (
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-slate-900">Weekly availability</h2>
+              {puedeEditar && !editDisp && (
+                <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => setEditDisp(new Set(disp.get(detalle.id) ?? []))}>
+                  Edit availability
+                </Button>
+              )}
+            </div>
+            {editDisp ? (
+              <>
+                <p className="mb-3 text-sm text-slate-600">Tap or drag to mark the hours this teacher can teach.</p>
+                <GrillaDisponibilidad value={editDisp} onChange={setEditDisp} />
+                {errorDisp && <p className="mt-2 text-sm text-red-600">{errorDisp}</p>}
+                <div className="mt-3 flex justify-end gap-2">
+                  <Button variant="secondary" onClick={() => { setEditDisp(null); setErrorDisp('') }}>
+                    Cancel
+                  </Button>
+                  <Button onClick={guardarDisp} disabled={guardandoDisp}>
+                    {guardandoDisp ? 'Saving…' : 'Save availability'}
+                  </Button>
+                </div>
+              </>
+            ) : disp.get(detalle.id)?.size ? (
               <>
                 <p className="mb-3 text-sm text-slate-600">{resumenDisponibilidad(disp.get(detalle.id))}</p>
                 <GrillaDisponibilidad value={disp.get(detalle.id)} />
               </>
             ) : (
-              <p className="text-sm text-slate-400">This teacher has not marked their availability yet.</p>
+              <p className="text-sm text-slate-400">No availability marked yet.</p>
             )}
           </Card>
 
@@ -195,6 +274,9 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
             action={
               puedeEditar && (
                 <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => setGestionandoCampos(true)} disabled={cargando || Boolean(error)}>
+                    Profile fields
+                  </Button>
                   <Button variant="secondary" onClick={() => setBuscandoLibre(true)} disabled={cargando || Boolean(error)}>
                     <Icon name="search" className="h-4 w-4" /> Find a free teacher
                   </Button>
@@ -216,7 +298,14 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
                 <option value="inactivos">Inactive</option>
                 <option value="todos">All</option>
               </select>
+              {puedeEditar && interno.campos.length > 0 && (
+                <button type="button" aria-expanded={verFiltroPerfil} onClick={() => setVerFiltroPerfil((v) => !v)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 hover:border-brand-300 hover:text-brand-700">
+                  Profile filters
+                  {hayFiltros(filtrosPerfil) && <span className="rounded-full bg-brand-600 px-1.5 text-xs font-bold text-white">on</span>}
+                </button>
+              )}
             </div>
+            {puedeEditar && verFiltroPerfil && <FiltroCaracteristicas campos={interno.campos} filtros={filtrosPerfil} onChange={setFiltrosPerfil} className="m-4" />}
             {cargando ? (
               <p className="px-4 py-10 text-center text-sm text-slate-500">Loading teachers…</p>
             ) : error ? (
@@ -265,6 +354,8 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
         <BuscarDocenteLibre
           docentes={docentes}
           salones={salones}
+          campos={puedeEditar ? interno.campos : []}
+          perfiles={interno.perfiles}
           onVerDocente={(id) => {
             setBuscandoLibre(false)
             setDetalleId(id)
@@ -272,6 +363,19 @@ export default function Docentes({ data, paquetes, puedeEditar, docenteInicialId
           onClose={() => setBuscandoLibre(false)}
         />
       )}
+      {editandoPerfil && detalle && (
+        <PerfilInternoForm
+          docente={detalle}
+          perfil={interno.perfiles.get(detalle.id)}
+          campos={interno.campos}
+          onGuardado={async () => {
+            await interno.recargar()
+            setEditandoPerfil(false)
+          }}
+          onClose={() => setEditandoPerfil(false)}
+        />
+      )}
+      {gestionandoCampos && <CamposDocenteModal campos={interno.campos} onCambio={async () => interno.recargar()} onClose={() => setGestionandoCampos(false)} />}
       {form && <DocenteForm key={form.docente?.id ?? 'nuevo'} docente={form.docente} onSave={guardar} onClose={() => setForm(null)} />}
     </>
   )

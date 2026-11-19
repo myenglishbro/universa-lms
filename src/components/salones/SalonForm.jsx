@@ -3,6 +3,9 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import DocenteForm from '../docentes/DocenteForm'
+import FiltroCaracteristicas from '../docentes/FiltroCaracteristicas'
+import usePerfilInterno from '../../hooks/usePerfilInterno'
+import { coincidePerfil, filtrosVacios, hayFiltros } from '../../lib/perfilDocente'
 import ConfiguracionAcademica from './ConfiguracionAcademica'
 import HorariosEditor from './HorariosEditor'
 import ResumenSalon from './ResumenSalon'
@@ -41,6 +44,8 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
   const [errorGeneral, setErrorGeneral] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [nuevoDocente, setNuevoDocente] = useState(false)
+  const interno = usePerfilInterno() // características internas para filtrar docentes (solo las ve administración)
+  const [filtrosPerfil, setFiltrosPerfil] = useState(filtrosVacios)
   // Con sesiones registradas, la fecha de fin la calcula el calendario y la de inicio ya no se puede mover.
   const tieneCalendario = (salon?.progreso?.sesiones ?? 0) > 0
 
@@ -126,10 +131,11 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
   }
   const etiquetaDocente = { choque: '⛔ busy in another classroom', libre: '✓ available at this time', ocupado: 'not available at this time', sin_datos: 'no availability on record' }
   const orden = { libre: 0, sin_datos: 1, ocupado: 2, choque: 3 }
-  const lista = docentes.filter((d) => d.activo || d.id === values.docenteId).map((d) => ({ d, e: estadoDocente(d) }))
+  const lista = docentes.filter((d) => (d.activo && coincidePerfil(interno.perfiles.get(d.id), filtrosPerfil)) || d.id === values.docenteId).map((d) => ({ d, e: estadoDocente(d) }))
   if (sugerir || lista.some((x) => x.e === 'choque')) lista.sort((a, b) => (orden[a.e] ?? 1) - (orden[b.e] ?? 1) || a.d.nombre.localeCompare(b.d.nombre))
   const nLibres = lista.filter((x) => x.e === 'libre').length
   const opcionesDocente = [{ value: '', label: 'Unassigned' }, ...lista.map(({ d, e }) => ({ value: d.id, label: e === 'choque' ? `${d.nombre} · ⛔ busy: ${choquesDocente(d.id)[0]}${choquesDocente(d.id).length > 1 ? ` and ${choquesDocente(d.id).length - 1} more` : ''}` : e ? `${d.nombre} · ${etiquetaDocente[e]}` : d.nombre }))]
+  const descDocente = interno.perfiles.get(values.docenteId)?.descripcion
   const ayudaDocente = sugerir
     ? nLibres > 0
       ? `${nLibres} ${nLibres === 1 ? 'teacher is available' : 'teachers are available'} at this time.`
@@ -200,6 +206,13 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                   />
                   <div>
                     <Field label="Teacher" name="docenteId" value={values.docenteId} onChange={cambiar} options={opcionesDocente} error={errors.docente} hint={dispDocentes !== null ? ayudaDocente : undefined} />
+                    {interno.campos.some((c) => c.activo) && (
+                      <div className="sm:col-span-2">
+                        <FiltroCaracteristicas campos={interno.campos} filtros={filtrosPerfil} onChange={setFiltrosPerfil} />
+                        {hayFiltros(filtrosPerfil) && <p className="mt-1 text-xs text-slate-500">{lista.length} {lista.length === 1 ? 'teacher matches' : 'teachers match'} the profile filters.</p>}
+                        {descDocente && <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">Internal note: {descDocente}</p>}
+                      </div>
+                    )}
                     <Button type="button" variant="ghost" className="mt-1 px-2 py-1" onClick={() => setNuevoDocente(true)}>
                       + New teacher
                     </Button>

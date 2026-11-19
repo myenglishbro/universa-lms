@@ -3,7 +3,9 @@ import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
+import FiltroCaracteristicas from './FiltroCaracteristicas'
 import { aConjunto, cubreHorarios } from '../../lib/disponibilidad'
+import { coincidePerfil, filtrosVacios } from '../../lib/perfilDocente'
 import { tiposReserva, tituloReserva } from '../../lib/reservas'
 import { formatFecha, hoyLima } from '../../lib/salones'
 import { cancelarReserva, crearReserva, listarReservas } from '../../services/reservas'
@@ -18,7 +20,8 @@ const reservaVacia = { tipo: 'examen_nivel', titulo: '' }
 // Los que no registraron disponibilidad se listan aparte: no tienen clase en ese momento, pero no se pudo comprobar su horario.
 // Desde aquí se reserva: la reserva ocupa al docente como una clase (no podrá recibir otra a esa hora) hasta que se cancele.
 // La base de datos vuelve a validar todo al reservar, así que dos personas no pueden reservar al mismo docente a la vez.
-export default function BuscarDocenteLibre({ docentes, salones, onVerDocente, onClose }) {
+export default function BuscarDocenteLibre({ docentes, salones, campos = [], perfiles = new Map(), onVerDocente, onClose }) {
+  const [filtrosPerfil, setFiltrosPerfil] = useState(filtrosVacios)
   const [v, setV] = useState({ fecha: hoyLima(), inicio: '10:00', fin: '11:00' })
   const [disp, setDisp] = useState(null) // Map docenteId -> Set de franjas
   const [ocupados, setOcupados] = useState(null) // Map docenteId -> [textos]
@@ -123,7 +126,7 @@ export default function BuscarDocenteLibre({ docentes, salones, onVerDocente, on
     if (!valido || !ocupados || !disp) return g
     const franja = [{ dia: diaIso(v.fecha), horaInicio: v.inicio, horaFin: v.fin }]
     for (const d of docentes) {
-      if (!d.activo) continue
+      if (!d.activo || !coincidePerfil(perfiles.get(d.id), filtrosPerfil)) continue
       const n = carga.get(d.id) ?? 0
       if (ocupados.has(d.id)) {
         g.ocupados.push({ d, n, motivo: ocupados.get(d.id).join(', ') })
@@ -137,7 +140,7 @@ export default function BuscarDocenteLibre({ docentes, salones, onVerDocente, on
     const orden = (a, b) => a.n - b.n || a.d.nombre.localeCompare(b.d.nombre)
     for (const k of Object.keys(g)) g[k].sort(orden)
     return g
-  }, [valido, ocupados, disp, docentes, carga, v.fecha, v.inicio, v.fin])
+  }, [valido, ocupados, disp, docentes, carga, perfiles, filtrosPerfil, v.fecha, v.inicio, v.fin])
 
   const cargando = valido && (ocupados === null || disp === null) && !error
 
@@ -186,6 +189,7 @@ export default function BuscarDocenteLibre({ docentes, salones, onVerDocente, on
         <Field label="From" name="inicio" type="time" value={v.inicio} onChange={cambiar} />
         <Field label="To" name="fin" type="time" value={v.fin} onChange={cambiar} error={v.fin <= v.inicio ? 'Must be after the start' : undefined} />
       </div>
+      {campos.length > 0 && <FiltroCaracteristicas campos={campos} filtros={filtrosPerfil} onChange={setFiltrosPerfil} className="mt-3" />}
 
       {error && <p className="mt-3 text-sm text-red-600">Could not complete: {error}</p>}
       {cargando && <p className="mt-6 text-center text-sm text-slate-500">Searching…</p>}
