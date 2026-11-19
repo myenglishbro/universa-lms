@@ -65,7 +65,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         </div>
       </div>
 
-      <div role="radiogroup" aria-label={`${c.nombre}${etiquetaSufijo}`} className="mt-2 grid grid-cols-3 gap-1.5 sm:grid-cols-6" onMouseLeave={() => setPrevio(null)}>
+      <div role="radiogroup" aria-label={`${c.nombre}${etiquetaSufijo}`} className="mt-2 grid grid-cols-6 gap-1.5" onMouseLeave={() => setPrevio(null)}>
         {NIVELES_RUBRICA.map((n) => {
           const activo = nivel === n.nivel
           return (
@@ -82,10 +82,10 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
               onMouseEnter={() => setPrevio(n.nivel)}
               onFocus={() => setPrevio(n.nivel)}
               onBlur={() => setPrevio(null)}
-              className={`flex flex-col items-center rounded-lg border px-1 py-1.5 leading-tight transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${activo ? 'border-brand-600 bg-brand-600 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50'}`}
+              title={n.etiqueta}
+              className={`flex h-10 items-center justify-center rounded-lg border text-base font-bold tabular-nums transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${activo ? 'border-brand-600 bg-brand-600 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50'}`}
             >
-              <span className="text-base font-bold">{n.nivel}</span>
-              <span className={`text-[10px] font-medium ${activo ? 'text-brand-50' : 'text-slate-500'}`}>{n.etiqueta}</span>
+              {n.nivel}
             </button>
           )
         })}
@@ -136,6 +136,50 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         </div>
       )}
     </div>
+  )
+}
+
+// Nombre corto de un criterio para el eje del radar: sin prefijo de grupo o de tarea y solo la primera parte antes de « & ».
+const etiquetaEje = (nombre) => (nombre.split(' · ').pop() ?? nombre).split(' & ')[0]
+
+// Perfil del alumno: un eje por criterio (de 0 a 5); el polígono se dibuja mientras se califica. Los pendientes quedan en el centro con punto hueco.
+function RadarRubrica({ criterios, valores }) {
+  const n = criterios.length
+  const R = 86
+  const cx = 150
+  const cy = 118
+  const punto = (i, f) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n
+    return [cx + Math.cos(a) * R * f, cy + Math.sin(a) * R * f]
+  }
+  const anillo = (f) => criterios.map((_, i) => punto(i, f).join(',')).join(' ')
+  const nivelDe = (c) => nivelDePuntaje(c, valores?.[c.id])
+  const poligono = criterios.map((c, i) => punto(i, (nivelDe(c) ?? 0) / 5).join(',')).join(' ')
+  return (
+    <svg viewBox="0 0 300 236" className="mx-auto block h-auto w-full max-w-xs text-brand-600" role="img" aria-label="Student profile by criterion">
+      {[0.2, 0.4, 0.6, 0.8, 1].map((f) => (
+        <polygon key={f} points={anillo(f)} fill="none" className="stroke-slate-200" strokeWidth="1" />
+      ))}
+      {criterios.map((c, i) => {
+        const [x, y] = punto(i, 1)
+        return <line key={c.id} x1={cx} y1={cy} x2={x} y2={y} className="stroke-slate-200" />
+      })}
+      <polygon points={poligono} fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      {criterios.map((c, i) => {
+        const nv = nivelDe(c)
+        const [x, y] = punto(i, (nv ?? 0) / 5)
+        return <circle key={c.id} cx={x} cy={y} r={nv == null ? 3 : 4.5} fill={nv == null ? 'white' : 'currentColor'} stroke="currentColor" strokeWidth="2" />
+      })}
+      {criterios.map((c, i) => {
+        const [x, y] = punto(i, 1.2)
+        const ancla = x < cx - 5 ? 'end' : x > cx + 5 ? 'start' : 'middle'
+        return (
+          <text key={c.id} x={x} y={y} textAnchor={ancla} dominantBaseline="middle" fontSize="10.5" fontWeight="600" className="fill-slate-700">
+            {etiquetaEje(c.nombre)}
+          </text>
+        )
+      })}
+    </svg>
   )
 }
 
@@ -240,6 +284,12 @@ export default function CriteriosRubrica({ criterios, valores, onCambiar, deshab
           <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-800">{fmtNota(total)} pts</span>
         </div>
       )}
+      <div className={conNiveles && criterios.length >= 3 ? 'gap-4 lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start' : ''}>
+      {conNiveles && criterios.length >= 3 && (
+        <div className="mb-3 rounded-xl border border-slate-200 bg-white p-2 lg:sticky lg:top-24 lg:mb-0">
+          <RadarRubrica criterios={criterios} valores={valores} />
+        </div>
+      )}
       <ul className={conNiveles ? 'space-y-2' : 'divide-y divide-slate-100'}>
         {agruparCriterios(criterios).map((g) => {
           if (!g.grupo) return <li key={g.items[0].id}>{campo(g.items[0], g.items[0].nombre, false)}</li>
@@ -257,6 +307,7 @@ export default function CriteriosRubrica({ criterios, valores, onCambiar, deshab
           )
         })}
       </ul>
+      </div>
     </div>
   )
 }

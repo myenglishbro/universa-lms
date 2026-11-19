@@ -336,7 +336,7 @@ export function ContenidoCelda({ evaluacionId, alumnoId, servicio = servicioReal
 // Editor de una celda de la matriz (un estudiante en una evaluación): nota directa o rúbrica, por unidad si corresponde.
 export default function CeldaNota({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
   return (
-    <Modal title={titulo} onClose={onClose} wide>
+    <Modal title={titulo} onClose={onClose} wide="xl">
       <ContenidoCelda evaluacionId={evaluacionId} alumnoId={alumnoId} servicio={servicio} onClose={onClose} onCambio={onCambio} />
     </Modal>
   )
