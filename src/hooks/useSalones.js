@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as api from '../services/salones'
 import { listarCatalogo } from '../services/catalogo'
+import { MINUTO, guardarCache, leerCache } from '../lib/cacheSesion'
+
+// Los estados solo cambian con el paso de los días: se sincronizan como mucho cada 5 minutos por pestaña (y siempre tras crear o editar un salón).
+// El catálogo académico casi no cambia: se reutiliza 10 minutos y se vuelve a pedir al editarlo.
+const SINCRONIZAR_CADA = 5 * MINUTO
+const CATALOGO_VIGENCIA = 10 * MINUTO
 
 // Carga salones (con su progreso), niveles y docentes, y expone las operaciones de escritura.
 // Tras cada escritura se vuelve a consultar, así la interfaz siempre refleja lo guardado en la base.
@@ -15,10 +21,9 @@ export default function useSalones() {
   const [error, setError] = useState('')
 
   const cargar = useCallback(
-    () =>
-      // Primero se sincronizan los estados (Planificado → En curso); si falla, la lista se carga igual.
-      api
-        .sincronizarEstados()
+    (forzar = false) =>
+      // Primero se sincronizan los estados (Planificado → En curso) si toca; si falla, la lista se carga igual.
+      Promise.resolve(forzar === true || !leerCache('sync-estados', SINCRONIZAR_CADA) ? api.sincronizarEstados().then((n) => (guardarCache('sync-estados'), n)) : 0)
         .catch(() => 0)
         .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes(), api.listarPendientes().catch(() => ({}))]))
         .then(([s, progreso, p, d, pend]) => {
@@ -35,10 +40,16 @@ export default function useSalones() {
   )
 
   const cargarCatalogo = useCallback(
-    () =>
-      listarCatalogo()
-        .then((c) => setCatalogo({ ...c, error: '', cargando: false }))
-        .catch((e) => setCatalogo({ planes: [], modalidades: [], frecuencias: [], errorFrecuencias: '', error: e.message, cargando: false })),
+    (forzar = false) => {
+      const guardado = forzar === true ? null : leerCache('catalogo', CATALOGO_VIGENCIA)
+      if (guardado) {
+        setCatalogo({ ...guardado, error: '', cargando: false })
+        return Promise.resolve()
+      }
+      return listarCatalogo()
+        .then((c) => (guardarCache('catalogo', c), setCatalogo({ ...c, error: '', cargando: false })))
+        .catch((e) => setCatalogo({ planes: [], modalidades: [], frecuencias: [], errorFrecuencias: '', error: e.message, cargando: false }))
+    },
     [],
   )
 
@@ -49,22 +60,22 @@ export default function useSalones() {
 
   const guardarSalon = async (id, salon) => {
     await api.guardarSalon(id, salon)
-    await cargar()
+    await cargar(true)
   }
 
   const cambiarEstado = async (id, estado) => {
     await api.cambiarEstado(id, estado)
-    await cargar()
+    await cargar(true)
   }
 
   const eliminarSalon = async (id) => {
     await api.eliminarSalon(id)
-    await cargar()
+    await cargar(true)
   }
 
   const archivarSalones = async (ids, ciclo) => {
     const n = await api.archivarSalones(ids, ciclo)
-    await cargar()
+    await cargar(true)
     return n
   }
 
@@ -74,5 +85,5 @@ export default function useSalones() {
     return nuevo
   }
 
-  return { salones, archivados, niveles, docentes, catalogo, cargando, error, recargar: cargar, recargarCatalogo: cargarCatalogo, guardarSalon, cambiarEstado, eliminarSalon, archivarSalones, crearDocente }
+  return { salones, archivados, niveles, docentes, catalogo, cargando, error, recargar: () => cargar(), recargarCatalogo: () => cargarCatalogo(true), guardarSalon, cambiarEstado, eliminarSalon, archivarSalones, crearDocente }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { borrarCache, guardarCache, leerCache, MINUTO } from '../lib/cacheSesion'
 
 // Sesión de Supabase Auth + roles: `rol` (admin/comercial, tabla perfiles), `portal` (estudiante/docente, tabla cuenta_roles)
 // y `registro` (profesor que se registró y espera que administración lo active como docente).
@@ -34,8 +35,9 @@ export default function useAuth() {
           .eq('user_id', userId)
           .maybeSingle()
           .then((x) => (x.error ? supabase.from('perfiles').select('rol').eq('user_id', userId).maybeSingle() : x)), // sin la migración de gestión del personal aún no existe «activo»
-        supabase
-          .rpc('reclamar_invitaciones')
+        // Las invitaciones pendientes solo se reclaman una vez por sesión de la pestaña (y siempre que se pida volver a consultar los roles).
+        Promise.resolve(version === 0 && leerCache(`invitaciones-${userId}`, 12 * 60 * MINUTO) ? null : supabase.rpc('reclamar_invitaciones').then((x) => (x?.error ? null : guardarCache(`invitaciones-${userId}`))))
+          .catch(() => null)
           .then(() => supabase.from('cuenta_roles').select('rol').eq('user_id', userId)), // la política deja ver TODAS las cuentas a administración: sin este filtro un admin recibiría los roles de los demás
         supabase.from('docente_registros').select('*').eq('user_id', userId).maybeSingle(), // filtrado por cuenta: sin filtro, a un admin le llegarían todos los registros y maybeSingle fallaría; sin la migración de registros: error ignorado → null
       ])
@@ -55,7 +57,10 @@ export default function useAuth() {
     if (error) throw new Error(error.code === 'invalid_credentials' ? 'Incorrect email or password' : error.message)
   }
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => {
+    borrarCache()
+    return supabase.auth.signOut()
+  }
   const recargar = () => setVersion((v) => v + 1)
 
   return { session, rol: vigente ? perfil.rol : null, portal: vigente ? perfil.portal : [], registro: vigente ? perfil.registro : null, cargando, signIn, signOut, recargar }

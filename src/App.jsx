@@ -47,7 +47,7 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
   const abierto = { ...SIN_ABIERTO, ...location.state?.abierto }
   const admin = auth.rol === 'admin'
   const data = useSalones()
-  const notifTickets = useNotificacionesTickets(puedeVer(auth.rol, 'tickets')) // contador del menú (el Task Board es de todo el personal)
+  const notifTickets = useNotificacionesTickets(puedeVer(auth.rol, 'tickets'), auth.session.user.id) // contador del menú (el Task Board es de todo el personal)
   // Los hooks piden sus datos la primera vez que `activo` es true y los conservan: volver a una pantalla no los descarga de nuevo.
   const estudiantes = useEstudiantes(undefined, USAN_ESTUDIANTES.includes(page))
   const paquetesBase = usePaquetes(admin && USAN_PAQUETES.includes(page)) // los paquetes (dinero) son solo de administración

@@ -27,9 +27,10 @@ export const archivarTicket = (id, archivar = true) => rpc('ticket_archivar', { 
 export const marcarLeidas = (ids = null) => rpc('ticket_marcar_leidas', { p_ids: ids })
 
 // Cambios en vivo: llama a `alCambiar` cuando alguien modifica tickets, comentarios o historial. Devuelve la función para cancelar.
-export function suscribirTickets(tablas, alCambiar) {
+// `filtro` (opcional, p. ej. «user_id=eq.<id>») limita los eventos a las filas que importan.
+export function suscribirTickets(tablas, alCambiar, filtro) {
   const canal = supabase.channel(`tickets-${tablas.join('-')}-${Math.random().toString(36).slice(2)}`)
-  tablas.forEach((tabla) => canal.on('postgres_changes', { event: '*', schema: 'public', table: tabla }, alCambiar))
+  tablas.forEach((tabla) => canal.on('postgres_changes', { event: '*', schema: 'public', table: tabla, ...(filtro ? { filter: filtro } : {}) }, alCambiar))
   canal.subscribe()
   return () => supabase.removeChannel(canal)
 }

@@ -381,7 +381,7 @@ function VistaAlumno({ datos, onAbrir, onInforme, onSeguimiento }) {
 // Matriz de calificaciones del salón: estudiantes en columnas, componentes por módulo y ciclo en filas. Hacer clic en una celda abre su ficha.
 export default function MatrizNotas({ salonId, servicio = servicioReal, vistaInicial }) {
   const cargar = useCallback(() => servicio.matrizSalon(salonId), [servicio, salonId])
-  const { datos, cargando, error, recargar } = useCarga(cargar, null)
+  const { datos, cargando, error, recargar, setDatos } = useCarga(cargar, null)
   const [editor, setEditor] = useState(null)
   const [mcer, setMcer] = useState(null)
   const nivelSalon = datos?.salon?.nivel
@@ -431,6 +431,16 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       setSeguimiento({ nombre: a.nombre, modulos: (await servicio.informeAlumno(salonId, a.alumno_id)).modulos ?? [] })
     } catch (e) {
       setFallo(`Could not load the progress: ${e.message}`)
+    }
+  }
+  // Tras guardar, publicar o corregir una nota solo cambia la fila de ese estudiante: se pide únicamente esa fila (si algo falla, se recarga todo).
+  const actualizarAlumno = async (alumnoId) => {
+    if (!servicio.matrizAlumno) return recargar()
+    try {
+      const fila = await servicio.matrizAlumno(salonId, alumnoId)
+      setDatos((d) => (d ? { ...d, alumnos: d.alumnos.map((a) => (a.alumno_id === alumnoId ? fila : a)) } : d))
+    } catch {
+      await recargar()
     }
   }
   const Editor = editor?.evaluacion.tipo === 'participacion' ? ParticipacionModal : editor?.evaluacion.tipo === 'formative' ? FormativeModal : CeldaNota
@@ -517,7 +527,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           celda={celdaEditor}
           servicio={servicio}
           onClose={() => setEditor(null)}
-          onCambio={recargar}
+          onCambio={Editor === CeldaNota ? () => actualizarAlumno(editor.alumno.alumno_id) : recargar}
         />
         </NivelMcerContext.Provider>
       )}

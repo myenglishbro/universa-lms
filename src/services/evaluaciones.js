@@ -56,6 +56,8 @@ export const corregirCalificacion = (evaluacionId, { alumnoId, unidad, puntaje, 
 
 // Matriz del salón (docente asignado o administración): alumnos × evaluaciones, subtotales por módulo y ciclo.
 export const matrizSalon = (salonId) => rpc('eval_matriz_salon', { p_salon: salonId })
+// Solo la fila de un estudiante (celdas, resumen y nivel): tras guardar una nota no hace falta recalcular todo el salón.
+export const matrizAlumno = (salonId, alumnoId) => rpc('eval_matriz_alumno', { p_salon: salonId, p_alumno: alumnoId })
 // Participación por clase (Formative Assessment)
 export const participacionDetalle = (evaluacionId) => rpc('eval_participacion_detalle', { p_evaluacion: evaluacionId })
 // filas: [{ alumnoId, sesionId, cumplio: true | false | null }]; null = pendiente
