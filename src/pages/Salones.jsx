@@ -7,6 +7,7 @@ import CerrarCicloModal from '../components/archivo/CerrarCicloModal'
 import AsignacionDocentes, { porAsignar } from '../components/salones/AsignacionDocentes'
 import SalonDetalle from '../components/salones/SalonDetalle'
 import ImportarSalonesModal from '../components/salones/ImportarSalonesModal'
+import RespaldoSalonesModal from '../components/salones/RespaldoSalonesModal'
 import SalonForm from '../components/salones/SalonForm'
 import SalonesAgrupados from '../components/salones/SalonesAgrupados'
 import SalonesTabla from '../components/salones/SalonesTabla'
@@ -52,6 +53,7 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [cerrandoCiclo, setCerrandoCiclo] = useState(false)
   const [asignando, setAsignando] = useState(false)
   const [importando, setImportando] = useState(false)
+  const [respaldando, setRespaldando] = useState(false)
   const todosLosSalones = useMemo(() => [...salones, ...archivados], [salones, archivados])
   const [form, setForm] = useState(null) // null = cerrado, { salon } = abierto (salon null = crear)
 
@@ -146,6 +148,15 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50 disabled:opacity-50"
                         >
                           <Icon name="up" className="h-4 w-4 text-brand-600" /> Import classrooms (JSON)
+                        </button>
+                        <button
+                          role="menuitem"
+                          type="button"
+                          disabled={cargando || Boolean(error) || estudiantes?.cargando}
+                          onClick={() => { setMenuMas(false); setRespaldando(true) }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-brand-50 disabled:opacity-50"
+                        >
+                          <Icon name="doc" className="h-4 w-4 text-brand-600" /> Back up classrooms (Excel)
                         </button>
                         {finalizados.length > 0 && (
                           <button
@@ -305,6 +316,8 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
           onClose={() => setAsignando(false)}
         />
       )}
+
+      {respaldando && <RespaldoSalonesModal salones={todosLosSalones} estudiantes={estudiantes?.estudiantes ?? []} matriculas={estudiantes?.matriculas ?? []} onClose={() => setRespaldando(false)} />}
 
       {importando && (
         <ImportarSalonesModal

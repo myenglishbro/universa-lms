@@ -64,7 +64,7 @@ export async function reunirDatos(salon, { archivo = null, conRubricas = true } 
   return { salon, alumnos, clases, asistencia: marcas, rubricas, logo: await logo() }
 }
 
-function guardarArchivo(blob, nombre) {
+export function guardarArchivo(blob, nombre) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
