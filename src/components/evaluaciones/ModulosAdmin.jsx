@@ -4,7 +4,6 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import Field, { inputClass } from '../ui/Field'
 import useCarga from '../../hooks/useCarga'
-import { METODOS_CONSOLIDACION } from '../../lib/evaluaciones'
 import * as servicioReal from '../../services/evaluaciones'
 
 // Administración: módulos del salón (cantidad libre, ciclo opcional), plantilla de cada módulo y consolidación del nivel.
@@ -16,8 +15,6 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
   const { datos, cargando, error, recargar } = useCarga(cargar, null)
   const [nuevo, setNuevo] = useState({ nombre: '', ciclo: '', aporte: '1' })
   const [rangos, setRangos] = useState({}) // moduloId → {desde, hasta}
-  const [metodo, setMetodo] = useState(null)
-  const [confirmada, setConfirmada] = useState(null)
   const [aviso, setAviso] = useState('')
   const [fallo, setFallo] = useState('')
   const [ocupado, setOcupado] = useState(false)
@@ -48,9 +45,6 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
   // Un solo sistema para todos los módulos: la versión vigente de «Grade Chart Universa».
   const vigente = plantillas.flatMap((p) => (p.nombre === 'Grade Chart Universa' ? p.versiones.filter((v) => v.estado === 'vigente') : [])).map((v) => ({ value: v.id }))[0]
   const ciclos = cicloDesde !== '' && cicloDesde != null ? Array.from({ length: Number(cicloHasta) - Number(cicloDesde) + 1 }, (_, i) => Number(cicloDesde) + i) : []
-  const cons = estructura.consolidacion
-  const metodoActual = metodo ?? cons.metodo
-  const confirmadaActual = confirmada ?? cons.confirmada
 
   return (
     <Card className="p-5">
@@ -123,27 +117,6 @@ export default function ModulosAdmin({ salonId, cicloDesde, cicloHasta, servicio
           Add module
         </Button>
       </form>
-
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        <h3 className="text-sm font-semibold text-slate-900">Final level grade</h3>
-        <p className="mt-1 text-xs text-slate-500">Pending Coordination confirmation. Until confirmed, students do not see the level grade.</p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <select aria-label="Consolidation method" className={`${inputClass} min-w-56 flex-1 sm:max-w-md`} value={metodoActual} onChange={(e) => { setMetodo(e.target.value); if (e.target.value === 'sin_definir') setConfirmada(false) }}>
-            {METODOS_CONSOLIDACION.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" disabled={metodoActual === 'sin_definir'} checked={confirmadaActual} onChange={(e) => setConfirmada(e.target.checked)} />
-            Confirmed by Coordination
-          </label>
-          <Button variant="secondary" disabled={ocupado} onClick={() => ejecutar(() => servicio.guardarConsolidacion(salonId, metodoActual, metodoActual !== 'sin_definir' && confirmadaActual), 'Consolidation saved.')}>
-            Save
-          </Button>
-        </div>
-      </div>
 
       {aviso && <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
       {fallo && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
