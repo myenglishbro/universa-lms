@@ -7,6 +7,8 @@ import useCarga from '../../hooks/useCarga'
 import { ESTADOS_CELDA, agruparPorCiclo, fmtNota, notaSobreEvaluado, textoCelda } from '../../lib/evaluaciones'
 import { descargarInforme } from '../../lib/informeNotas'
 import InformeDialogo from './InformeDialogo'
+import MisHabilidades from './MisHabilidades'
+import Modal from '../ui/Modal'
 import * as servicioReal from '../../services/evaluaciones'
 import CeldaNota from './CeldaNota'
 import { NivelMcerContext } from './CriteriosRubrica'
@@ -156,7 +158,7 @@ function Seccion({ columnas, className, children }) {
   )
 }
 
-function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme }) {
+function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimiento }) {
   const { modulos, salon, consolidacion } = datos
   const grupos = useMemo(() => agruparPorCiclo(modulos), [modulos])
   const resumen = (a, id) => a.resumen.modulos.find((x) => x.modulo_id === id)
@@ -186,6 +188,9 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme }) {
                 </span>
                 <button type="button" aria-label={`Report for ${a.nombre}`} onClick={() => onInforme(a)} className="text-[10px] text-brand-700 hover:underline">
                   PDF report
+                </button>
+                <button type="button" aria-label={`Progress of ${a.nombre}`} onClick={() => onSeguimiento(a)} className="block w-full text-[10px] text-brand-700 hover:underline">
+                  Progress
                 </button>
               </th>
             ))}
@@ -283,7 +288,7 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme }) {
 }
 
 // Vista por estudiante (celulares y pantallas angostas): sus módulos como tarjetas, sin comprimir la matriz.
-function VistaAlumno({ datos, onAbrir, onInforme }) {
+function VistaAlumno({ datos, onAbrir, onInforme, onSeguimiento }) {
   const { alumnos, modulos, consolidacion } = datos
   const [sel, setSel] = useState(alumnos[0]?.alumno_id ?? '')
   const a = alumnos.find((x) => x.alumno_id === sel) ?? alumnos[0]
@@ -298,9 +303,14 @@ function VistaAlumno({ datos, onAbrir, onInforme }) {
           </option>
         ))}
       </select>
-      <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => onInforme(a)}>
-        Download report for {a.nombre} (PDF)
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => onSeguimiento(a)}>
+          View progress of {a.nombre}
+        </Button>
+        <Button variant="secondary" className="px-3 py-1 text-xs" onClick={() => onInforme(a)}>
+          Download report for {a.nombre} (PDF)
+        </Button>
+      </div>
       {grupos.map((g) => (
         <section key={g.ciclo ?? 'sin'} className="space-y-3">
           <h3 className="text-sm font-semibold text-slate-900">{g.ciclo != null ? `Cycle ${g.ciclo}` : 'Modules without a cycle'}</h3>
@@ -381,6 +391,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
     return () => { vivo = false }
   }, [nivelSalon])
   const [informeListo, setInformeListo] = useState(null)
+  const [seguimiento, setSeguimiento] = useState(null)
   const [fallo, setFallo] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [soloPendientes, setSoloPendientes] = useState(false)
@@ -413,12 +424,27 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       setFallo(`Could not generate the report: ${e.message}`)
     }
   }
+  // Seguimiento: las mismas gráficas que ve el estudiante en «My skills» (solo lo publicado), para el estudiante elegido.
+  const verSeguimiento = async (a) => {
+    setFallo('')
+    try {
+      setSeguimiento({ nombre: a.nombre, modulos: (await servicio.informeAlumno(salonId, a.alumno_id)).modulos ?? [] })
+    } catch (e) {
+      setFallo(`Could not load the progress: ${e.message}`)
+    }
+  }
   const Editor = editor?.evaluacion.tipo === 'participacion' ? ParticipacionModal : editor?.evaluacion.tipo === 'formative' ? FormativeModal : CeldaNota
   // La celda se lee de los datos vigentes (no del clic) para que el resumen del Formative se actualice al guardar.
   const celdaEditor = editor ? datos.alumnos.find((x) => x.alumno_id === editor.alumno.alumno_id)?.celdas[editor.evaluacion.id] : undefined
 
   return (
     <div className="space-y-3">
+      {seguimiento && (
+        <Modal title={`Progress of ${seguimiento.nombre}`} onClose={() => setSeguimiento(null)} wide="xl">
+          {seguimiento.modulos.length > 0 ? <MisHabilidades modulos={seguimiento.modulos} /> : null}
+          <p className="mt-2 text-xs text-slate-500">Only published grades appear here. If nothing is shown, no Formative, Writing or Oral Project grade with detail has been published for this student yet.</p>
+        </Modal>
+      )}
       {informeListo && (
         <InformeDialogo
           datos={informeListo}
@@ -473,14 +499,14 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
       {fallo && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
       {vista === 'tabla' ? (
         alumnosVisibles.length ? (
-          <Tabla datos={datos} alumnos={alumnosVisibles} soloPendientes={soloPendientes} onAbrir={abrir} onInforme={informe} />
+          <Tabla datos={datos} alumnos={alumnosVisibles} soloPendientes={soloPendientes} onAbrir={abrir} onInforme={informe} onSeguimiento={verSeguimiento} />
         ) : (
           <Card className="p-6 text-center">
             <p className="text-sm text-slate-500">No student matches “{busqueda}”.</p>
           </Card>
         )
       ) : (
-        <VistaAlumno datos={datos} onAbrir={abrir} onInforme={informe} />
+        <VistaAlumno datos={datos} onAbrir={abrir} onInforme={informe} onSeguimiento={verSeguimiento} />
       )}
       {editor && (
         <NivelMcerContext.Provider value={mcer}>

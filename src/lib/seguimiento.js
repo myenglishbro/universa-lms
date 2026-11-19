@@ -51,3 +51,33 @@ export function promedioAnterior(seguimiento, indice) {
   const prev = seguimiento[indice - 1]
   return prev ? Object.fromEntries(prev.habilidades.filter((h) => h.promedio != null).map((h) => [h.clave, h.promedio])) : {}
 }
+
+// ---- Detalle de Writing y Project (criterios 0–5 de las rúbricas por niveles) ----
+// Etiqueta corta de un criterio: sin prefijo de tarea («Task 1 · ») ni de grupo («Grammar & Vocabulary · »).
+export const nombreCriterio = (nombre) => String(nombre ?? '').replace(/^Task \d · /, '').split(' · ').pop()
+
+// Por módulo: Writing (Task 1 + Task 2 sumadas por criterio) y Project, cada criterio como % de su máximo. Solo notas publicadas con detalle.
+export function seguimientoDetalle(modulos = []) {
+  const unir = (notas) => {
+    const acc = new Map()
+    for (const n of notas) for (const c of n.criterios ?? []) {
+      const k = nombreCriterio(c.criterio)
+      const a = acc.get(k) ?? { nombre: k, puntaje: 0, max: 0 }
+      a.puntaje += Number(c.puntaje)
+      a.max += Number(c.max)
+      acc.set(k, a)
+    }
+    return [...acc.values()].filter((a) => a.max > 0).map((a) => ({ nombre: a.nombre, clave: a.nombre.toLowerCase(), pct: Math.round((a.puntaje / a.max) * 1000) / 10 }))
+  }
+  const out = []
+  for (const m of modulos) {
+    const de = (tipo) => unir((m.evaluaciones ?? []).filter((e) => e.tipo === tipo).flatMap((e) => e.notas ?? []))
+    const writing = de('writing')
+    const project = de('project')
+    if (writing.length || project.length) out.push({ id: m.modulo_id, nombre: m.nombre, writing, project })
+  }
+  return out
+}
+
+// Nivel 0–5 que corresponde a un porcentaje (nivel ÷ 5 × peso = puntos).
+export const nivelDePct = (pct) => Math.max(0, Math.min(5, Math.round((Number(pct) / 100) * 5)))

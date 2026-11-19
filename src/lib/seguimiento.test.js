@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { claveHabilidad, promedioAnterior, seguimientoFormative, tendencia } from './seguimiento.js'
+import { claveHabilidad, nivelDePct, nombreCriterio, promedioAnterior, seguimientoDetalle, seguimientoFormative, tendencia } from './seguimiento.js'
 
 const crit = (criterio, puntaje, max = 20) => ({ criterio, puntaje, max })
 const nota = (unidad, criterios) => ({ unidad, puntaje: 70, criterios })
@@ -47,4 +47,32 @@ test('promedioAnterior toma el promedio del módulo previo por habilidad, aunque
   ])
   assert.deepEqual(promedioAnterior(s, 1), { listening: 60 })
   assert.deepEqual(promedioAnterior(s, 0), {})
+})
+
+const mw = (id, nombre, evals) => ({ modulo_id: id, nombre, evaluaciones: evals })
+test('nombreCriterio quita el prefijo de tarea y de grupo', () => {
+  assert.equal(nombreCriterio('Task 1 · Content & Task Achievement'), 'Content & Task Achievement')
+  assert.equal(nombreCriterio('Grammar & Vocabulary · Grammar'), 'Grammar')
+  assert.equal(nombreCriterio('Fluency & Coherence'), 'Fluency & Coherence')
+})
+
+test('seguimientoDetalle suma Task 1 y Task 2 por criterio y lee Project criterio por criterio', () => {
+  const s = seguimientoDetalle([
+    mw('m1', 'Module 1', [
+      { tipo: 'writing', notas: [
+        { unidad: 'Task 1', criterios: [{ criterio: 'Task 1 · Mechanics', puntaje: 2.4, max: 3 }] },
+        { unidad: 'Task 2', criterios: [{ criterio: 'Task 2 · Mechanics', puntaje: 3.6, max: 6 }] },
+      ] },
+      { tipo: 'project', notas: [{ unidad: '', criterios: [{ criterio: 'Grammar & Vocabulary · Grammar', puntaje: 10, max: 12.5 }, { criterio: 'Visual Support & Delivery', puntaje: 5, max: 5 }] }] },
+      { tipo: 'test', notas: [{ unidad: '', criterios: null }] },
+    ]),
+    mw('m2', 'Module 2', [{ tipo: 'writing', notas: [] }]),
+  ])
+  assert.equal(s.length, 1)
+  assert.deepEqual(s[0].writing, [{ nombre: 'Mechanics', clave: 'mechanics', pct: 66.7 }])
+  assert.deepEqual(s[0].project.map((c) => [c.nombre, c.pct]), [['Grammar', 80], ['Visual Support & Delivery', 100]])
+})
+
+test('nivelDePct convierte el porcentaje en nivel 0–5', () => {
+  assert.deepEqual([0, 20, 59, 60, 100].map(nivelDePct), [0, 1, 3, 3, 5])
 })
