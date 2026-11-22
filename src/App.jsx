@@ -20,6 +20,7 @@ const Ejercicios = lazy(() => import('./pages/Ejercicios'))
 const ArchivoCiclos = lazy(() => import('./pages/ArchivoCiclos'))
 const Evaluaciones = lazy(() => import('./pages/Evaluaciones'))
 const Feriados = lazy(() => import('./pages/Feriados'))
+const EncuestasClase = lazy(() => import('./pages/EncuestasClase'))
 const Registros = lazy(() => import('./pages/Registros'))
 const ZonasAdmin = lazy(() => import('./pages/ZonasAdmin'))
 const Frecuencias = lazy(() => import('./pages/Frecuencias'))
@@ -41,7 +42,7 @@ const SIN_ABIERTO = { salon: null, paquete: null, estudiante: null, docente: nul
 function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const slug = useParams()['*']?.split('/')[0]
+  const [slug, idEnUrl] = (useParams()['*'] ?? '').split('/')
   const permitida = PANTALLAS_PANEL.includes(slug) && puedeVer(auth.rol, slug)
   const page = permitida ? slug : pantallaInicial(auth.rol)
   const abierto = { ...SIN_ABIERTO, ...location.state?.abierto }
@@ -71,7 +72,11 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
     if (!puedeVer(auth.rol, pagina)) return // p. ej. comercial no tiene la ficha del salón: el enlace no hace nada
     irA(pagina, { [clave]: id })
   }
-  const verSalon = ir('salones', 'salon')
+  // El salón abierto va en la URL (/panel/salones/<id>): sobrevive a recargar, a «atrás» y a copiar el enlace.
+  const abrirSalon = (id) => navigate(id ? `/panel/salones/${id}` : '/panel/salones')
+  const verSalon = (id) => {
+    if (puedeVer(auth.rol, 'salones')) abrirSalon(id)
+  }
   const verPaquete = ir('paquetes', 'paquete')
   const verEstudiante = ir('estudiantes', 'estudiante')
   const verDocente = ir('docentes', 'docente')
@@ -104,7 +109,8 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
         <Salones
           data={data}
           estudiantes={estudiantes}
-          salonInicialId={abierto.salon}
+          salonId={idEnUrl || null}
+          onAbrirSalon={abrirSalon}
           puedeEditar={admin}
           onVerEstudiante={verEstudiante}
           onVerDocente={verDocente}
@@ -155,6 +161,7 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
       {ve('evaluaciones') && admin && <Evaluaciones niveles={data.niveles} onVerSalon={verSalon} />}
       {ve('ejercicios') && admin && <Ejercicios />}
       {ve('archivo') && admin && <ArchivoCiclos archivados={data.archivados} />}
+      {ve('encuestas') && admin && <EncuestasClase />}
       {ve('registros') && <Registros onCambio={data.recargar} puedeEditar={admin} />}
       {ve('zonas') && admin && <ZonasAdmin />}
       {ve('usuarios') && admin && <UsuariosPersonal miCorreo={usuario.email} />}

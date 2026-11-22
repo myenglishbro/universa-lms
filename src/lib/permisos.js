@@ -8,7 +8,7 @@ const PANTALLAS = {
 }
 
 // Pantallas que existen en el panel de gestión: son también el segmento de la URL (/panel/estudiantes).
-export const PANTALLAS_PANEL = ['dashboard', 'tickets', 'agenda', 'salones', 'paquetes', 'estudiantes', 'docentes', 'frecuencias', 'evaluaciones', 'ejercicios', 'archivo', 'registros', 'zonas', 'usuarios', 'feriados']
+export const PANTALLAS_PANEL = ['dashboard', 'tickets', 'agenda', 'salones', 'paquetes', 'estudiantes', 'docentes', 'encuestas', 'frecuencias', 'evaluaciones', 'ejercicios', 'archivo', 'registros', 'zonas', 'usuarios', 'feriados']
 
 export const puedeVer = (rol, pantalla) => {
   if (!(rol in PANTALLAS)) return false

@@ -19,6 +19,7 @@ const navItems = [
 
   { id: 'estudiantes', label: 'Students', icon: 'users', grupo: 'People' },
   { id: 'docentes', label: 'Teachers', icon: 'teacher', grupo: 'People' },
+  { id: 'encuestas', label: 'Class feedback', icon: 'chart', soloAdmin: true, grupo: 'People' },
   { id: 'registros', label: 'Registered teachers', icon: 'userplus', soloAdmin: true, grupo: 'People' },
 
   { id: 'frecuencias', label: 'Frequencies', icon: 'clock', soloAdmin: true, grupo: 'Settings' },

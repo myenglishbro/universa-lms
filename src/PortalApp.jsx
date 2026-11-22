@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import CambiarClave from './components/portal/CambiarClave'
+import EncuestaClase from './components/portal/EncuestaClase'
 import Layout from './components/layout/Layout'
 import PageHeader from './components/ui/PageHeader'
 import Card from './components/ui/Card'
@@ -47,6 +48,7 @@ export default function PortalApp({ vista, email, vistas, onCambiarVista, onSign
   if (!items[vista].some((i) => i.id === pagina)) return <Navigate to={`${base}/${items[vista][0].id}`} replace />
   return (
     <Layout base={base} current={pagina} onNavigate={(id) => navigate(`${base}/${id}`)} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
+      {vista === 'estudiante' && <EncuestaClase />}
       <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading…</p>}>
       {pagina === 'cuenta' ? (
         <MiCuenta email={email} />

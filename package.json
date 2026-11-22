@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node --test src/lib/evaluaciones.test.js src/lib/seguimiento.test.js src/lib/informeNotas.test.js src/lib/borradorReporte.test.js src/lib/comentariosInforme.test.js src/lib/progresoHabilidades.test.js src/lib/perfilDocente.test.js src/lib/coloresNivel.test.js src/lib/cacheSesion.test.js src/lib/respaldoSalones.test.js src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js",
+    "test": "node --test src/lib/evaluaciones.test.js src/lib/seguimiento.test.js src/lib/informeNotas.test.js src/lib/borradorReporte.test.js src/lib/comentariosInforme.test.js src/lib/progresoHabilidades.test.js src/lib/perfilDocente.test.js src/lib/coloresNivel.test.js src/lib/cacheSesion.test.js src/lib/respaldoSalones.test.js src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js src/lib/cambioLibro.test.js src/lib/rutaAprendizaje.test.js src/lib/encuestas.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

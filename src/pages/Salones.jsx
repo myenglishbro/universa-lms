@@ -42,7 +42,8 @@ function Segmentado({ etiqueta, valor, onCambiar, opciones }) {
   )
 }
 
-export default function Salones({ data, estudiantes, puedeEditar, salonInicialId = null, onVerEstudiante, onVerDocente }) {
+// El salón abierto vive en la URL (/panel/salones/<id>): `salonId` lo manda el panel y `onAbrirSalon(id | null)` navega. Así recargar, "atrás" y copiar el enlace funcionan.
+export default function Salones({ data, estudiantes, puedeEditar, salonId = null, onAbrirSalon, onVerEstudiante, onVerDocente }) {
   const { salones, niveles, docentes, catalogo, cargando, error, recargar, guardarSalon, cambiarEstado, eliminarSalon, crearDocente, archivados, archivarSalones } = data
   const [busqueda, setBusqueda] = useState('')
   const [nivel, setNivel] = useState('')
@@ -50,7 +51,6 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const [tipo, setTipo] = useState('') // '' = todos · 'grupal' · 'paquete'
   const [vista, setVista] = useState('tarjetas')
   const [menuMas, setMenuMas] = useState(false)
-  const [detalleId, setDetalleId] = useState(salonInicialId)
   const [cerrandoCiclo, setCerrandoCiclo] = useState(false)
   const [asignando, setAsignando] = useState(false)
   const [importando, setImportando] = useState(false)
@@ -89,10 +89,23 @@ export default function Salones({ data, estudiantes, puedeEditar, salonInicialId
   const finalizados = salones.filter((s) => s.estado === 'finalizado')
   const ciclosExistentes = [...new Set(archivados.map((s) => s.cicloArchivo))]
 
+  const detalleId = salonId
+  const setDetalleId = onAbrirSalon
   const detalle = salones.find((s) => s.id === detalleId)
+
+  if (detalleId && !detalle && cargando) return <p className="py-10 text-center text-sm text-slate-500">Loading classroom…</p>
+  const noEncontrado = Boolean(detalleId) && !detalle && !cargando && !error
 
   return (
     <>
+      {noEncontrado && (
+        <p className="mb-4 rounded-lg bg-peach-50 px-4 py-3 text-sm text-peach-700">
+          That classroom does not exist or is no longer available (it may be archived).{' '}
+          <button type="button" className="font-medium underline" onClick={() => setDetalleId(null)}>
+            Back to the list
+          </button>
+        </p>
+      )}
       {detalle ? (
         <SalonDetalle
           salon={detalle}
