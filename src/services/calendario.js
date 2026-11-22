@@ -27,6 +27,12 @@ export async function listarSesiones(salonId) {
   }))
 }
 
+// Fechas de evaluación marcadas por administración para el salón (cualquier día del calendario).
+export async function listarFechasEvaluacion(salonId) {
+  const filas = datos(await supabase.from('salon_fechas_evaluacion').select('id, fecha, titulo, nota').eq('salon_id', salonId).order('fecha').order('titulo'))
+  return filas.map((r) => ({ id: r.id, fecha: r.fecha, titulo: r.titulo, nota: r.nota ?? '' }))
+}
+
 // Sesiones pendientes del salón que se superponen con otro salón del mismo docente (solo advertencia).
 export async function listarConflictos(salonId) {
   const filas = datos(
@@ -110,3 +116,8 @@ export const eliminarFeriado = async (fecha) => {
   feriadosEnMemoria = null
   return datos(await supabase.rpc('eliminar_feriado', { p_fecha: fecha }))
 }
+
+export const guardarFechaEvaluacion = async (salonId, { id = null, fecha, titulo, nota }) =>
+  datos(await supabase.rpc('guardar_fecha_evaluacion', { p_salon: salonId, p_fecha: fecha, p_titulo: titulo, p_nota: nota || null, p_id: id }))
+
+export const eliminarFechaEvaluacion = async (id) => datos(await supabase.rpc('eliminar_fecha_evaluacion', { p_id: id }))

@@ -4,7 +4,7 @@ import Card from '../ui/Card'
 import { formatFechaCorta, numerarSesiones } from '../../lib/calendario'
 import { formatFecha, hoyLima } from '../../lib/salones'
 
-function Fila({ s, numero, avisos, repuesta, acciones, puedeRecuperar, ocupado }) {
+function Fila({ s, numero, avisos, evaluaciones, repuesta, acciones, puedeRecuperar, ocupado }) {
   const cancelada = s.estado === 'cancelada'
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-sm">
@@ -21,6 +21,11 @@ function Fila({ s, numero, avisos, repuesta, acciones, puedeRecuperar, ocupado }
         {s.estado === 'realizada' && <Badge color="brand">Held</Badge>}
         {cancelada && <Badge>Cancelled</Badge>}
         {cancelada && repuesta && <span className="text-xs text-slate-500">made up on {formatFecha(repuesta.fecha)}</span>}
+        {evaluaciones.map((e) => (
+          <Badge key={e.id} color="peach">
+            Evaluation: {e.titulo}
+          </Badge>
+        ))}
         {avisos.map((a) => (
           <Badge key={a} color="peach">
             {a}
@@ -41,6 +46,9 @@ function Fila({ s, numero, avisos, repuesta, acciones, puedeRecuperar, ocupado }
               </Button>
               <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.reprogramar(s)}>
                 Reschedule
+              </Button>
+              <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.evaluacion(s)}>
+                {evaluaciones.length > 0 ? 'Evaluation ✓' : 'Evaluation'}
               </Button>
             </>
           )}
@@ -70,7 +78,7 @@ function Grupo({ titulo, color, children }) {
 }
 
 // acciones: null para solo lectura (rol comercial).
-export default function SesionesLista({ sesiones, conflictos, feriados, sinProgramar, acciones, ocupado }) {
+export default function SesionesLista({ sesiones, conflictos, feriados, evaluaciones = [], sinProgramar, acciones, ocupado }) {
   const hoy = hoyLima()
   const numeros = numerarSesiones(sesiones)
   const diasFeriado = new Map(feriados.map((f) => [f.fecha, f.nombre]))
@@ -90,6 +98,7 @@ export default function SesionesLista({ sesiones, conflictos, feriados, sinProgr
       s={s}
       numero={numeros.get(s.id)}
       avisos={avisosDe(s)}
+      evaluaciones={evaluaciones.filter((e) => e.fecha === s.fecha)}
       repuesta={repuestas.get(s.id)}
       acciones={acciones}
       puedeRecuperar={sinProgramar > 0}

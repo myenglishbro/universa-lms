@@ -3,6 +3,7 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import useCalendario from '../../hooks/useCalendario'
 import CancelarSesionModal from './CancelarSesionModal'
+import EvaluacionModal from './EvaluacionModal'
 import ProgresoSalon from './ProgresoSalon'
 import SesionModal from './SesionModal'
 import SesionesLista from './SesionesLista'
@@ -34,6 +35,7 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
         reprogramar: (sesion) => setModal({ tipo: 'reprogramar', sesion }),
         recuperar: (sesion) => setModal({ tipo: 'recuperar', sesion }),
         corregir: (sesion) => setModal({ tipo: 'corregir', sesion }),
+        evaluacion: (sesion) => setModal({ tipo: 'evaluacion', sesion }),
       }
     : null
 
@@ -84,6 +86,7 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
           sesiones={cal.sesiones}
           conflictos={cal.conflictos}
           feriados={cal.feriados}
+          evaluaciones={cal.evaluaciones}
           sinProgramar={p.sinProgramar}
           acciones={acciones}
           ocupado={ocupado}
@@ -106,7 +109,16 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
           onClose={() => setModal(null)}
         />
       )}
-      {modal && modal.tipo !== 'cancelar' && (
+      {modal?.tipo === 'evaluacion' && (
+        <EvaluacionModal
+          sesion={modal.sesion}
+          existente={cal.evaluaciones.find((e) => e.fecha === modal.sesion.fecha)}
+          onSave={cal.guardarEvaluacion}
+          onRemove={cal.eliminarEvaluacion}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal && modal.tipo !== 'cancelar' && modal.tipo !== 'evaluacion' && (
         <SesionModal modo={modal.tipo} sesion={modal.sesion} proponer={cal.proponer} onSave={guardarModal} onClose={() => setModal(null)} />
       )}
     </section>

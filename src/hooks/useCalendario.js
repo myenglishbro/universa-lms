@@ -7,16 +7,18 @@ export default function useCalendario(salonId, alCambiar) {
   const [sesiones, setSesiones] = useState([])
   const [conflictos, setConflictos] = useState([])
   const [feriados, setFeriados] = useState([])
+  const [evaluaciones, setEvaluaciones] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
   const cargar = useCallback(
     () =>
-      Promise.all([api.listarSesiones(salonId), api.listarConflictos(salonId), api.listarFeriados()])
-        .then(([s, c, f]) => {
+      Promise.all([api.listarSesiones(salonId), api.listarConflictos(salonId), api.listarFeriados(), api.listarFechasEvaluacion(salonId).catch(() => [])])
+        .then(([s, c, f, ev]) => {
           setSesiones(s)
           setConflictos(c)
           setFeriados(f)
+          setEvaluaciones(ev)
           setError('')
         })
         .catch((e) => setError(e.message))
@@ -37,6 +39,7 @@ export default function useCalendario(salonId, alCambiar) {
     sesiones,
     conflictos,
     feriados,
+    evaluaciones,
     cargando,
     error,
     recargar: cargar,
@@ -46,6 +49,14 @@ export default function useCalendario(salonId, alCambiar) {
     recuperar: (id, fecha, ini, fin) => ejecutar(() => api.crearRecuperacion(id, fecha, ini, fin)),
     reprogramar: (id, fecha, ini, fin, nota) => ejecutar(() => api.reprogramarSesion(id, fecha, ini, fin, nota)),
     corregir: (id, estado, motivo) => ejecutar(() => api.corregirSesion(id, estado, motivo)),
+    guardarEvaluacion: async (datos) => {
+      await api.guardarFechaEvaluacion(salonId, datos)
+      await cargar()
+    },
+    eliminarEvaluacion: async (id) => {
+      await api.eliminarFechaEvaluacion(id)
+      await cargar()
+    },
     proponer: api.proponerRecuperacion,
   }
 }
