@@ -5,7 +5,7 @@ import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
 import EditorEjercicio from './EditorEjercicio'
 import EjercicioJugador from './EjercicioJugador'
-import { NIVELES, TIPOS, TONOS, compilar, construirPrompt, datosVacios, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+import { CICLOS, MODULOS, NIVELES, TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
 
 function Pasos({ paso }) {
   const pasos = ['Type', 'AI prompt', 'Edit and save']
@@ -34,7 +34,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
   const [errorIA, setErrorIA] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [datos, setDatos] = useState(ejercicio?.datos ?? null)
-  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', nivel: ejercicio?.nivel ?? '', tema: ejercicio?.tema ?? '' })
+  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', nivel: ejercicio?.nivel ?? '', tema: ejercicio?.tema ?? '', ciclo: ejercicio?.ciclo ?? '', modulo: ejercicio?.modulo ?? '', uso: ejercicio?.uso ?? '' })
   const [vista, setVista] = useState('editar')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -185,6 +185,11 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
           <div className="grid gap-3 sm:grid-cols-3">
             <Field className="sm:col-span-2" label="Exercise title" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`E.g. ${t.label}: daily routines`} autoFocus />
             <Field label="Level" options={[{ value: '', label: 'No level' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Cycle" options={[{ value: '', label: 'No cycle' }, ...CICLOS.map((c) => ({ value: String(c), label: `Cycle ${c}` }))]} value={String(meta.ciclo)} onChange={(e) => setMeta((m) => ({ ...m, ciclo: e.target.value }))} />
+            <Field label="Module" options={[{ value: '', label: 'No module' }, ...MODULOS.map((c) => ({ value: String(c), label: `Module ${c}` }))]} value={String(meta.modulo)} onChange={(e) => setMeta((m) => ({ ...m, modulo: e.target.value }))} />
+            <Field label="Use" options={[{ value: '', label: 'Not set' }, ...USOS.map((u) => ({ value: u.id, label: u.label }))]} value={meta.uso} onChange={(e) => setMeta((m) => ({ ...m, uso: e.target.value }))} />
           </div>
           <Field label="Topic (optional)" value={meta.tema} onChange={(e) => setMeta((m) => ({ ...m, tema: e.target.value }))} placeholder="To find it more easily in the bank" />
 

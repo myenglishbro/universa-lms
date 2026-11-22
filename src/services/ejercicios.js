@@ -10,7 +10,7 @@ export async function listarEjercicios() {
   return datos(
     await supabase
       .from('ejercicios')
-      .select('id, titulo, tipo, nivel, tema, datos, publico, autor_user_id, autor_nombre, created_at')
+      .select('id, titulo, tipo, nivel, tema, ciclo, modulo, uso, datos, publico, autor_user_id, autor_nombre, created_at')
       .order('created_at', { ascending: false }),
   )
 }
@@ -20,7 +20,7 @@ export function guardarEjercicio(id, e) {
   const { contenido, clave } = compilar(e.tipo, e.datos)
   return rpc('guardar_ejercicio', {
     p_id: id,
-    p_datos: { titulo: e.titulo, tipo: e.tipo, nivel: e.nivel || '', tema: e.tema || '', datos: e.datos, contenido, clave },
+    p_datos: { titulo: e.titulo, tipo: e.tipo, nivel: e.nivel || '', tema: e.tema || '', ciclo: e.ciclo || '', modulo: e.modulo || '', uso: e.uso || '', datos: e.datos, contenido, clave },
   })
 }
 export const archivarEjercicio = (id) => rpc('archivar_ejercicio', { p_id: id })

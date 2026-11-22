@@ -15,6 +15,17 @@ export const tipoDe = (id) => TIPOS.find((t) => t.id === id)
 export const esManual = (tipo) => tipo === 'writing' || tipo === 'speaking'
 export const NIVELES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
+// Clasificación del banco: ciclo (1 al 12), módulo dentro del ciclo (1 o 2) y uso. Los tres son opcionales.
+export const CICLOS = Array.from({ length: 12 }, (_, i) => i + 1)
+export const MODULOS = [1, 2]
+export const USOS = [
+  { id: 'formative', label: 'Formative' },
+  { id: 'assessment', label: 'Assessment' },
+]
+export const usoLabel = (id) => USOS.find((u) => u.id === id)?.label ?? ''
+// «Cycle 3 · Module 1 · Formative» (solo lo que esté definido).
+export const clasificacionTexto = (e) => [e.ciclo ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
+
 export const TONOS = {
   brand: 'bg-brand-100 text-brand-700',
   peach: 'bg-peach-100 text-peach-700',

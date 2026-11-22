@@ -8,7 +8,7 @@ import Modal from '../ui/Modal'
 import CrearEjercicio from './CrearEjercicio'
 import EjercicioJugador from './EjercicioJugador'
 import useCarga from '../../hooks/useCarga'
-import { TIPOS, TONOS, cantidadItems, compilar, tipoDe } from '../../lib/ejercicios'
+import { CICLOS, MODULOS, TIPOS, TONOS, USOS, cantidadItems, clasificacionTexto, compilar, tipoDe } from '../../lib/ejercicios'
 import { supabase } from '../../lib/supabase'
 import * as servicioReal from '../../services/ejercicios'
 
@@ -32,6 +32,7 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
+        {clasificacionTexto(e) && <Badge color="brand">{clasificacionTexto(e)}</Badge>}
         {e.nivel && <Badge color="brand">{e.nivel}</Badge>}
         {e.tema && <Badge color="slate">{e.tema}</Badge>}
         <Badge color={e.publico ? 'brand' : 'peach'}>{e.publico ? 'Bank' : 'Mine'}</Badge>
@@ -80,6 +81,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
   const [busqueda, setBusqueda] = useState('')
   const [tipo, setTipo] = useState('')
   const [alcance, setAlcance] = useState('todos') // todos | banco | mios
+  const [clasif, setClasif] = useState({ ciclo: '', modulo: '', uso: '' }) // '' = todos; ciclo 'sin' = sin clasificar
   const [form, setForm] = useState(null) // { ejercicio }
   const [ver, setVer] = useState(null)
   const [falla, setFalla] = useState('')
@@ -91,10 +93,13 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       lista.filter(
         (e) =>
           (!tipo || e.tipo === tipo) &&
+          (!clasif.ciclo || (clasif.ciclo === 'sin' ? !e.ciclo : String(e.ciclo) === clasif.ciclo)) &&
+          (!clasif.modulo || String(e.modulo) === clasif.modulo) &&
+          (!clasif.uso || e.uso === clasif.uso) &&
           (alcance === 'todos' || (alcance === 'banco' ? e.publico : !e.publico)) &&
           (!texto || sinTildes(`${e.titulo} ${e.tema ?? ''} ${e.nivel ?? ''} ${e.autor_nombre}`).includes(texto)),
       ),
-    [lista, tipo, alcance, texto],
+    [lista, tipo, clasif, alcance, texto],
   )
   const conteo = (t) => lista.filter((e) => e.tipo === t).length
 
@@ -141,6 +146,39 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by cycle, module and use">
+        <select value={clasif.ciclo} onChange={(e) => setClasif({ ...clasif, ciclo: e.target.value })} className={`${inputClass} w-auto`} aria-label="Cycle">
+          <option value="">All cycles</option>
+          {CICLOS.map((c) => (
+            <option key={c} value={c}>
+              Cycle {c}
+            </option>
+          ))}
+          <option value="sin">Not classified</option>
+        </select>
+        <select value={clasif.modulo} onChange={(e) => setClasif({ ...clasif, modulo: e.target.value })} className={`${inputClass} w-auto`} aria-label="Module">
+          <option value="">All modules</option>
+          {MODULOS.map((m) => (
+            <option key={m} value={m}>
+              Module {m}
+            </option>
+          ))}
+        </select>
+        <select value={clasif.uso} onChange={(e) => setClasif({ ...clasif, uso: e.target.value })} className={`${inputClass} w-auto`} aria-label="Use">
+          <option value="">Formative and Assessment</option>
+          {USOS.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+        {(clasif.ciclo || clasif.modulo || clasif.uso) && (
+          <button type="button" onClick={() => setClasif({ ciclo: '', modulo: '', uso: '' })} className="text-sm font-medium text-brand-700 hover:underline">
+            Clear
+          </button>
+        )}
       </div>
 
       <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filter by type">
