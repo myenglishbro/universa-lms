@@ -1,5 +1,5 @@
 import { clasificarNota, fmtNota } from './evaluaciones.js'
-import { nivelDePct, promedioAnterior, seguimientoDetalle, seguimientoFormative } from './seguimiento.js'
+import { nivelDePct, promedioAnterior, seguimientoDetalle, seguimientoFormative, unidadesDelModulo } from './seguimiento.js'
 import { HABILIDADES_INFORME, radarCapas } from './progresoHabilidades.js'
 
 export { HABILIDADES_INFORME }
@@ -452,11 +452,7 @@ function hojaFormative(d, h) {
     .filter(({ e }) => e && (e.notas ?? []).length > 0)
   if (!mods.length) return ''
 
-  const unidadesDe = (e) => {
-    const base = ['Unit 1', 'Unit 2', 'Unit 3']
-    for (const n of e.notas) if (n.unidad && !base.includes(n.unidad)) base.push(n.unidad)
-    return base
-  }
+  const unidadesDe = (e) => unidadesDelModulo(e, e.notas.filter((n) => n.unidad))
   const habilidades = []
   for (const { e } of mods) for (const n of e.notas) for (const c of n.criterios ?? []) if (!habilidades.includes(c.criterio)) habilidades.push(c.criterio)
   const porHabilidad = Object.fromEntries(habilidades.map((k) => [k, []]))

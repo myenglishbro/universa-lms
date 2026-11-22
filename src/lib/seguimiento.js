@@ -1,7 +1,19 @@
 // Seguimiento del alumno: habilidades del Formative por unidad (0–100 %), tendencia y comparación con el módulo anterior.
 // Solo usa lo publicado que ya devuelve el informe del alumno: modulos[].evaluaciones[] con tipo 'formative' y notas[{ unidad, criterios: [{ criterio, puntaje, max }] }].
 
-const UNIDADES = ['Unit 1', 'Unit 2', 'Unit 3']
+// Las 3 unidades de un módulo: las que trae la evaluación o, si no vienen, el bloque de 3 al que pertenecen las notas
+// (módulo 1 = Unit 1-3, módulo 2 = Unit 4-6…). Se suman las unidades extra que aparezcan en las notas.
+export function unidadesDelModulo(e, notas = []) {
+  const num = (u) => Number(String(u).match(/(\d+)$/)?.[1])
+  let base = Array.isArray(e?.unidades) && e.unidades.length ? [...e.unidades] : null
+  if (!base) {
+    const nums = notas.map((n) => num(n.unidad)).filter((n) => Number.isFinite(n))
+    const ini = nums.length ? Math.floor((Math.min(...nums) - 1) / 3) * 3 + 1 : 1
+    base = [`Unit ${ini}`, `Unit ${ini + 1}`, `Unit ${ini + 2}`]
+  }
+  for (const n of notas) if (n.unidad && !base.includes(n.unidad)) base.push(n.unidad)
+  return base
+}
 
 // Clave para emparejar la misma habilidad entre módulos con rúbricas distintas («Listening / Lessons» y «Listening» son la misma).
 export const claveHabilidad = (nombre) => String(nombre ?? '').split('/')[0].trim().toLowerCase()
@@ -32,8 +44,7 @@ export function seguimientoFormative(modulos = []) {
     const e = (m.evaluaciones ?? []).find((x) => x.tipo === 'formative')
     const notas = (e?.notas ?? []).filter((n) => n.unidad && Array.isArray(n.criterios) && n.criterios.length > 0)
     if (!notas.length) continue
-    const unidades = [...UNIDADES]
-    for (const n of notas) if (!unidades.includes(n.unidad)) unidades.push(n.unidad)
+    const unidades = unidadesDelModulo(e, notas)
     const nombres = []
     for (const n of notas) for (const c of n.criterios) if (!nombres.includes(c.criterio)) nombres.push(c.criterio)
     const habilidades = nombres.map((nombre) => {
