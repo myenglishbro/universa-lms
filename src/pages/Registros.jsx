@@ -203,7 +203,7 @@ export default function Registros({ onCambio, servicio = servicioReal, puedeEdit
       </Ayuda>
 
       {!cargando && !error && (
-        <div className="mb-4 grid grid-cols-3 gap-3">
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Tile icono="userplus" tono={pendientes > 0 ? 'peach' : 'slate'} valor={pendientes} etiqueta="To activate" onClick={() => setFiltro('pendientes')} activo={filtro === 'pendientes'} />
           <Tile icono="teacher" tono="brand" valor={docentes} etiqueta="Already teachers" onClick={() => setFiltro('docentes')} activo={filtro === 'docentes'} />
           <Tile icono="users" tono="slate" valor={datos.length} etiqueta="Registered in total" onClick={() => setFiltro('todos')} activo={filtro === 'todos'} />

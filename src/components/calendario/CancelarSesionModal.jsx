@@ -94,7 +94,7 @@ export default function CancelarSesionModal({ sesion, proponer, onConfirm, onClo
           )}
           {radio('otra', 'Choose another date')}
           {opcion === 'otra' && (
-            <div className="grid grid-cols-3 gap-2 pl-6">
+            <div className="grid grid-cols-1 gap-2 pl-6 sm:grid-cols-3">
               <Field label="Date" type="date" min={hoyLima()} value={otra.fecha} onChange={(e) => setOtra({ ...otra, fecha: e.target.value })} required />
               <Field label="Start" type="time" value={otra.horaInicio} onChange={(e) => setOtra({ ...otra, horaInicio: e.target.value })} required />
               <Field label="End" type="time" value={otra.horaFin} onChange={(e) => setOtra({ ...otra, horaFin: e.target.value })} required />

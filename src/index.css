@@ -66,3 +66,21 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Celular: las tablas con la clase «tabla-tarjetas» muestran cada fila como una tarjeta (el nombre de la columna sale de data-label de cada celda).
+   Una celda sin data-label es el título de la tarjeta; una con data-acciones va a la derecha, al pie. */
+@media (max-width: 767px) {
+  .tabla-tarjetas thead { display: none; }
+  .tabla-tarjetas, .tabla-tarjetas tbody, .tabla-tarjetas tr, .tabla-tarjetas td { display: block; width: 100%; }
+  .tabla-tarjetas tr { padding: 0.75rem 1rem; }
+  .tabla-tarjetas td { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; text-align: right; white-space: normal; }
+  .tabla-tarjetas td::before { content: attr(data-label); flex-shrink: 0; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-slate-500); text-align: left; }
+  .tabla-tarjetas td:not([data-label]) { justify-content: flex-start; text-align: left; }
+  .tabla-tarjetas td:not([data-label])::before { display: none; }
+  .tabla-tarjetas td[data-acciones] { justify-content: flex-end; padding-top: 0.5rem; }
+}
+
+/* Celular: 16 px en los campos evita que el navegador del teléfono haga zoom al tocarlos. */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px; }
+}

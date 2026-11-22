@@ -68,7 +68,7 @@ export default function SesionModal({ modo, sesion, proponer, onSave, onClose })
           </>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Field label="Date" type="date" min={modo === 'recuperar' ? hoyLima() : undefined} value={v.fecha} onChange={cambiar('fecha')} required />
               <Field label="Start" type="time" value={v.horaInicio} onChange={cambiar('horaInicio')} required />
               <Field label="End" type="time" value={v.horaFin} onChange={cambiar('horaFin')} required />

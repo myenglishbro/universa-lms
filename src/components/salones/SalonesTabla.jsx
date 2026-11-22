@@ -13,7 +13,7 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
   const fotos = useFotosDocentes()
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="tabla-tarjetas w-full text-left text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
             <th className="px-4 py-2.5 font-medium">Classroom</th>
@@ -42,7 +42,7 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
                   )}
                 </div>
               </td>
-              <td className="px-4 py-2.5">
+              <td data-label="Academic level" className="px-4 py-2.5">
                 <div>{s.nivel ? <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${colorDe(s.nivelId).chip}`}>{s.nivel}</span> : <span className="text-peach-700">No level assigned</span>}</div>
                 {s.curso && <div className="text-xs text-slate-500">{s.curso}</div>}
                 {s.plan && (
@@ -51,7 +51,7 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
                   </div>
                 )}
               </td>
-              <td className="px-4 py-2.5">
+              <td data-label="Teacher" className="px-4 py-2.5">
                 {s.docente ? (
                   <span className="flex items-center gap-2">
                     <Avatar nombre={s.docente} fotoUrl={fotos.get(s.docenteId)} tamano="sm" /> {s.docente}
@@ -60,9 +60,9 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
                   <span className="text-slate-400">Unassigned</span>
                 )}
               </td>
-              <td className="px-4 py-2.5 text-slate-600">{formatHorario(s.horarios)}</td>
-              <td className="whitespace-nowrap px-4 py-2.5">{formatFecha(s.fechaInicio)}</td>
-              <td className="whitespace-nowrap px-4 py-2.5">
+              <td data-label="Schedule" className="px-4 py-2.5 text-slate-600">{formatHorario(s.horarios)}</td>
+              <td data-label="Start" className="whitespace-nowrap px-4 py-2.5">{formatFecha(s.fechaInicio)}</td>
+              <td data-label="Estimated end" className="whitespace-nowrap px-4 py-2.5">
                 {formatFecha(fechaFinSalon(s))}
                 {proximoAFinalizar(s) && (
                   <span className="ml-2">
@@ -70,7 +70,7 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
                   </span>
                 )}
               </td>
-              <td className="whitespace-nowrap px-4 py-2.5">
+              <td data-label="Progress" className="whitespace-nowrap px-4 py-2.5">
                 {s.paquete ? (
                   <span title="Hours used of the package">
                     {minutosTexto(s.paquete.consumidas)}/{minutosTexto(s.paquete.contratadas)}
@@ -83,11 +83,11 @@ export default function SalonesTabla({ salones, colorDe = () => SIN_COLOR, puede
                   <span className="text-slate-400">—</span>
                 )}
               </td>
-              <td className="px-4 py-2.5">{s.capacidad}</td>
-              <td className="px-4 py-2.5">
+              <td data-label="Capacity" className="px-4 py-2.5">{s.capacidad}</td>
+              <td data-label="Status" className="px-4 py-2.5">
                 <EstadoBadge estado={s.estado} />
               </td>
-              <td className="whitespace-nowrap px-4 py-2.5 text-right">
+              <td data-acciones className="whitespace-nowrap px-4 py-2.5 text-right">
                 <Button variant="ghost" className="px-2 py-1" onClick={() => onVer(s.id)}>
                   View
                 </Button>

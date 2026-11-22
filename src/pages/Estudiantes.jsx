@@ -252,7 +252,7 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="tabla-tarjetas w-full text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Student</th>
@@ -271,10 +271,10 @@ export default function Estudiantes({ data, salones, paquetes, puedeEditar, estu
                           <td className="px-4 py-2.5 font-medium text-slate-900">
                             {e.nombre} {!e.activo && <Badge color="slate">Inactivo</Badge>}
                           </td>
-                          <td className="px-4 py-2.5 text-slate-600">{e.correo || e.telefono || '—'}</td>
-                          <td className="px-4 py-2.5 text-slate-600">{sal.length ? sal.join(', ') : <span className="text-slate-400">No classroom</span>}</td>
-                          <td className="px-4 py-2.5 text-slate-600">{nPaq ? `${nPaq} active` : '—'}</td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">View</td>
+                          <td data-label="Contact" className="px-4 py-2.5 text-slate-600">{e.correo || e.telefono || '—'}</td>
+                          <td data-label="Classrooms" className="px-4 py-2.5 text-slate-600">{sal.length ? sal.join(', ') : <span className="text-slate-400">No classroom</span>}</td>
+                          <td data-label="Packages" className="px-4 py-2.5 text-slate-600">{nPaq ? `${nPaq} active` : '—'}</td>
+                          <td data-acciones className="whitespace-nowrap px-4 py-2.5 text-right text-brand-700">View</td>
                         </tr>
                       )
                     })}
