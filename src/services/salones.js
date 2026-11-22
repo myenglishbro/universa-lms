@@ -75,6 +75,14 @@ async function paquetesPorSalon() {
   }
 }
 
+// Estudiantes con matrícula activa por salón, indexado por id de salón. Es un extra: si no se puede leer, el dashboard avisa sin inventar cifras.
+export async function contarEstudiantesActivos() {
+  const filas = datos(await supabase.from('matriculas').select('salon_id').eq('estado', 'activa'))
+  const por = {}
+  for (const f of filas) por[f.salon_id] = (por[f.salon_id] ?? 0) + 1
+  return por
+}
+
 // Progreso académico por salón (solo salones con total de sesiones), indexado por id.
 export async function listarProgreso() {
   const filas = datos(await supabase.from('salon_progreso').select('*'))

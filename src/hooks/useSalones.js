@@ -25,9 +25,9 @@ export default function useSalones() {
       // Primero se sincronizan los estados (Planificado → En curso) si toca; si falla, la lista se carga igual.
       Promise.resolve(forzar === true || !leerCache('sync-estados', SINCRONIZAR_CADA) ? api.sincronizarEstados().then((n) => (guardarCache('sync-estados'), n)) : 0)
         .catch(() => 0)
-        .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes(), api.listarPendientes().catch(() => ({}))]))
-        .then(([s, progreso, p, d, pend]) => {
-          const todos = s.map((salon) => ({ ...salon, progreso: progreso[salon.id] ?? null, pendientes: pend[salon.id] ?? null }))
+        .then(() => Promise.all([api.listarSalones(), api.listarProgreso(), api.listarNiveles(), api.listarDocentes(), api.listarPendientes().catch(() => ({})), api.contarEstudiantesActivos().catch(() => null)]))
+        .then(([s, progreso, p, d, pend, alumnos]) => {
+          const todos = s.map((salon) => ({ ...salon, progreso: progreso[salon.id] ?? null, pendientes: pend[salon.id] ?? null, estudiantes: alumnos ? (alumnos[salon.id] ?? 0) : null }))
           setSalones(todos.filter((x) => !x.archivadoAt))
           setArchivados(todos.filter((x) => x.archivadoAt))
           setNiveles(p)

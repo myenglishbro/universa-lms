@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import EstadoBadge from '../components/salones/EstadoBadge'
 import { SIN_NIVEL, estados, formatFecha } from '../lib/salones'
+import { resumenCambioLibro, salonesDeCicloPar } from '../lib/cambioLibro'
 import { VENTANAS, analizarSalon, calcularIndicadores, filtrarFilas, ordenarPorFin, textoDias } from '../lib/dashboardComercial'
 
 // Vista inicial recomendada; "Restablecer" en cambio limpia todos los criterios.
@@ -74,6 +75,84 @@ function Prioridad({ ind, cargando, onVer }) {
   )
 }
 
+// Aviso de cambio de libro: al terminar un ciclo par (2, 4, 6…) los estudiantes pasan a un libro nuevo; aquí se ve cuántos y cuándo, para pedirlo a tiempo.
+function CambioLibro({ filas, onVer }) {
+  const r = useMemo(() => resumenCambioLibro(filas), [filas])
+  const [abierto, setAbierto] = useState(null)
+  if (r.ciclos.length === 0) return null
+  const sinDato = r.ciclos.some((c) => c.sinDatoEstudiantes)
+  const hay = r.urgentes > 0
+  const t = TONOS[hay ? 'peach' : 'brand']
+  const tramos = [
+    ['ya', 'Overdue'],
+    ['d30', '≤ 30 days'],
+    ['d60', '31–60 days'],
+    ['mas', 'Later'],
+    ['sinFecha', 'No date'],
+  ]
+  return (
+    <Card className={`mb-6 border-l-4 p-4 ${t.borde}`}>
+      <div className="flex flex-wrap items-center gap-4">
+        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${t.icono}`}>
+          <Icon name="box" className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Book change</p>
+          <p className="text-lg font-semibold text-slate-900">
+            {sinDato
+              ? `${r.salones} ${r.salones === 1 ? 'classroom finishes' : 'classrooms finish'} an even cycle`
+              : hay
+                ? `${r.urgentes} ${r.urgentes === 1 ? 'student needs' : 'students need'} the next book within 30 days`
+                : `${r.total} ${r.total === 1 ? 'student finishes' : 'students finish'} an even cycle soon`}
+          </p>
+          <p className="text-sm text-slate-500">
+            {sinDato ? 'Enrollment could not be read, so student counts are missing.' : `${r.proximos} more in 31–60 days. Order the books for the next cycle ahead of time.`}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+              <th className="py-1 pr-3 font-medium">Cycle ending</th>
+              <th className="px-2 py-1 text-right font-medium">Students</th>
+              {tramos.map(([k, l]) => (
+                <th key={k} className="px-2 py-1 text-right font-medium">{l}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {r.ciclos.map((c) => (
+              <Fragment key={c.ciclo}>
+                <tr className="border-t border-slate-100">
+                  <td className="py-1.5 pr-3">
+                    <button type="button" onClick={() => setAbierto(abierto === c.ciclo ? null : c.ciclo)} aria-expanded={abierto === c.ciclo} className="font-medium text-brand-700 hover:underline">
+                      Cycle {c.ciclo}
+                    </button>
+                    <span className="ml-2 text-xs text-slate-400">{c.salones} {c.salones === 1 ? 'classroom' : 'classrooms'}</span>
+                  </td>
+                  <td className="px-2 py-1.5 text-right font-semibold text-slate-900">{c.sinDatoEstudiantes ? '—' : c.estudiantes}</td>
+                  {tramos.map(([k]) => (
+                    <td key={k} className={`px-2 py-1.5 text-right ${c[k] > 0 && (k === 'ya' || k === 'd30') ? 'font-semibold text-peach-700' : 'text-slate-600'}`}>{c.sinDatoEstudiantes ? '—' : c[k]}</td>
+                  ))}
+                </tr>
+                {abierto === c.ciclo &&
+                  salonesDeCicloPar(filas, c.ciclo).map(({ salon, a }) => (
+                    <tr key={salon.id} className="bg-brand-50/40 text-xs text-slate-600">
+                      <td className="py-1 pl-4 pr-3"><button type="button" onClick={() => onVer(salon.id)} className="font-medium text-brand-700 hover:underline">{salon.codigo}</button> · {salon.nombre}</td>
+                      <td className="px-2 py-1 text-right">{salon.estudiantes ?? '—'}</td>
+                      <td colSpan={tramos.length} className="px-2 py-1 text-right">{a.fin ? `Ends ${formatFecha(a.fin)} (${textoDias(a, salon.estado)})` : 'No end date'}</td>
+                    </tr>
+                  ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  )
+}
+
 // Barra apilada: cómo se reparten los salones en curso según qué tan cerca está su fin.
 function Urgencia({ filas }) {
   const grupos = useMemo(() => {
@@ -122,7 +201,7 @@ function Urgencia({ filas }) {
 // Control segmentado para la ventana de finalización.
 function Segmentado({ opciones, valor, onChange }) {
   return (
-    <div role="group" aria-label="When do they end?" className="grid grid-cols-5 gap-0.5 rounded-xl bg-slate-100 p-0.5 lg:inline-grid">
+    <div role="group" aria-label="When do they end?" className="flex max-w-full gap-0.5 overflow-x-auto rounded-xl bg-slate-100 p-0.5 lg:inline-grid lg:grid-cols-5 lg:overflow-visible">
       {opciones.map((o) => (
         <button
           key={o.value}
@@ -278,6 +357,8 @@ export default function Dashboard({ data, onVerSalon }) {
       </div>
 
       <Prioridad ind={ind} cargando={cargando || Boolean(error)} onVer={(p) => setF({ ...sinFiltros, ...p })} />
+
+      {!cargando && !error && <CambioLibro filas={filas} onVer={onVerSalon} />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Indicador
