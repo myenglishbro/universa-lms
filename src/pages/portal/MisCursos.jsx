@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import CalendarioClases, { FilaClase } from '../../components/portal/CalendarioClases'
+import RutaAprendizaje from '../../components/portal/RutaAprendizaje'
 import TarjetaCursoEstudiante from '../../components/portal/TarjetaCursoEstudiante'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
@@ -84,6 +85,8 @@ export default function MisCursos({ servicio = servicioReal, cursoInicialId = nu
         )
       ) : (
         <>
+          <RutaAprendizaje cursos={cursos.datos} />
+
           {deHoy > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold text-slate-900">Your classes today</h2>
