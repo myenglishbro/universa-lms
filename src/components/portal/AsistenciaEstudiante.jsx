@@ -1,17 +1,47 @@
 import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import { Dona } from '../ui/Anillo'
-import { ESTADOS_ASISTENCIA, estadoAsistencia, porcentajeAsistencia } from '../../lib/asistencia'
+import { ESTADOS_ASISTENCIA, LIMITE_INASISTENCIA, estadoAsistencia, porcentajeAsistencia, riesgoAsistencia } from '../../lib/asistencia'
 import { formatFecha } from '../../lib/salones'
 
 const COLOR = { presente: '#6a2cc8', tardanza: '#ffb97e', justificado: '#94a3b8', ausente: '#e11d48' }
+
+// Aviso de inasistencias: 2 tardanzas = 1 inasistencia; con 25 % o más el estudiante repite aunque su puntaje sea perfecto.
+export function AvisoInasistencias({ riesgo, conteo }) {
+  if (!riesgo.base) return null
+  const detalle = `${conteo.ausente} ${conteo.ausente === 1 ? 'absence' : 'absences'} + ${conteo.tardanza} late (2 late = 1 absence) = ${riesgo.equivalentes} of ${riesgo.base} classes · ${riesgo.pct}%`
+  if (riesgo.enRiesgo)
+    return (
+      <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-4">
+        <p className="text-sm font-bold text-rose-800">You reached {LIMITE_INASISTENCIA}% absences: you repeat the course</p>
+        <p className="mt-1 text-xs text-rose-700">Even with a perfect score, {LIMITE_INASISTENCIA}% or more absences means repeating. Please talk to your teacher or the academic team.</p>
+        <p className="mt-2 text-xs font-medium text-rose-800">{detalle}</p>
+      </div>
+    )
+  if (riesgo.cercano)
+    return (
+      <div role="status" className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+        <p className="text-sm font-bold text-amber-900">Careful: you are close to {LIMITE_INASISTENCIA}% absences</p>
+        <p className="mt-1 text-xs text-amber-800">At {LIMITE_INASISTENCIA}% you repeat the course, whatever your score. Two late arrivals count as one absence.</p>
+        <p className="mt-2 text-xs font-medium text-amber-900">{detalle}</p>
+      </div>
+    )
+  return (
+    <p className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
+      Absences: <strong>{riesgo.pct}%</strong> (limit {LIMITE_INASISTENCIA}%). Two late arrivals count as one absence.
+    </p>
+  )
+}
 
 // Pestaña «Asistencia»: dona con el reparto, y el historial clase por clase con el tema y los materiales vinculados.
 export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial }) {
   const marcadas = Object.values(conteo).reduce((a, b) => a + b, 0)
   const pct = porcentajeAsistencia(conteo)
+  const riesgo = riesgoAsistencia(conteo)
   return (
     <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <div className="space-y-4">
+      <AvisoInasistencias riesgo={riesgo} conteo={conteo} />
       <Card className="h-fit p-5">
         <h2 className="mb-4 text-base font-semibold text-slate-900">My attendance</h2>
         {marcadas === 0 ? (
@@ -37,6 +67,7 @@ export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial 
           </>
         )}
       </Card>
+      </div>
 
       <Card className="p-5">
         <h2 className="mb-3 text-base font-semibold text-slate-900">Class history</h2>

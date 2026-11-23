@@ -76,3 +76,14 @@ test('seguimientoDetalle suma Task 1 y Task 2 por criterio y lee Project criteri
 test('nivelDePct convierte el porcentaje en nivel 0–5', () => {
   assert.deepEqual([0, 20, 59, 60, 100].map(nivelDePct), [0, 1, 3, 3, 5])
 })
+
+import { riesgoAsistencia } from './asistencia.js'
+test('riesgoAsistencia: 2 tardanzas = 1 inasistencia y 25 % repite', () => {
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2, justificado: 0 }).enRiesgo, true)
+  const r = riesgoAsistencia({ presente: 20, ausente: 2, tardanza: 1, justificado: 0 })
+  assert.equal(r.equivalentes, 2)
+  assert.equal(r.enRiesgo, false)
+  assert.equal(riesgoAsistencia({ presente: 3, ausente: 0, tardanza: 1 }).equivalentes, 0)
+  assert.equal(riesgoAsistencia({ presente: 3, ausente: 1, tardanza: 0 }).pct, 25)
+  assert.equal(riesgoAsistencia({ presente: 0, ausente: 0, tardanza: 0 }).enRiesgo, false)
+})

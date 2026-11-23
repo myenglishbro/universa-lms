@@ -33,3 +33,17 @@ export function porcentajeAsistencia(conteo) {
   const base = conteo.presente + conteo.tardanza + conteo.ausente
   return base ? Math.round(((conteo.presente + conteo.tardanza) / base) * 100) : null
 }
+
+// Regla de inasistencias: 2 tardanzas suman 1 inasistencia (la tardanza suelta no cuenta). Con 25 % o más de inasistencias el estudiante REPITE,
+// aunque tenga el puntaje perfecto. Base: clases con marca, sin las justificadas (igual que el porcentaje de asistencia).
+export const LIMITE_INASISTENCIA = 25
+export function riesgoAsistencia(conteo) {
+  const tardanzas = conteo.tardanza ?? 0
+  const base = (conteo.presente ?? 0) + tardanzas + (conteo.ausente ?? 0)
+  const equivalentes = (conteo.ausente ?? 0) + Math.floor(tardanzas / 2)
+  const pct = base ? Math.round((equivalentes / base) * 1000) / 10 : 0
+  // Clases que aún podría faltar sin llegar al límite, con la base actual (orientativo).
+  const enRiesgo = base > 0 && pct >= LIMITE_INASISTENCIA
+  const cercano = !enRiesgo && base > 0 && pct >= LIMITE_INASISTENCIA - 5
+  return { base, equivalentes, pct, enRiesgo, cercano }
+}
