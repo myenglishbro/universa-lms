@@ -52,7 +52,7 @@ export const guardarCalificaciones = (evaluacionId, filas) =>
   })
 export const publicarEvaluacion = (evaluacionId, alumnos = null) => rpc('publicar_evaluacion', { p_evaluacion: evaluacionId, p_alumnos: alumnos })
 export const corregirCalificacion = (evaluacionId, { alumnoId, unidad, puntaje, comentario, motivo, detalle }) =>
-  rpc('corregir_calificacion', { p_evaluacion: evaluacionId, p_alumno: alumnoId, p_unidad: unidad ?? '', p_puntaje: puntaje === '' ? null : puntaje, p_comentario: comentario || null, p_motivo: motivo, p_detalle: detalle ?? null })
+  rpc('corregir_calificacion', { p_evaluacion: evaluacionId, p_alumno: alumnoId, p_unidad: unidad ?? '', p_puntaje: puntaje === '' || puntaje === undefined ? null : puntaje, p_comentario: comentario || null, p_motivo: motivo, p_detalle: detalle ?? null })
 
 // Matriz del salón (docente asignado o administración): alumnos × evaluaciones, subtotales por módulo y ciclo.
 export const matrizSalon = (salonId) => rpc('eval_matriz_salon', { p_salon: salonId })
