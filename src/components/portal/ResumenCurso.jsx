@@ -37,7 +37,7 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
   const horas = progreso?.horas ?? null // salón de un paquete de horas: el avance se mide en horas, no en clases
   const pct = horas ? porcentajeAvance(horas.consumidas, horas.contratadas) : progreso ? porcentajeAvance(progreso.realizadas, progreso.total) : null
   const asist = porcentajeAsistencia(conteoAsistencia)
-  const riesgo = riesgoAsistencia(conteoAsistencia)
+  const riesgo = riesgoAsistencia(conteoAsistencia, progreso?.total)
   const ciclos = progreso?.ciclos ?? []
   const lecciones = secciones.flatMap((s) => s.lecciones)
   const nVistas = lecciones.filter((l) => vistas.has(l.id)).length

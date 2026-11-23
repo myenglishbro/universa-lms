@@ -21,7 +21,7 @@ export default function AsistenciaAlumno({ alumnoId, servicio = asistenciaReal }
       ) : (
         <ul className="divide-y divide-slate-100">
           {datos.map((s) => {
-            const r = riesgoAsistencia({ presente: s.presentes, ausente: s.ausentes, tardanza: s.tardanzas })
+            const r = riesgoAsistencia({ presente: s.presentes, ausente: s.ausentes, tardanza: s.tardanzas }, s.total_sesiones)
             return (
             <li key={s.salon_id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
               <span className="font-medium text-slate-900">
@@ -32,7 +32,7 @@ export default function AsistenciaAlumno({ alumnoId, servicio = asistenciaReal }
               </span>
               {r.base > 0 && (
                 <span className={`w-full text-xs ${r.enRiesgo ? 'font-bold text-rose-700' : r.cercano ? 'font-medium text-amber-800' : 'text-slate-500'}`}>
-                  {r.enRiesgo ? `⚠ Repeats the course: ${r.pct}% absences (limit ${LIMITE_INASISTENCIA}%)` : `Absences ${r.pct}% (2 late = 1 absence, limit ${LIMITE_INASISTENCIA}%)`}
+                  {r.enRiesgo ? `⚠ Repeats the course: ${r.pct}% absences (limit ${LIMITE_INASISTENCIA}%)` : `Absences ${r.pct}% of ${r.porTotal ? 'the course' : 'classes recorded'} (2 late = 1 absence, limit ${LIMITE_INASISTENCIA}%)${r.limiteClases ? ` · can still miss ${r.faltasRestantes} or be late ${r.tardanzasRestantes}` : ''}`}
                 </span>
               )}
             </li>

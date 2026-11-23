@@ -119,7 +119,7 @@ export default function CursoEstudiante({ curso, proximas = [], onVolver, vistaP
           (historial.error ? (
             <p className="text-sm text-red-600">Could not load your attendance: {historial.error}</p>
           ) : (
-            <AsistenciaEstudiante historial={historial.datos} conteo={conteo} onVerMaterial={(id) => irA('contenido', id)} />
+            <AsistenciaEstudiante historial={historial.datos} conteo={conteo} totalClases={progreso.datos?.total} onVerMaterial={(id) => irA('contenido', id)} />
           ))}
       </div>
 

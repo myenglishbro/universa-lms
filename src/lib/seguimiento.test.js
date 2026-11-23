@@ -80,6 +80,16 @@ test('nivelDePct convierte el porcentaje en nivel 0–5', () => {
 import { riesgoAsistencia } from './asistencia.js'
 test('riesgoAsistencia: 2 tardanzas = 1 inasistencia y 25 % repite', () => {
   assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2, justificado: 0 }).enRiesgo, true)
+  // Sobre el total del curso: 8 inasistencias de 48 clases = 16,7 % (no repite); de 32 = 25 % (repite).
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2 }, 48).enRiesgo, false)
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2 }, 32).enRiesgo, true)
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2 }, 48).limiteClases, 12)
+  // Margen: límite 12, lleva 8 → puede tener 3 faltas más; solo tardanzas: 7 (2 ya forman un par → 6 llegan a 11, la 7.ª aún no completa par).
+  const m = riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2 }, 48)
+  assert.equal(m.faltasRestantes, 3)
+  assert.equal(m.tardanzasRestantes, 7)
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 3 }, 48).tardanzasRestantes, 6)
+  assert.equal(riesgoAsistencia({ presente: 21, ausente: 7, tardanza: 2 }, 32).faltasRestantes, 0)
   const r = riesgoAsistencia({ presente: 20, ausente: 2, tardanza: 1, justificado: 0 })
   assert.equal(r.equivalentes, 2)
   assert.equal(r.enRiesgo, false)

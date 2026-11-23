@@ -7,15 +7,35 @@ import { formatFecha } from '../../lib/salones'
 const COLOR = { presente: '#6a2cc8', tardanza: '#ffb97e', justificado: '#94a3b8', ausente: '#e11d48' }
 
 // Aviso de inasistencias: 2 tardanzas = 1 inasistencia; con 25 % o más el estudiante repite aunque su puntaje sea perfecto.
+function Margen({ riesgo, claro = false }) {
+  if (riesgo.limiteClases == null) return null
+  const n = riesgo.faltasRestantes
+  const t = riesgo.tardanzasRestantes
+  const caja = claro ? 'bg-white/70' : 'bg-white'
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+      <div className={`rounded-xl px-2 py-2 ${caja}`}>
+        <p className={`text-2xl font-bold tabular-nums ${riesgo.enRiesgo ? 'text-rose-700' : n <= 1 ? 'text-amber-700' : 'text-slate-900'}`}>{n}</p>
+        <p className="text-[11px] leading-tight text-slate-600">more {n === 1 ? 'absence' : 'absences'} you can have</p>
+      </div>
+      <div className={`rounded-xl px-2 py-2 ${caja}`}>
+        <p className={`text-2xl font-bold tabular-nums ${riesgo.enRiesgo ? 'text-rose-700' : t <= 1 ? 'text-amber-700' : 'text-slate-900'}`}>{t}</p>
+        <p className="text-[11px] leading-tight text-slate-600">or {t === 1 ? 'late arrival' : 'late arrivals'} if you only arrive late</p>
+      </div>
+    </div>
+  )
+}
+
 export function AvisoInasistencias({ riesgo, conteo }) {
   if (!riesgo.base) return null
-  const detalle = `${conteo.ausente} ${conteo.ausente === 1 ? 'absence' : 'absences'} + ${conteo.tardanza} late (2 late = 1 absence) = ${riesgo.equivalentes} of ${riesgo.base} classes · ${riesgo.pct}%`
+  const detalle = `${conteo.ausente} ${conteo.ausente === 1 ? 'absence' : 'absences'} + ${conteo.tardanza} late (2 late = 1 absence) = ${riesgo.equivalentes} of ${riesgo.base} ${riesgo.porTotal ? 'classes in the course' : 'classes recorded so far'} · ${riesgo.pct}%`
   if (riesgo.enRiesgo)
     return (
       <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-4">
         <p className="text-sm font-bold text-rose-800">You reached {LIMITE_INASISTENCIA}% absences: you repeat the course</p>
         <p className="mt-1 text-xs text-rose-700">Even with a perfect score, {LIMITE_INASISTENCIA}% or more absences means repeating. Please talk to your teacher or the academic team.</p>
         <p className="mt-2 text-xs font-medium text-rose-800">{detalle}</p>
+        <Margen riesgo={riesgo} claro />
       </div>
     )
   if (riesgo.cercano)
@@ -24,20 +44,24 @@ export function AvisoInasistencias({ riesgo, conteo }) {
         <p className="text-sm font-bold text-amber-900">Careful: you are close to {LIMITE_INASISTENCIA}% absences</p>
         <p className="mt-1 text-xs text-amber-800">At {LIMITE_INASISTENCIA}% you repeat the course, whatever your score. Two late arrivals count as one absence.</p>
         <p className="mt-2 text-xs font-medium text-amber-900">{detalle}</p>
+        <Margen riesgo={riesgo} claro />
       </div>
     )
   return (
-    <p className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
-      Absences: <strong>{riesgo.pct}%</strong> (limit {LIMITE_INASISTENCIA}%). Two late arrivals count as one absence.
-    </p>
+    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
+      <p>
+        Absences: <strong>{riesgo.pct}%</strong> of the course (limit {LIMITE_INASISTENCIA}%{riesgo.limiteClases ? `, i.e. ${riesgo.limiteClases} absences` : ''}). Two late arrivals count as one absence.
+      </p>
+      <Margen riesgo={riesgo} />
+    </div>
   )
 }
 
 // Pestaña «Asistencia»: dona con el reparto, y el historial clase por clase con el tema y los materiales vinculados.
-export default function AsistenciaEstudiante({ historial, conteo, onVerMaterial }) {
+export default function AsistenciaEstudiante({ historial, conteo, totalClases = null, onVerMaterial }) {
   const marcadas = Object.values(conteo).reduce((a, b) => a + b, 0)
   const pct = porcentajeAsistencia(conteo)
-  const riesgo = riesgoAsistencia(conteo)
+  const riesgo = riesgoAsistencia(conteo, totalClases)
   return (
     <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
       <div className="space-y-4">

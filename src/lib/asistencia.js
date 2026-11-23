@@ -34,16 +34,23 @@ export function porcentajeAsistencia(conteo) {
   return base ? Math.round(((conteo.presente + conteo.tardanza) / base) * 100) : null
 }
 
-// Regla de inasistencias: 2 tardanzas suman 1 inasistencia (la tardanza suelta no cuenta). Con 25 % o más de inasistencias el estudiante REPITE,
-// aunque tenga el puntaje perfecto. Base: clases con marca, sin las justificadas (igual que el porcentaje de asistencia).
+// Regla de inasistencias: 2 tardanzas suman 1 inasistencia (la tardanza suelta no cuenta). Con 25 % o más de inasistencias SOBRE EL TOTAL DE CLASES
+// del curso el estudiante REPITE, aunque tenga el puntaje perfecto. Las justificadas no cuentan. Sin total definido en el salón se usa, como respaldo,
+// las clases con marca hasta hoy (orientativo).
 export const LIMITE_INASISTENCIA = 25
-export function riesgoAsistencia(conteo) {
+export function riesgoAsistencia(conteo, total = null) {
   const tardanzas = conteo.tardanza ?? 0
-  const base = (conteo.presente ?? 0) + tardanzas + (conteo.ausente ?? 0)
+  const marcadas = (conteo.presente ?? 0) + tardanzas + (conteo.ausente ?? 0)
   const equivalentes = (conteo.ausente ?? 0) + Math.floor(tardanzas / 2)
+  const porTotal = Number(total) > 0
+  const base = porTotal ? Number(total) : marcadas
   const pct = base ? Math.round((equivalentes / base) * 1000) / 10 : 0
-  // Clases que aún podría faltar sin llegar al límite, con la base actual (orientativo).
-  const enRiesgo = base > 0 && pct >= LIMITE_INASISTENCIA
+  // Inasistencias equivalentes con las que se llega al límite (25 % del total, redondeado hacia arriba).
+  const limiteClases = base ? Math.ceil((base * LIMITE_INASISTENCIA) / 100) : null
+  const enRiesgo = base > 0 && equivalentes > 0 && pct >= LIMITE_INASISTENCIA
   const cercano = !enRiesgo && base > 0 && pct >= LIMITE_INASISTENCIA - 5
-  return { base, equivalentes, pct, enRiesgo, cercano }
+  // Margen que queda ANTES de llegar al límite: faltas completas y, si solo llegara tarde, cuántas tardanzas (2 = 1 falta; una tardanza que completa un par ya cuesta una).
+  const faltasRestantes = limiteClases == null || enRiesgo ? 0 : Math.max(0, limiteClases - 1 - equivalentes)
+  const tardanzasRestantes = faltasRestantes === 0 && limiteClases != null && !enRiesgo ? (tardanzas % 2 === 0 ? 1 : 0) : faltasRestantes * 2 + (tardanzas % 2 === 0 ? 1 : 0)
+  return { base, porTotal, equivalentes, pct, limiteClases, enRiesgo, cercano, faltasRestantes, tardanzasRestantes }
 }
