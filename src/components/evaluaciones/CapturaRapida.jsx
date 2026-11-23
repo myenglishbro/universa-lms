@@ -2,10 +2,12 @@ import { useCallback, useRef, useState } from 'react'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
+import { PropuestaModulo } from '../ejercicios/FormativePropuesta'
 import useCarga from '../../hooks/useCarga'
 import { NIVELES_RUBRICA, criteriosDeUnidad, esPorNiveles, fmtNota, nivelDePuntaje, notaRubrica, puntajeDeNivel, valoresDeDetalleRubrica } from '../../lib/evaluaciones'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
+import * as servicioEjercicios from '../../services/ejercicios'
 
 const claseInput = 'w-16 rounded-md border border-slate-300 px-2 py-1 text-right text-sm focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500'
 
@@ -379,6 +381,9 @@ function Captura({ datos, servicio, onCambio }) {
       </div>
       {esParticipacion ? (
         <CapturaParticipacion key={ev.id} evaluacionId={ev.id} servicio={servicio} onCambio={onCambio} />
+      ) : ev.tipo === 'formative' ? (
+        // La nota de una unidad del Formative sale de sus 5 elementos: se capturan aquí (0–100) y la unidad se calcula y publica sola.
+        <PropuestaModulo key={`${ev.id}|${u}`} evaluacionId={ev.id} unidad={u} servicio={servicio.propuestaFormative ? servicio : servicioEjercicios} compacto onCambio={onCambio} />
       ) : (
         <CapturaNotas key={`${ev.id}|${u}`} evaluacionId={ev.id} unidad={u} servicio={servicio} onCambio={onCambio} />
       )}

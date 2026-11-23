@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
@@ -14,15 +14,19 @@ const ESTADO_ACTIVIDAD = { sin_entrega: 'not submitted', por_revisar: 'to review
 // Todo se ve y se captura de 0 a 100 (como lo dan las plataformas); la conversión a la escala interna (0–max) se hace solo al guardar.
 // Listening, Reading, Writing y Speaking son SOLO LECTURA: la nota llega del banco. El reemplazo manual queda detrás de «Override».
 // SPARK Homework es el único campo que se escribe (la nota sale de la plataforma SPARK, que aquí no está conectada).
-function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) {
+function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades, compacto = false, fila, col, onEnter }) {
   const [reemplazar, setReemplazar] = useState(false)
   const aPct = (v) => String(Math.round((Number(v) * 100 * 100) / Number(max)) / 100)
   const valorManual = manual !== undefined ? manual : el?.es_manual && el.valor != null ? aPct(el.valor) : ''
-  const verInput = !conActividades || reemplazar || manual !== undefined || el?.es_manual
+  // En la captura rápida el campo siempre está visible (sin botón «Override»): lo escrito reemplaza al banco; vacío = automático.
+  const verInput = compacto || !conActividades || reemplazar || manual !== undefined || el?.es_manual
+  // Color del campo según su origen: sin guardar (ámbar), nota manual (violeta) o vacío (gris; el banco o SPARK pendiente).
+  const claseEstado = manual !== undefined ? 'border-amber-400 bg-amber-50' : el?.es_manual ? 'border-brand-400 bg-brand-50' : 'border-slate-300'
+  const hayBanco = conActividades && el && el.n_asignadas > 0 && el.promedio != null
   const spark = !conActividades ? descriptorSpark(valorManual === '' ? '' : (Number(valorManual) * 5) / 100) : null
   return (
     <div className="space-y-1">
-      {conActividades && (
+      {conActividades && !compacto && (
         <span title={(el?.actividades ?? []).map((a) => `${a.titulo}: ${a.estado === 'calificada' ? nota2(a.nota) : ESTADO_ACTIVIDAD[a.estado]}`).join('\n')}>
           {!el || el.n_asignadas === 0 ? (
             <span className="text-slate-300">no activities</span>
@@ -37,7 +41,7 @@ function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) 
           )}
         </span>
       )}
-      {conActividades && !verInput && (
+      {conActividades && !verInput && !compacto && (
         <button type="button" onClick={() => setReemplazar(true)} className="block text-[11px] text-slate-500 underline">
           Override
         </button>
@@ -49,12 +53,23 @@ function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) 
           max="100"
           step="any"
           aria-label={etiqueta}
-          placeholder={conActividades ? 'override' : '0–100'}
+          placeholder={compacto ? (hayBanco ? nota2(el.promedio) : '0–100') : conActividades ? 'override' : '0–100'}
           title={conActividades ? 'Manual override of the bank grade (0–100). Empty = automatic.' : 'SPARK platform grade (0–100)'}
-          className={`w-20 rounded-lg border px-2 py-1 text-sm ${el?.es_manual || manual !== undefined ? 'border-brand-400 bg-brand-50' : 'border-slate-300'}`}
+          className={`${compacto ? 'w-24' : 'w-20'} rounded-lg border px-2 py-1 text-sm ${claseEstado}`}
+          data-col={col}
+          data-fila={fila}
+          onKeyDown={onEnter}
           value={valorManual}
           onChange={(ev) => onManual(ev.target.value)}
         />
+      )}
+      {compacto && conActividades && (
+        <p className="text-[11px] leading-tight text-slate-500">
+          {manual !== undefined ? 'Unsaved' : el?.es_manual ? 'Manual grade' : hayBanco ? `Bank average (${el.n_calificadas} of ${el.n_asignadas})` : el?.n_asignadas > 0 ? 'Pending in the bank' : 'No activities'}
+        </p>
+      )}
+      {compacto && !conActividades && (
+        <p className="text-[11px] leading-tight text-slate-500">{manual !== undefined ? 'Unsaved' : el?.es_manual || valorManual !== '' ? 'Saved' : 'Pending'}</p>
       )}
       {spark && (
         <p className="max-w-[14rem] text-[11px] leading-snug text-slate-600" aria-live="polite">
@@ -66,7 +81,15 @@ function CeldaElemento({ el, max, manual, onManual, etiqueta, conActividades }) 
 }
 
 // Una unidad: los 5 elementos de cada estudiante. La nota de la unidad se publica sola al completarse; aquí solo se corrige o se completa a mano.
-function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
+function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho, compacto = false }) {
+  const tabla = useRef(null)
+  // Enter baja a la misma columna del estudiante siguiente (como en una hoja de cálculo).
+  const irAlSiguiente = (e) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    const { col, fila } = e.target.dataset
+    tabla.current?.querySelector(`input[data-col="${col}"][data-fila="${Number(fila) + 1}"]`)?.focus()
+  }
   const [manual, setManual] = useState({})
   const [ocupado, setOcupado] = useState(false)
   const [error, setError] = useState('')
@@ -102,14 +125,14 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
       <div className="border-b border-slate-100 px-4 py-3">
         <h3 className="text-base font-semibold text-slate-900">{grupo.unidad}</h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" ref={tabla}>
         <table className="w-full min-w-[56rem] text-sm">
           <thead className="bg-slate-50 text-left text-xs text-slate-600">
             <tr>
-              <th className="px-3 py-2">Student</th>
+              <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Student</th>
               {ELEMENTOS.map((h) => (
                 <th key={h.id} className="px-3 py-2">
-                  {h.label}
+                  {h.label} <span className="font-normal text-slate-400">/100</span>
                 </th>
               ))}
               <th className="px-3 py-2 text-right">Unit</th>
@@ -117,11 +140,11 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {grupo.filas.map((f) => {
+            {grupo.filas.map((f, i) => {
               const e = ESTADOS_FILA[estadoFila(f)]
               return (
                 <tr key={f.alumno_id} className="align-top">
-                  <td className="px-3 py-2 font-medium text-slate-900">
+                  <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-900">
                     {f.nombre}
                     <span className="block text-xs font-normal text-slate-500">{f.completos} of 5 elements</span>
                   </td>
@@ -134,6 +157,10 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
                           max={max}
                           conActividades={h.id !== 'spark'}
                           manual={manual[k]}
+                          compacto={compacto}
+                          fila={i}
+                          col={h.id}
+                          onEnter={irAlSiguiente}
                           etiqueta={`${h.label} for ${f.nombre}`}
                           onManual={(v) => setManual((m) => ({ ...m, [k]: v }))}
                         />
@@ -166,7 +193,8 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
       <div className="space-y-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3">
         {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
         {aviso && <p role="status" className="text-sm text-brand-700">{aviso}</p>}
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {claves.length > 0 && <span className="text-xs text-amber-700">{claves.length} unsaved grade(s)</span>}
           <Button onClick={guardar} disabled={ocupado || claves.length === 0}>
             {ocupado ? 'Saving…' : `Save manual grades (${claves.length})`}
           </Button>
@@ -176,7 +204,8 @@ function GrupoUnidad({ grupo, evaluacionId, max, servicio, onHecho }) {
   )
 }
 
-function PropuestaModulo({ evaluacionId, servicio }) {
+// `unidad` muestra solo esa unidad y `compacto` omite los textos de ayuda (captura rápida de la matriz). `onCambio` avisa a la matriz tras guardar.
+export function PropuestaModulo({ evaluacionId, servicio, unidad = null, compacto = false, onCambio }) {
   // Al abrir se recalcula (por si se quitó o cambió una actividad) y luego se lee.
   const cargar = useCallback(async () => {
     try {
@@ -190,20 +219,29 @@ function PropuestaModulo({ evaluacionId, servicio }) {
   if (cargando && !datos) return <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
   if (error) return <p className="text-sm text-red-600">Could not load the Formative: {error}</p>
   if (!datos) return null
-  const grupos = agruparPorUnidad(datos.filas, datos.unidades)
+  const grupos = agruparPorUnidad(datos.filas, datos.unidades).filter((g) => !unidad || g.unidad === unidad)
+  const alGuardar = async () => {
+    await recargar()
+    await onCambio?.()
+  }
   return (
     <>
-      <p className="mb-2 text-sm text-slate-500">
+      {compacto && (
+        <p className="mb-3 text-sm text-slate-500">
+          The Formative unit grade is made of 5 elements (0–100). Type a grade in any element to override the automatic one (empty = automatic). When the 5 are complete, the unit is published and appears in the Grade matrix.
+        </p>
+      )}
+      {!compacto && <p className="mb-2 text-sm text-slate-500">
         La nota de cada unidad se calcula y se publica sola cuando el estudiante tiene sus 5 elementos (16 % del Formative cada uno): Listening / Lessons, Writing, Reading y Speaking salen del promedio de las actividades oficiales; SPARK Homework es lo único que anotas tú, de 0 a 100 como lo da la plataforma SPARK. La participación por clase (20 %) sale de los checks de las sesiones.
-      </p>
-      <p className="mb-4 text-sm text-slate-500">
+      </p>}
+      {!compacto && <p className="mb-4 text-sm text-slate-500">
         ¿Olvidaste asignar una actividad o la tomaste de forma oral? Usa «Override» en ese elemento y escribe la nota (0 a 100): prevalece sobre las actividades y, si lo vacías, vuelve el cálculo automático. Si falta algún elemento, la unidad queda en avance: no se publica y no cuenta como cero.
-      </p>
-      {datos.actividades.length === 0 && (
+      </p>}
+      {!compacto && datos.actividades.length === 0 && (
         <p className="mb-4 rounded-xl bg-peach-50 px-3 py-2 text-sm text-peach-700">This module has no official activities from the bank yet. In “Exercises” choose “Count toward Formative” on an assigned exercise, or assign a new one as an official activity.</p>
       )}
       {grupos.map((g) => (
-        <GrupoUnidad key={g.unidad} grupo={g} evaluacionId={evaluacionId} max={datos.max} servicio={servicio} onHecho={recargar} />
+        <GrupoUnidad key={g.unidad} grupo={g} evaluacionId={evaluacionId} max={datos.max} servicio={servicio} onHecho={alGuardar} compacto={compacto} />
       ))}
     </>
   )

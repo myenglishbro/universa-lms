@@ -105,15 +105,15 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
       {ELEMENTOS.map((h) => {
         const el = actual.elementos?.[h.id]
         const k = `${actual.unidad}|${h.id}`
-        // Todo de 0 a 100 (como lo dan las plataformas). Listening, Reading, Writing y Speaking vienen del banco: solo lectura. SPARK se escribe.
+        // Todo de 0 a 100 (como lo dan las plataformas). Los 5 elementos se pueden corregir: lo escrito reemplaza al cálculo del banco; vacío = vuelve el automático.
         const valor = k in editado ? editado[k] : el?.valor == null ? '' : String(Number((Number(el.valor) * 20).toFixed(2)))
-        const editable = h.id === 'spark'
+        const editable = true
         const origen = k in editado ? 'unsaved' : el?.valor == null ? 'pending' : el.es_manual ? 'manual' : 'automatic'
         return (
           <label key={h.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
             <span className="font-medium text-slate-800">
               {h.label} <span className="block text-[11px] font-normal text-slate-400">{origen}</span>
-              {editable && descriptorSpark(valor === '' ? '' : Number(valor) / 20) && (
+              {h.id === 'spark' && descriptorSpark(valor === '' ? '' : Number(valor) / 20) && (
                 <span className="mt-0.5 block max-w-xs text-[11px] font-normal leading-snug text-slate-600" aria-live="polite">
                   <strong>{descriptorSpark(Number(valor) / 20).nivel} · {descriptorSpark(Number(valor) / 20).etiqueta}:</strong> {descriptorSpark(Number(valor) / 20).texto}
                 </span>
@@ -128,7 +128,7 @@ function ElementosEditable({ evaluacionId, alumnoId, onCambio }) {
                 aria-label={`${h.label} for ${actual.unidad}`}
                 className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100 disabled:text-slate-600"
                 disabled={!editable}
-                title={editable ? 'SPARK platform grade (0–100)' : 'Comes from the activity bank'}
+                title={h.id === 'spark' ? 'SPARK platform grade (0–100)' : 'Grade from the activity bank (0–100). Type to override it; empty = automatic.'}
                 value={valor}
                 onChange={(ev) => setEditado((e) => ({ ...e, [k]: ev.target.value }))}
               />
