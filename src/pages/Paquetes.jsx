@@ -66,6 +66,7 @@ export default function Paquetes({ data, docentes, niveles, catalogo, puedeEdita
           key={detalle.id}
           paquete={detalle}
           servicio={servicio}
+          alumnos={alumnos}
           docentes={docentes}
           niveles={niveles}
           catalogo={catalogo}

@@ -50,6 +50,7 @@ export const registrarPaquete = (p) =>
         }
       : null,
     p_horarios: (p.salon?.horarios ?? []).map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
+    p_extra: p.salon ? (p.alumnosExtra ?? []) : [],
   })
 
 export const programarClase = (paqueteId, c) =>
@@ -84,7 +85,16 @@ export const crearSalonDePaquete = (paqueteId, s) =>
       ciclo_hasta: s.planId ? s.cicloHasta : '',
     },
     p_horarios: s.horarios.map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
+    p_extra: s.alumnosExtra ?? [],
   })
+
+// Estudiantes con matrícula activa en el salón del paquete (el titular y los adicionales).
+export async function alumnosDelPaquete(salonId) {
+  const filas = datos(await supabase.from('matriculas').select('id, alumno_id, alumnos(nombre)').eq('salon_id', salonId).eq('estado', 'activa'))
+  return filas.map((m) => ({ matriculaId: m.id, alumnoId: m.alumno_id, nombre: m.alumnos?.nombre ?? '' })).sort((a, b) => a.nombre.localeCompare(b.nombre))
+}
+export const agregarAlumnosPaquete = (paqueteId, alumnoIds) => rpc('agregar_alumnos_paquete', { p_paquete: paqueteId, p_alumnos: alumnoIds })
+export const retirarAlumnoPaquete = (matriculaId, motivo) => rpc('retirar_matricula', { p_matricula: matriculaId, p_motivo: motivo || null })
 
 // Elimina el paquete con su historial y libera al docente. Devuelve 'eliminado' o 'finalizado' (si su salón no se pudo borrar).
 export const eliminarPaquete = (id) => rpc('eliminar_paquete', { p_id: id })

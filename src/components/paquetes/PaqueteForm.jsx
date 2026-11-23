@@ -4,6 +4,7 @@ import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import { minutosTexto } from '../../lib/paquetes'
 import AlumnoForm from './AlumnoForm'
+import AlumnosExtra from './AlumnosExtra'
 import ConfiguracionAcademica from '../salones/ConfiguracionAcademica'
 import HorariosEditor from '../salones/HorariosEditor'
 
@@ -26,6 +27,7 @@ function Titulo({ n, titulo, subtitulo }) {
 export default function PaqueteForm({ origen, alumnos, docentes, niveles, catalogo, onSave, onCrearAlumno, onClose }) {
   const [v, setV] = useState({
     alumnoId: origen?.alumno_id ?? '',
+    alumnosExtra: [],
     horas: '',
     docenteId: origen?.docente_id ?? '',
     nivelId: origen?.nivel_id ?? '',
@@ -131,6 +133,7 @@ export default function PaqueteForm({ origen, alumnos, docentes, niveles, catalo
                     + New student
                   </Button>
                 )}
+                {conSalon && <div className="mt-3"><AlumnosExtra alumnos={alumnos} seleccionados={v.alumnosExtra} excluidos={[v.alumnoId]} onChange={(alumnosExtra) => parchear({ alumnosExtra })} /></div>}
               </div>
               <Field
                 label="Teacher"

@@ -7,6 +7,7 @@ import Modal from '../ui/Modal'
 import { formatFecha } from '../../lib/salones'
 import { advertenciaSaldo, estadoClase, estadoPaquete, minutosTexto, tipoMovimiento } from '../../lib/paquetes'
 import AjusteForm from './AjusteForm'
+import AlumnosPaquete from './AlumnosPaquete'
 import CancelarClaseModal from './CancelarClaseModal'
 import ClaseForm from './ClaseForm'
 import CrearSalonPaqueteModal from './CrearSalonPaqueteModal'
@@ -27,7 +28,7 @@ function Cifra({ etiqueta, valor, destacada = false, nota }) {
 
 // Detalle de un paquete: saldo (comprado, consumido, disponible, programado), clases y movimientos.
 // El saldo viene de Supabase; esta pantalla solo dispara las acciones y vuelve a leer el resultado.
-export default function PaqueteDetalle({ paquete: p, servicio, docentes, niveles, catalogo, onSalonCreado, puedeEditar, onVolver, onCambio, onRenovar, onVerAlumno, onVerSalon }) {
+export default function PaqueteDetalle({ paquete: p, servicio, alumnos = [], docentes, niveles, catalogo, onSalonCreado, puedeEditar, onVolver, onCambio, onRenovar, onVerAlumno, onVerSalon }) {
   const [detalle, setDetalle] = useState({ clases: [], movimientos: [] })
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(null)
@@ -137,6 +138,8 @@ export default function PaqueteDetalle({ paquete: p, servicio, docentes, niveles
           nota={`${p.clases_programadas} ${p.clases_programadas === 1 ? 'class' : 'classes'} to teach`}
         />
       </div>
+
+      {p.salon_id && !cerrado && <AlumnosPaquete paquete={p} servicio={servicio} alumnos={alumnos} puedeEditar={puedeEditar} onVerAlumno={onVerAlumno} onCambio={onCambio} />}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
