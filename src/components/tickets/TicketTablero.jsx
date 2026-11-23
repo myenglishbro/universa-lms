@@ -1,7 +1,7 @@
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
 import Icon from '../ui/Icon'
-import { ESTADOS, ESTILO_ESTADO, ESTILO_PRIORIDAD, colorAvatar, etiquetaPrioridad, etiquetaTipo, nombreCorto, ordenarTickets, vencido } from '../../lib/tickets'
+import { ESTADOS, ESTILO_ESTADO, ESTILO_PRIORIDAD, colorAvatar, etiquetaPrioridad, etiquetaTipo, nombreCorto, ordenarTickets, responsablesDe, vencido } from '../../lib/tickets'
 
 const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
 
@@ -21,6 +21,27 @@ function Responsable({ id, nombre }) {
     <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-slate-700" title={nombre(id)}>
       <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold uppercase ${colorAvatar(n)}`}>{n.charAt(0)}</span>
       <span className="truncate">{n}</span>
+    </span>
+  )
+}
+
+// Varios responsables: avatares superpuestos (hasta 3) y «+N»; con uno solo se ve igual que siempre.
+function Responsables({ ids, nombre }) {
+  if (ids.length <= 1) return <Responsable id={ids[0]} nombre={nombre} />
+  const todos = ids.map((id) => nombre(id) ?? '').join(', ')
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-slate-700" title={todos}>
+      <span className="flex -space-x-1.5">
+        {ids.slice(0, 3).map((id) => {
+          const n = nombreCorto(nombre(id))
+          return (
+            <span key={id} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold uppercase ring-2 ring-white ${colorAvatar(n)}`}>
+              {n.charAt(0)}
+            </span>
+          )
+        })}
+      </span>
+      <span className="truncate">{ids.length > 3 ? `${ids.length} people` : ids.map((id) => nombreCorto(nombre(id))).join(', ')}</span>
     </span>
   )
 }
@@ -48,7 +69,7 @@ function Tarjeta({ ticket, nombre, flotante = false }) {
         </div>
         <p className={`mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-slate-900 ${hecho ? 'line-through decoration-slate-300' : ''}`}>{ticket.titulo}</p>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <Responsable id={ticket.responsable_id} nombre={nombre} />
+          <Responsables ids={responsablesDe(ticket)} nombre={nombre} />
           <span className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
             {ticket.n_comentarios > 0 && (
               <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>

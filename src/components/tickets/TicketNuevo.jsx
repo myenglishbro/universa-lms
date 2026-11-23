@@ -4,10 +4,11 @@ import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import { PRIORIDADES, TIPOS } from '../../lib/tickets'
 import { crearTicket } from '../../services/tickets'
+import ResponsablesPicker from './ResponsablesPicker'
 
 // `personal`: usuarios administrativos activos para elegir responsable (opcional).
 export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
-  const [f, setF] = useState({ titulo: '', descripcion: '', tipo: 'tarea', prioridad: 'media', responsable_id: '', fecha_limite: '' })
+  const [f, setF] = useState({ titulo: '', descripcion: '', tipo: 'tarea', prioridad: 'media', responsables: [], fecha_limite: '' })
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const cambiar = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }))
@@ -34,13 +35,10 @@ export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Type" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
           <Field label="Prioridad" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} />
-          <Field
-            label="Responsable"
-            options={[{ value: '', label: 'Unassigned' }, ...personal.map((p) => ({ value: p.user_id, label: p.user_id === miId ? `${p.correo} (me)` : p.correo }))]}
-            value={f.responsable_id}
-            onChange={cambiar('responsable_id')}
-          />
           <Field type="date" label="Due date (optional)" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
+          <div className="sm:col-span-2">
+            <ResponsablesPicker personal={personal} valor={f.responsables} miId={miId} onChange={(responsables) => setF((p) => ({ ...p, responsables }))} />
+          </div>
         </div>
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">

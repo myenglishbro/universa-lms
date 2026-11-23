@@ -17,10 +17,10 @@ export const crearTicket = (t) =>
     p_descripcion: t.descripcion || null,
     p_tipo: t.tipo,
     p_prioridad: t.prioridad,
-    p_responsable: t.responsable_id || null,
+    p_responsables: t.responsables ?? [],
     p_fecha_limite: t.fecha_limite || null,
   })
-// cambios: solo las claves a modificar (titulo, descripcion, tipo, prioridad, estado, responsable_id, fecha_limite).
+// cambios: solo las claves a modificar (titulo, descripcion, tipo, prioridad, estado, responsables [lista de usuarios], fecha_limite).
 export const actualizarTicket = (id, cambios) => rpc('ticket_actualizar', { p_id: id, p_cambios: cambios })
 export const comentarTicket = (id, texto) => rpc('ticket_comentar', { p_id: id, p_texto: texto })
 export const archivarTicket = (id, archivar = true) => rpc('ticket_archivar', { p_id: id, p_archivar: archivar })

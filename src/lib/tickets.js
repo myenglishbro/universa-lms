@@ -44,6 +44,9 @@ export const etiquetaTipo = etiqueta(TIPOS)
 // Fecha de hoy en Lima (AAAA-MM-DD), como el resto del sistema.
 export const hoyLima = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
 
+// Responsables de un ticket: la lista nueva o, en tickets anteriores, el único responsable.
+export const responsablesDe = (t) => (t.responsables?.length ? t.responsables : t.responsable_id ? [t.responsable_id] : [])
+
 // Vencido = tiene fecha límite pasada y aún no está realizado.
 export const vencido = (t, hoy = hoyLima()) => Boolean(t.fecha_limite) && t.estado !== 'realizado' && t.fecha_limite < hoy
 
@@ -54,14 +57,14 @@ export function filtrarTickets(tickets, { vista = 'todos', estado = '', priorida
   const q = sinTildes(texto.trim())
   return tickets.filter((t) => {
     if (vista === 'archivados' ? !t.archivado : t.archivado) return false
-    if (vista === 'mios' && t.responsable_id !== uid) return false
+    if (vista === 'mios' && !responsablesDe(t).includes(uid)) return false
     if (vista === 'creados' && t.creado_por !== uid) return false
     if (vista === 'urgentes' && !(t.prioridad === 'urgente' && t.estado !== 'realizado')) return false
     if (vista === 'vencidos' && !vencido(t, hoy)) return false
     if (estado && t.estado !== estado) return false
     if (prioridad && t.prioridad !== prioridad) return false
     if (tipo && t.tipo !== tipo) return false
-    if (responsable === 'sin' ? t.responsable_id : responsable && t.responsable_id !== responsable) return false
+    if (responsable === 'sin' ? responsablesDe(t).length > 0 : responsable && !responsablesDe(t).includes(responsable)) return false
     if (q && !sinTildes(t.titulo).includes(q) && !sinTildes(t.codigo).includes(q)) return false
     return true
   })
@@ -80,8 +83,9 @@ export const nombreCorto = (correo, vacio = 'Unassigned') => (correo ? correo.sp
 export function textoHistorial(h, nombre) {
   const quien = nombre(h.usuario_id)
   if (h.accion === 'cambió') {
-    const valor = (v) => (h.campo === 'responsable' ? nombre(v, 'nobody') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : v || '—')
-    const campo = { titulo: 'the title', descripcion: 'the description', tipo: 'the type', prioridad: 'the priority', estado: 'the status', responsable: 'the assignee', fecha_limite: 'the due date' }[h.campo] ?? h.campo
+    const lista = (v) => (v ? v.split(',').map((id) => nombreCorto(nombre(id), 'someone')).join(', ') : 'nobody')
+    const valor = (v) => (h.campo === 'responsables' ? lista(v) : h.campo === 'responsable' ? nombre(v, 'nobody') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : v || '—')
+    const campo = { titulo: 'the title', descripcion: 'the description', tipo: 'the type', prioridad: 'the priority', estado: 'the status', responsable: 'the assignee', responsables: 'the assignees', fecha_limite: 'the due date' }[h.campo] ?? h.campo
     if (h.campo === 'descripcion') return `${quien} edited the description`
     return `${quien} changed ${campo}: ${valor(h.valor_anterior)} → ${valor(h.valor_nuevo)}`
   }

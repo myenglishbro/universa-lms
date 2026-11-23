@@ -4,24 +4,21 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { COLOR_PRIORIDAD, etiquetaPrioridad, ESTADOS, PRIORIDADES, TIPOS, nombreCorto, textoHistorial, vencido } from '../../lib/tickets'
+import { COLOR_PRIORIDAD, etiquetaPrioridad, ESTADOS, PRIORIDADES, TIPOS, nombreCorto, responsablesDe, textoHistorial, vencido } from '../../lib/tickets'
+import ResponsablesPicker from './ResponsablesPicker'
 import { actualizarTicket, archivarTicket, comentarTicket, comentariosDe, historialDe, suscribirTickets } from '../../services/tickets'
 
 const fechaHora = (iso) => new Date(iso).toLocaleString('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })
 
 // Formulario de edición. Se reinicia solo cuando cambian los valores guardados (key en el padre).
 function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
-  const inicial = { titulo: ticket.titulo, descripcion: ticket.descripcion ?? '', tipo: ticket.tipo, prioridad: ticket.prioridad, estado: ticket.estado, responsable_id: ticket.responsable_id ?? '', fecha_limite: ticket.fecha_limite ?? '' }
+  const inicial = { titulo: ticket.titulo, descripcion: ticket.descripcion ?? '', tipo: ticket.tipo, prioridad: ticket.prioridad, estado: ticket.estado, responsables: responsablesDe(ticket), fecha_limite: ticket.fecha_limite ?? '' }
   const [f, setF] = useState(inicial)
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const cambiar = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }))
-  const cambios = Object.fromEntries(Object.entries(f).filter(([k, v]) => v !== inicial[k]))
+  const cambios = Object.fromEntries(Object.entries(f).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(inicial[k])))
   const hayCambios = Object.keys(cambios).length > 0
-  const responsables = [
-    { value: '', label: 'Unassigned' },
-    ...personal.filter((p) => p.activo || p.user_id === ticket.responsable_id).map((p) => ({ value: p.user_id, label: `${p.correo}${p.user_id === miId ? ' (me)' : ''}${p.activo ? '' : ' (inactive)'}` })),
-  ]
 
   const guardar = async (e) => {
     e.preventDefault()
@@ -47,8 +44,10 @@ function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
           <Field label="Status" options={ESTADOS} value={f.estado} onChange={cambiar('estado')} />
           <Field label="Priority" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} />
           <Field label="Type" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
-          <Field label="Assignee" options={responsables} value={f.responsable_id} onChange={cambiar('responsable_id')} />
           <Field type="date" label="Due date" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
+          <div className="sm:col-span-2">
+            <ResponsablesPicker personal={personal} valor={f.responsables} miId={miId} conservar={inicial.responsables} deshabilitado={deshabilitado} onChange={(responsables) => setF((p) => ({ ...p, responsables }))} />
+          </div>
         </div>
       </fieldset>
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -121,7 +120,7 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
     }
   }
 
-  const clave = [ticket.titulo, ticket.descripcion, ticket.tipo, ticket.prioridad, ticket.estado, ticket.responsable_id, ticket.fecha_limite, ticket.archivado].join('|')
+  const clave = [ticket.titulo, ticket.descripcion, ticket.tipo, ticket.prioridad, ticket.estado, responsablesDe(ticket).join(','), ticket.fecha_limite, ticket.archivado].join('|')
 
   return (
     <Modal title={`${ticket.codigo} · Details`} wide="xl" onClose={onCerrar}>

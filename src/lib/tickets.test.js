@@ -33,3 +33,11 @@ test('orden: urgente primero, luego fecha límite más cercana', () => {
   const l = [t({ id: 1 }), t({ id: 2, prioridad: 'urgente' }), t({ id: 3, fecha_limite: '2026-03-01' })].sort(ordenarTickets)
   assert.deepEqual(l.map((x) => x.id), [2, 3, 1])
 })
+
+test('varios responsables: «mis tickets» y el filtro por responsable incluyen a todos los asignados', () => {
+  const lista = [t({ id: 1, responsables: ['a', 'b'], responsable_id: 'a' }), t({ id: 2, responsables: ['a'], responsable_id: 'a' }), t({ id: 3 }), t({ id: 4, responsable_id: 'b' })]
+  const ids = (f) => filtrarTickets(lista, f, 'b', '2026-02-01').map((x) => x.id)
+  assert.deepEqual(ids({ vista: 'mios' }), [1, 4])
+  assert.deepEqual(ids({ vista: 'todos', responsable: 'a' }), [1, 2])
+  assert.deepEqual(ids({ vista: 'todos', responsable: 'sin' }), [3])
+})
