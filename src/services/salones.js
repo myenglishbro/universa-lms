@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { datos, fallo } from './util'
+import { datos, fallo, todas } from './util'
 
 const hora = (t) => t.slice(0, 5) // "18:00:00" -> "18:00"
 
@@ -45,13 +45,14 @@ function aSalon(r) {
 }
 
 export async function listarSalones() {
-  const filas = datos(
-    await supabase
+  const filas = await todas(() =>
+    supabase
       .from('salones')
       .select(
         '*, niveles!salones_nivel_fk(nombre), docentes(nombre), salon_horarios(dia, hora_inicio, hora_fin), planes_academicos(minutos_clase, sesiones_semana, tipo_alumno, niveles(nombre), modalidades(nombre)), frecuencias(nombre, intensidad, formato, minutos_por_clase)',
       )
-      .order('fecha_inicio', { ascending: false }),
+      .order('fecha_inicio', { ascending: false })
+      .order('id'),
   )
   const paquetes = await paquetesPorSalon()
   return filas.map((r) => ({ ...aSalon(r), paquete: paquetes[r.id] ?? null }))
@@ -61,7 +62,7 @@ export async function listarSalones() {
 // Es un extra: si no se puede leer (permisos), los salones se muestran igual, sin marca de paquete.
 async function paquetesPorSalon() {
   try {
-    const filas = datos(await supabase.from('paquete_saldos').select('salon_id, compradas, ajustes, consumidas, disponibles, anulado').not('salon_id', 'is', null))
+    const filas = await todas(() => supabase.from('paquete_saldos').select('salon_id, compradas, ajustes, consumidas, disponibles, anulado').not('salon_id', 'is', null).order('id'))
     const por = {}
     for (const f of filas.filter((x) => !x.anulado)) {
       const a = (por[f.salon_id] ??= { contratadas: 0, consumidas: 0, disponibles: 0 })
@@ -77,7 +78,7 @@ async function paquetesPorSalon() {
 
 // Estudiantes con matrícula activa por salón, indexado por id de salón. Es un extra: si no se puede leer, el dashboard avisa sin inventar cifras.
 export async function contarEstudiantesActivos() {
-  const filas = datos(await supabase.from('matriculas').select('salon_id').eq('estado', 'activa'))
+  const filas = await todas(() => supabase.from('matriculas').select('salon_id').eq('estado', 'activa').order('id'))
   const por = {}
   for (const f of filas) por[f.salon_id] = (por[f.salon_id] ?? 0) + 1
   return por
@@ -85,7 +86,7 @@ export async function contarEstudiantesActivos() {
 
 // Progreso académico por salón (solo salones con total de sesiones), indexado por id.
 export async function listarProgreso() {
-  const filas = datos(await supabase.from('salon_progreso').select('*'))
+  const filas = await todas(() => supabase.from('salon_progreso').select('*').order('salon_id'))
   return Object.fromEntries(
     filas.map((r) => [
       r.salon_id,

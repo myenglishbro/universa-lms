@@ -17,3 +17,16 @@ export function datos({ data, error }) {
   if (error) throw fallo(error)
   return data
 }
+
+// Supabase corta cada consulta en 1000 filas SIN avisar: con más registros las listas quedaban incompletas (y los conteos, mal).
+// `todas` lee por páginas de 1000 y se detiene en la primera página incompleta, así que con menos de 1000 filas sigue siendo UNA sola
+// petición. `consulta` debe ser una función que arme la consulta (con un orden estable que incluya `id`) y NO la ejecute.
+const PAGINA = 1000
+export async function todas(consulta) {
+  const filas = []
+  for (let desde = 0; ; desde += PAGINA) {
+    const pagina = datos(await consulta().range(desde, desde + PAGINA - 1))
+    filas.push(...pagina)
+    if (pagina.length < PAGINA) return filas
+  }
+}

@@ -1,15 +1,16 @@
 import { supabase } from '../lib/supabase'
-import { datos, fallo } from './util'
+import { datos, fallo, todas } from './util'
 
 const rpc = async (nombre, args) => datos(await supabase.rpc(nombre, args))
 
 // Estudiantes (tabla alumnos) y sus matrículas. Las escrituras pasan por funciones SQL que validan cupos y duplicados.
 export async function listarEstudiantes() {
-  return datos(
-    await supabase
+  return todas(() =>
+    supabase
       .from('alumnos')
       .select('id, nombre, nombres, apellidos, telefono, correo, notas, activo, created_at, tipo_documento, numero_documento, fecha_nacimiento, pais_nacionalidad, genero')
-      .order('nombre'),
+      .order('nombre')
+      .order('id'),
   )
 }
 
@@ -18,7 +19,7 @@ export async function plataformaEstudiante(alumnoId) {
   return datos(await supabase.from('alumno_plataforma').select('usuario, clave').eq('alumno_id', alumnoId).maybeSingle())
 }
 export async function listarMatriculas() {
-  return datos(await supabase.from('matriculas').select('*').order('created_at', { ascending: false }))
+  return todas(() => supabase.from('matriculas').select('*').order('created_at', { ascending: false }).order('id'))
 }
 
 // Si el formulario trae nombres/apellidos se envían separados (la base arma el nombre completo); los datos de MaskPark solo si vienen.

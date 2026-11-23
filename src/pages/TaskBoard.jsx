@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import TicketDetalle from '../components/tickets/TicketDetalle'
 import TicketNuevo from '../components/tickets/TicketNuevo'
 import TicketTablero from '../components/tickets/TicketTablero'
@@ -24,11 +24,12 @@ const SIN_FILTROS = { estado: '', prioridad: '', tipo: '', responsable: '', text
 
 // Task Board: tablero Kanban compartido por el personal administrativo. `notif` viene del panel (contador del menú).
 export default function TaskBoard({ miId, notif }) {
-  const cargar = useCallback(async () => {
-    const [tickets, personal] = await Promise.all([listarTickets(), personalTickets()])
-    return { tickets, personal }
-  }, [])
-  const { datos, cargando, error, recargar } = useCarga(cargar, null)
+  // El personal casi no cambia: se lee una sola vez. Los tickets se vuelven a leer con cada cambio en vivo (sin repetir la consulta del personal).
+  const { datos: listaPersonal, cargando: cargandoPersonal, error: errorPersonal } = useCarga(personalTickets, null)
+  const { datos: listaTickets, cargando: cargandoTickets, error: errorTickets, recargar } = useCarga(listarTickets, null)
+  const datos = listaTickets && listaPersonal ? { tickets: listaTickets, personal: listaPersonal } : null
+  const cargando = cargandoPersonal || cargandoTickets
+  const error = errorTickets || errorPersonal
   const [tickets, setTickets] = useState([])
   const [vista, setVista] = useState('todos')
   const [filtros, setFiltros] = useState(SIN_FILTROS)
@@ -39,8 +40,8 @@ export default function TaskBoard({ miId, notif }) {
   const moviendo = useRef(0) // arrastres en curso: mientras haya uno, un refresco no pisa el movimiento optimista
 
   useEffect(() => {
-    if (datos && moviendo.current === 0) setTickets(datos.tickets)
-  }, [datos])
+    if (listaTickets && moviendo.current === 0) setTickets(listaTickets)
+  }, [listaTickets])
 
   // Actualización en vivo entre usuarios (con un pequeño retraso para agrupar ráfagas de cambios).
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function TaskBoard({ miId, notif }) {
     }
   }, [recargar])
 
-  const personal = useMemo(() => datos?.personal ?? [], [datos])
+  const personal = useMemo(() => listaPersonal ?? [], [listaPersonal])
   const mapa = useMemo(() => Object.fromEntries(personal.map((p) => [p.user_id, p])), [personal])
   const nombre = (id) => mapa[id]?.correo
   const activos = personal.filter((p) => p.activo)

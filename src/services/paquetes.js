@@ -1,11 +1,11 @@
 import { supabase } from '../lib/supabase'
-import { datos } from './util'
+import { datos, todas } from './util'
 
 const rpc = async (nombre, args) => datos(await supabase.rpc(nombre, args))
 
 // Saldos por paquete (vista paquete_saldos: horas compradas, consumidas, disponibles y programadas, en minutos).
 export async function listarPaquetes() {
-  return datos(await supabase.from('paquete_saldos').select('*').order('created_at', { ascending: false }))
+  return todas(() => supabase.from('paquete_saldos').select('*').order('created_at', { ascending: false }).order('id'))
 }
 
 export async function listarAlumnos() {

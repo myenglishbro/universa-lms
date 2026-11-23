@@ -383,7 +383,7 @@ function Captura({ datos, servicio, onCambio }) {
         <CapturaParticipacion key={ev.id} evaluacionId={ev.id} servicio={servicio} onCambio={onCambio} />
       ) : ev.tipo === 'formative' ? (
         // La nota de una unidad del Formative sale de sus 5 elementos: se capturan aquí (0–100) y la unidad se calcula y publica sola.
-        <PropuestaModulo key={`${ev.id}|${u}`} evaluacionId={ev.id} unidad={u} servicio={servicio.propuestaFormative ? servicio : servicioEjercicios} compacto onCambio={onCambio} />
+        <PropuestaModulo key={ev.id} evaluacionId={ev.id} unidad={u} servicio={servicio.propuestaFormative ? servicio : servicioEjercicios} compacto onCambio={onCambio} />
       ) : (
         <CapturaNotas key={`${ev.id}|${u}`} evaluacionId={ev.id} unidad={u} servicio={servicio} onCambio={onCambio} />
       )}
