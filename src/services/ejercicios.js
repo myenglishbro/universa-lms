@@ -61,6 +61,16 @@ export const vincularFormative = ({ asignacionId, evaluacionId, unidad, habilida
   rpc('formative_vincular', { p_asignacion: asignacionId, p_evaluacion: evaluacionId, p_unidad: unidad, p_habilidad: habilidad, p_rubrica: rubricaId || null })
 export const desvincularFormative = (asignacionId) => rpc('formative_desvincular', { p_asignacion: asignacionId })
 
+// Writing Assessment (examen de Task 1 y Task 2): se vincula al Writing de un módulo. El docente califica cada tarea con la rúbrica y la nota queda
+// como borrador en la matriz (se publica allí). El estudiante lo inicia una sola vez; el reloj corre en el servidor.
+export const writingOpciones = (salonId) => rpc('writing_opciones', { p_salon: salonId })
+export const asignarWritingAssessment = ({ ejercicioId, salonId, evaluacionId, minutos, limite }) =>
+  rpc('asignar_writing_assessment', { p_ejercicio: ejercicioId, p_salon: salonId, p_evaluacion: evaluacionId, p_minutos: Number(minutos), p_limite: limite || null })
+export const writingAssessmentRevision = (asignacionId) => rpc('writing_assessment_revision', { p_asignacion: asignacionId })
+export const calificarWritingTask = (entregaId, tarea, detalle, feedback) => rpc('calificar_writing_task', { p_entrega: entregaId, p_tarea: tarea, p_detalle: detalle, p_feedback: feedback })
+export const examenIniciar = (asignacionId) => rpc('examen_iniciar', { p_asignacion: asignacionId })
+export const examenRegistrarSalida = (asignacionId) => rpc('examen_registrar_salida', { p_asignacion: asignacionId })
+
 // Estudiante
 export const misEjercicios = (salonId) => rpc('portal_ejercicios', { p_salon: salonId })
 export const miFormative = (salonId) => rpc('portal_formative', { p_salon: salonId })

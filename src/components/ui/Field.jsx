@@ -10,7 +10,7 @@ export default function Field({ label, options, as, error, hint, className = '',
       {options ? (
         <select className={inputClass} {...props}>
           {options.map((o) => (
-            <option key={o.value ?? o} value={o.value ?? o}>
+            <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>
               {o.label ?? o}
             </option>
           ))}

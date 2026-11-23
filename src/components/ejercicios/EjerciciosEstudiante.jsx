@@ -3,9 +3,10 @@ import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import EjercicioJugador from './EjercicioJugador'
+import ExamenWriting from './ExamenWriting'
 import MiFormative from './MiFormative'
 import useCarga from '../../hooks/useCarga'
-import { TONOS, fmtPuntaje, tipoDe } from '../../lib/ejercicios'
+import { TONOS, esExamen, fmtPuntaje, tipoDe } from '../../lib/ejercicios'
 import { etiquetaFormative } from '../../lib/formativeBanco'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/ejercicios'
@@ -14,6 +15,8 @@ function Estado({ a }) {
   const e = a.entrega
   if (!e) return <Badge color="peach">To do</Badge>
   if (e.estado === 'pendiente') return <Badge color="slate">Submitted · under review</Badge>
+  // En el examen la nota la publica el docente en «My grades»: aquí solo se ve que ya se revisó.
+  if (a.examen) return <Badge color="brand">Reviewed · grade in “My grades”</Badge>
   // En una actividad oficial este es el resultado del ejercicio; la nota de la unidad se calcula sola con los 5 elementos.
   return <Badge color="brand">{a.formative ? 'Result' : 'Grade'} {fmtPuntaje(e.puntaje)}</Badge>
 }
@@ -45,21 +48,25 @@ export default function EjerciciosEstudiante({ salonId, servicio = servicioReal 
           <div>
             <h2 className="text-2xl font-bold text-brand-800">{actual.titulo}</h2>
             <p className="text-sm text-slate-500">
-              {t.label}
+              {esExamen(actual.contenido) ? 'Writing Assessment · exam' : t.label}
               {actual.fecha_limite && ` · due ${formatFecha(actual.fecha_limite)}`}
             </p>
             <p className={`text-sm font-medium ${actual.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(actual.formative)}</p>
             {actual.formative && <p className="text-xs text-slate-500">Counts toward your Formative: it is added to your progress automatically. When you complete the 5 elements of the unit, the grade appears in “My grades”.</p>}
           </div>
         </div>
-        <EjercicioJugador
-          key={actual.id}
-          ejercicio={actual}
-          entrega={actual.entrega}
-          onEnviado={(respuestas, audio) =>
-            servicio.entregarEjercicio(actual.id, respuestas, audio)
-          }
-        />
+        {esExamen(actual.contenido) ? (
+          <ExamenWriting key={actual.id} ejercicio={actual} entrega={actual.entrega} servicio={servicio} onEnviado={(respuestas) => servicio.entregarEjercicio(actual.id, respuestas)} />
+        ) : (
+          <EjercicioJugador
+            key={actual.id}
+            ejercicio={actual}
+            entrega={actual.entrega}
+            onEnviado={(respuestas, audio) =>
+              servicio.entregarEjercicio(actual.id, respuestas, audio)
+            }
+          />
+        )}
       </>
     )
   }

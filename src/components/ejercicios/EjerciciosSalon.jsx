@@ -7,9 +7,10 @@ import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
 import BancoEjercicios from './BancoEjercicios'
 import RevisionEjercicio from './RevisionEjercicio'
+import RevisionWritingAssessment from './RevisionWritingAssessment'
 import FormativePropuesta from './FormativePropuesta'
 import useCarga from '../../hooks/useCarga'
-import { TONOS, esManual, fmtPuntaje, tipoDe } from '../../lib/ejercicios'
+import { TONOS, esExamen, esManual, fmtPuntaje, tipoDe } from '../../lib/ejercicios'
 import { HABILIDADES, etiquetaFormative, habilidadSugerida, rubricaPorDefecto, rubricasDelTipo } from '../../lib/formativeBanco'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/ejercicios'
@@ -34,6 +35,9 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
   const [unidad, setUnidad] = useState('')
   const [habilidad, setHabilidad] = useState('')
   const [rubricaId, setRubricaId] = useState('')
+  // Writing Assessment (examen): módulo con Writing por tareas y tiempo límite.
+  const [opcionesExamen, setOpcionesExamen] = useState(null)
+  const [minutos, setMinutos] = useState('')
 
   const cerrar = () => {
     setEligiendo(false)
@@ -47,6 +51,8 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
     setUnidad('')
     setHabilidad('')
     setRubricaId('')
+    setOpcionesExamen(null)
+    setMinutos('')
   }
   const ej = elegido ?? vinculando
   const elegirModo = async (nuevo, ejercicio = ej) => {
@@ -65,8 +71,22 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
     }
   }
   // Por defecto un ejercicio nuevo cuenta para el Formative; «Práctica» es la excepción.
-  const elegirEjercicio = (e) => {
+  const elegirEjercicio = async (e) => {
     setElegido(e)
+    if (esExamen(e.datos)) {
+      setModo('examen')
+      setMinutos(String(e.datos.minutos ?? 60))
+      setFalla('')
+      try {
+        const o = await servicio.writingOpciones(salonId)
+        setOpcionesExamen(o)
+        const libres = o.filter((x) => !x.asignado)
+        if (libres.length === 1) setEvaluacionId(libres[0].evaluacion_id)
+      } catch (err) {
+        setFalla(err.message)
+      }
+      return
+    }
     elegirModo('formative', e)
   }
   const contarParaFormative = (a) => {
@@ -107,13 +127,19 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
   const rubricasElegibles = ej && opciones ? rubricasDelTipo(opciones.rubricas, ej.tipo) : []
   const asignar = async () => {
     setFalla('')
+    if (modo === 'examen') {
+      if (!evaluacionId) return setFalla('Choose the module whose Writing this exam feeds')
+      if (!(Number(minutos) >= 5 && Number(minutos) <= 240)) return setFalla('The time limit must be between 5 and 240 minutes')
+    }
     if (modo === 'formative') {
       const v = validarDestino()
       if (v) return setFalla(v)
     }
     setGuardando(true)
     try {
-      if (modo === 'formative') {
+      if (modo === 'examen') {
+        await servicio.asignarWritingAssessment({ ejercicioId: elegido.id, salonId, evaluacionId, minutos, limite })
+      } else if (modo === 'formative') {
         await servicio.asignarEjercicioFormative({ ejercicioId: elegido.id, salonId, limite, evaluacionId, unidad, habilidad, rubricaId: esManual(elegido.tipo) ? rubricaId : null })
       } else {
         await servicio.asignarEjercicio(elegido.id, salonId, limite)
@@ -178,6 +204,7 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
     </>
   )
 
+  if (abierta && lista?.find((x) => x.id === abierta)?.examen_minutos) return <RevisionWritingAssessment asignacionId={abierta} servicio={servicio} onVolver={() => { setAbierta(null); recargar() }} />
   if (abierta) return <RevisionEjercicio asignacionId={abierta} servicio={servicio} onVolver={() => { setAbierta(null); recargar() }} />
   if (verFormative) return <FormativePropuesta salonId={salonId} servicio={servicio} onVolver={() => { setVerFormative(false); recargar() }} />
 
@@ -224,14 +251,14 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
                     {a.fecha_limite && ` · until ${formatFecha(a.fecha_limite)}`}
                     {a.promedio != null && ` · average ${fmtPuntaje(a.promedio)}`}
                   </p>
-                  <p className={`text-xs font-medium ${a.formative ? 'text-brand-700' : 'text-slate-400'}`}>{etiquetaFormative(a.formative)}</p>
+                  <p className={`text-xs font-medium ${a.formative || a.examen_minutos ? 'text-brand-700' : 'text-slate-400'}`}>{a.examen_minutos ? `Writing Assessment exam · ${a.examen_minutos} min` : etiquetaFormative(a.formative)}</p>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                     <div className="h-full rounded-full bg-brand-500" style={{ width: `${a.total ? Math.round((100 * a.entregas) / a.total) : 0}%` }} />
                   </div>
                 </button>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   {a.pendientes > 0 && <Badge color="peach">{a.pendientes} to review</Badge>}
-                  {a.formative ? (
+                  {a.examen_minutos ? null : a.formative ? (
                     <button type="button" onClick={() => volverAPractica(a)} className="text-xs text-slate-400 hover:text-rose-600">
                       Remove from Formative
                     </button>
@@ -263,7 +290,27 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
               <span className="block text-xs text-brand-700">{tipoDe(elegido.tipo).label}</span>
             </p>
             <Field label="Due date (optional)" type="date" value={limite} onChange={(e) => setLimite(e.target.value)} hint="Students can submit it later, but they will see the date." />
-            <fieldset className="space-y-2">
+            {modo === 'examen' && (
+              <div className="space-y-3">
+                <p className="rounded-xl bg-peach-50 px-3 py-2 text-xs text-peach-800">
+                  Writing Assessment exam: one attempt, time limit, and the student cannot leave the page without it being recorded. You grade each task with the rubric and the grade is saved as a draft in the Grade matrix, where you publish it.
+                </p>
+                {!opcionesExamen && !falla && <p className="text-sm text-slate-500">Loading modules…</p>}
+                {opcionesExamen && opcionesExamen.length === 0 && (
+                  <p className="rounded-xl bg-peach-50 px-3 py-2 text-sm text-peach-700">This classroom has no module with a Writing by tasks (Task 1 and Task 2).</p>
+                )}
+                {opcionesExamen && opcionesExamen.length > 0 && (
+                  <Field
+                    label="Module Writing it feeds"
+                    value={evaluacionId}
+                    onChange={(e) => setEvaluacionId(e.target.value)}
+                    options={[{ value: '', label: 'Choose the module…' }, ...opcionesExamen.map((x) => ({ value: x.evaluacion_id, label: `${x.modulo}${x.asignado ? ' (already has an exam)' : ''}`, disabled: x.asignado }))]}
+                  />
+                )}
+                <Field label="Time limit (minutes)" type="number" min="5" max="240" value={minutos} onChange={(e) => setMinutos(e.target.value)} hint="The clock starts when each student begins." />
+              </div>
+            )}
+            <fieldset className={`space-y-2 ${modo === 'examen' ? 'hidden' : ''}`}>
               <legend className="mb-1 text-sm font-medium text-slate-700">How is this exercise used?</legend>
               <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
                 <input type="radio" name="modo" checked={modo === 'practica'} onChange={() => elegirModo('practica')} className="mt-0.5" />
@@ -280,10 +327,10 @@ export default function EjerciciosSalon({ salonId, esAdmin = false, userId, serv
                 </span>
               </label>
             </fieldset>
-            {camposFormative}
+            {modo !== 'examen' && camposFormative}
             {falla && <p role="alert" className="text-sm text-rose-700">{falla}</p>}
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setElegido(null)}>
+              <Button variant="ghost" onClick={() => { setElegido(null); setOpcionesExamen(null); setEvaluacionId('') }}>
                 Back
               </Button>
               <Button onClick={asignar} disabled={guardando}>

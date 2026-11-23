@@ -1,7 +1,7 @@
 import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Icon from '../ui/Icon'
-import { audioDriveEmbed, claveLista, itemVacio } from '../../lib/ejercicios'
+import { audioDriveEmbed, claveLista, datosExamen, esExamen, itemVacio } from '../../lib/ejercicios'
 
 const LETRAS = 'ABCDEFGH'
 
@@ -54,7 +54,37 @@ export default function EditorEjercicio({ tipo, datos, onChange }) {
         <Field as="textarea" rows={7} label="Reading text" value={datos.texto ?? ''} onChange={(e) => poner('texto', e.target.value)} placeholder="Paste or write the text the student will read." />
       )}
 
-      {(tipo === 'writing' || tipo === 'speaking') && (
+      {tipo === 'writing' && (
+        <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 p-3 text-sm has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={esExamen(datos)}
+            onChange={(e) => onChange(e.target.checked ? datosExamen(datos) : { instrucciones: datos.instrucciones ?? '', consigna: '', min_palabras: 80 })}
+          />
+          <span>
+            <strong className="block text-slate-900">Writing Assessment (exam)</strong>
+            <span className="text-xs text-slate-500">Two tasks (Task 1 and Task 2), time limit and a single attempt. The teacher grades each task with the rubric and the grade goes to the module’s Writing.</span>
+          </span>
+        </label>
+      )}
+
+      {tipo === 'writing' && esExamen(datos) && (
+        <div className="space-y-4">
+          <Field label="Time limit (minutes)" type="number" min="5" max="240" value={datos.minutos ?? 60} onChange={(e) => poner('minutos', e.target.value)} className="max-w-48" hint="The clock starts when the student begins and cannot be restarted." />
+          {datos.tareas.map((t, i) => (
+            <div key={i} className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-brand-800">Task {i + 1} <span className="font-normal text-slate-500">· {i === 0 ? '35' : '65'} points</span></p>
+              <Field label="Genre (optional)" value={t.genero ?? ''} onChange={(e) => poner('tareas', datos.tareas.map((x, j) => (j === i ? { ...x, genero: e.target.value } : x)))} placeholder="E.g. Email, opinion essay, story…" />
+              <Field as="textarea" rows={4} label="Prompt" value={t.consigna ?? ''} onChange={(e) => poner('tareas', datos.tareas.map((x, j) => (j === i ? { ...x, consigna: e.target.value } : x)))} />
+              <Field label="Suggested minimum words" type="number" min="0" value={t.min_palabras ?? 0} onChange={(e) => poner('tareas', datos.tareas.map((x, j) => (j === i ? { ...x, min_palabras: e.target.value } : x)))} className="max-w-48" />
+            </div>
+          ))}
+          <p className="rounded-xl bg-peach-50 px-4 py-3 text-sm text-peach-700">Not graded automatically: the teacher reviews it, grades each task and publishes the grade from the Grade matrix.</p>
+        </div>
+      )}
+
+      {(tipo === 'speaking' || (tipo === 'writing' && !esExamen(datos))) && (
         <>
           <Field as="textarea" rows={4} label="Prompt" value={datos.consigna ?? ''} onChange={(e) => poner('consigna', e.target.value)} placeholder={tipo === 'writing' ? 'Write an email to a friend about…' : 'Talk about your last holiday for one minute…'} />
           {tipo === 'writing' ? (

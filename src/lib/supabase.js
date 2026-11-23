@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { instalarConsolaTiempos, nombreDePeticion, registrarTiempo } from './tiempos'
 
 const url = import.meta.env.VITE_SUPABASE_URL?.trim()
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
@@ -26,5 +27,20 @@ async function fetchConReintento(entrada, init) {
   }
 }
 
+// Mide cada consulta (con sus reintentos) para saber cuáles pesan de verdad. Ver `universaTiempos()` en la consola del navegador.
+async function fetchMedido(entrada, init) {
+  const inicio = performance.now()
+  const nombre = nombreDePeticion(entrada instanceof Request ? entrada.url : entrada)
+  try {
+    const r = await fetchConReintento(entrada, init)
+    registrarTiempo(nombre, performance.now() - inicio, !r.ok)
+    return r
+  } catch (e) {
+    registrarTiempo(nombre, performance.now() - inicio, true)
+    throw e
+  }
+}
+instalarConsolaTiempos()
+
 // null si faltan las variables de entorno; App lo detecta y muestra instrucciones.
-export const supabase = origen && key ? createClient(origen, key, { global: { fetch: fetchConReintento } }) : null
+export const supabase = origen && key ? createClient(origen, key, { global: { fetch: fetchMedido } }) : null

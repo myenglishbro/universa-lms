@@ -13,6 +13,18 @@ export const TIPOS = [
 ]
 export const tipoDe = (id) => TIPOS.find((t) => t.id === id)
 export const esManual = (tipo) => tipo === 'writing' || tipo === 'speaking'
+// Writing Assessment: examen de dos tareas (Task 1 y Task 2) con tiempo límite y un solo intento. Es un Writing con modo = 'assessment'.
+export const esExamen = (d) => d?.modo === 'assessment'
+export const TAREAS_EXAMEN = ['Task 1', 'Task 2']
+export const datosExamen = (anteriores = {}) => ({
+  modo: 'assessment',
+  instrucciones: anteriores.instrucciones ?? '',
+  minutos: 60,
+  tareas: [
+    { genero: '', consigna: '', min_palabras: 80 },
+    { genero: '', consigna: '', min_palabras: 150 },
+  ],
+})
 export const NIVELES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 // Clasificación del banco: ciclo (1 al 12), módulo dentro del ciclo (1 o 2) y uso. Los tres son opcionales.
@@ -114,6 +126,13 @@ export function validar(tipo, d) {
       for (const [i, a] of d.afirmaciones.entries()) if (!texto(a.enunciado)) return `Statement ${i + 1} is empty`
       return ''
     case 'writing':
+      if (esExamen(d)) {
+        const m = Number(d.minutos)
+        if (!Number.isFinite(m) || m < 5 || m > 240) return 'The time limit must be between 5 and 240 minutes'
+        for (const [i, t] of (d.tareas ?? []).entries()) if (!texto(t.consigna)) return `Write the prompt for Task ${i + 1}`
+        return (d.tareas ?? []).length === 2 ? '' : 'A Writing Assessment has exactly two tasks'
+      }
+      return texto(d.consigna) ? '' : 'Escribe la consigna para el estudiante'
     case 'speaking':
       return texto(d.consigna) ? '' : 'Escribe la consigna para el estudiante'
     default:
@@ -195,6 +214,17 @@ export function compilar(tipo, d) {
         clave: { items: d.afirmaciones.map((a) => [a.verdadero ? 'true' : 'false']) },
       }
     case 'writing':
+      if (esExamen(d)) {
+        return {
+          contenido: {
+            modo: 'assessment',
+            instrucciones,
+            minutos: Number(d.minutos) || 60,
+            tareas: d.tareas.map((t) => ({ genero: texto(t.genero), consigna: texto(t.consigna), min_palabras: Number(t.min_palabras) || 0 })),
+          },
+          clave: null,
+        }
+      }
       return { contenido: { instrucciones, consigna: texto(d.consigna), min_palabras: Number(d.min_palabras) || 0 }, clave: null }
     case 'speaking':
       return { contenido: { instrucciones, consigna: texto(d.consigna), segundos_max: Number(d.segundos_max) || 90 }, clave: null }
