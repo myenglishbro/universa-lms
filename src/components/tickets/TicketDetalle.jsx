@@ -4,7 +4,8 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { COLOR_PRIORIDAD, etiquetaPrioridad, ESTADOS, PRIORIDADES, TIPOS, nombreCorto, responsablesDe, textoHistorial, vencido } from '../../lib/tickets'
+import { COLOR_PRIORIDAD, diasSinMovimiento, estancado, etiquetaPrioridad, ESTADOS, GUIA_PRIORIDAD, PRIORIDADES, TIPOS, nombreCorto, responsablesDe, textoHistorial, vencido } from '../../lib/tickets'
+import ChecklistTicket from './ChecklistTicket'
 import ResponsablesPicker from './ResponsablesPicker'
 import { actualizarTicket, archivarTicket, comentarTicket, comentariosDe, historialDe, suscribirTickets } from '../../services/tickets'
 
@@ -42,7 +43,7 @@ function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
         <Field as="textarea" rows={4} label="Description" value={f.descripcion} onChange={cambiar('descripcion')} maxLength={5000} />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Status" options={ESTADOS} value={f.estado} onChange={cambiar('estado')} />
-          <Field label="Priority" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} />
+          <Field label="Priority" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} hint={GUIA_PRIORIDAD[f.prioridad]?.cuando} />
           <Field label="Type" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
           <Field type="date" label="Due date" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
           <div className="sm:col-span-2">
@@ -128,6 +129,7 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
         <Badge color={COLOR_PRIORIDAD[ticket.prioridad]}>{etiquetaPrioridad(ticket.prioridad)}</Badge>
         {ticket.archivado && <Badge color="slate">Archived</Badge>}
         {vencido(ticket) && <Badge color="rose">Overdue</Badge>}
+        {estancado(ticket) && <Badge color="peach">Stalled · no activity for {diasSinMovimiento(ticket)} days</Badge>}
         <span>
           Created by {nombreCorto(nombre(ticket.creado_por), 'someone')} · {fechaHora(ticket.created_at)}
         </span>
@@ -135,6 +137,7 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div>
           <Formulario key={clave} ticket={ticket} personal={personal} miId={miId} deshabilitado={ticket.archivado} onGuardado={refrescar} />
+          <ChecklistTicket ticket={ticket} deshabilitado={ticket.archivado} onCambio={refrescar} />
           <div className="mt-4 border-t border-slate-100 pt-3">
             {ticket.archivado ? (
               <Button variant="secondary" disabled={ocupado} onClick={() => archivar(false)}>

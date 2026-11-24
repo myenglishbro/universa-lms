@@ -17,6 +17,7 @@ function Fila({ s, numero, avisos, evaluaciones, repuesta, acciones, puedeRecupe
       </span>
       <span className="flex flex-1 flex-wrap items-center gap-1.5">
         {s.tipo === 'recuperacion' && <Badge color="brand">Make-up</Badge>}
+        {s.tipo === 'extra' && <Badge color="peach">Extra · {s.etiqueta}</Badge>}
         {s.manual && s.tipo === 'regular' && <Badge>Date pinned</Badge>}
         {s.estado === 'realizada' && <Badge color="brand">Held</Badge>}
         {cancelada && <Badge>Cancelled</Badge>}
@@ -52,7 +53,12 @@ function Fila({ s, numero, avisos, evaluaciones, repuesta, acciones, puedeRecupe
               </Button>
             </>
           )}
-          {cancelada && !repuesta && puedeRecuperar && (
+          {s.tipo === 'extra' && s.estado === 'programada' && (
+            <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.eliminarExtra(s)}>
+              Delete
+            </Button>
+          )}
+          {cancelada && !repuesta && puedeRecuperar && s.tipo !== 'extra' && (
             <Button variant="ghost" className="px-2 py-1" onClick={() => acciones.recuperar(s)}>
               Schedule make-up
             </Button>

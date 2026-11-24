@@ -4,7 +4,7 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import useCarga from '../../hooks/useCarga'
-import { ESTADOS_CELDA, agruparPorCiclo, fmtNota, notaSobreEvaluado, textoCelda } from '../../lib/evaluaciones'
+import { ESTADOS_CELDA, NOTA_MINIMA, agruparPorCiclo, fmtNota, notaBaja, notaSobreEvaluado, textoCelda } from '../../lib/evaluaciones'
 import { borradorDe } from '../../lib/borradorReporte'
 import { descargarInforme } from '../../lib/informeNotas'
 import InformeDialogo from './InformeDialogo'
@@ -92,6 +92,13 @@ function BotonCelda({ celda, evaluacion, alumno, onAbrir }) {
 
 const Marca = ({ children, tono }) => (
   <span className={`ml-1 rounded px-1 text-[10px] font-medium ${tono === 'rose' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`}>{children}</span>
+)
+
+// Aviso de nota por debajo del mínimo (70): se ve en la matriz sin abrir la ficha.
+const Baja = () => (
+  <span title={`Below ${NOTA_MINIMA}`} className="ml-1 inline-flex items-center rounded bg-rose-600 px-1.5 text-[10px] font-bold uppercase text-white">
+    ▼ Below {NOTA_MINIMA}
+  </span>
 )
 
 // Subtotal de un módulo (solo notas publicadas): puntos acumulados arriba, nota sobre lo evaluado abajo.
@@ -271,8 +278,9 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimien
             {alumnos.map((a) => (
               <td key={a.alumno_id} className="border-b border-slate-100 px-2 py-2 text-center text-xs">
                 {a.nivel?.definido && consolidacion.confirmada ? (
-                  <span className="text-base font-semibold">
+                  <span className={`text-base font-semibold ${notaBaja(a.nivel.nota) ? 'text-rose-700' : ''}`}>
                     {fmtNota(a.nivel.nota)} {a.nivel.parcial && <Badge color="peach">Parcial</Badge>}
+                    {notaBaja(a.nivel.nota) && <span className="block"><Baja /></span>}
                   </span>
                 ) : (
                   <span className="font-normal text-slate-400" title="Pending a rule confirmed by Coordination">
@@ -372,7 +380,7 @@ function VistaAlumno({ datos, onAbrir, onInforme, onSeguimiento }) {
           Level total (published points): <strong>{a.resumen.acumulado.escala_evaluada > 0 ? `${fmtNota(a.resumen.acumulado.puntos)} / ${fmtNota(a.resumen.acumulado.escala)}` : '—'}</strong>
         </p>
         <p className="mt-1">
-          Final result: {a.nivel?.definido && consolidacion.confirmada ? <strong>{fmtNota(a.nivel.nota)}</strong> : <span className="text-slate-400">pending a rule confirmed by Coordination</span>}
+          Final result: {a.nivel?.definido && consolidacion.confirmada ? <><strong className={notaBaja(a.nivel.nota) ? 'text-rose-700' : ''}>{fmtNota(a.nivel.nota)}</strong>{notaBaja(a.nivel.nota) && <Baja />}</> : <span className="text-slate-400">pending a rule confirmed by Coordination</span>}
         </p>
       </Card>
     </div>

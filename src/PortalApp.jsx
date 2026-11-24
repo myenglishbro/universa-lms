@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import CambiarClave from './components/portal/CambiarClave'
 import EncuestaClase from './components/portal/EncuestaClase'
@@ -11,12 +11,54 @@ const MisSalones = lazy(() => import('./pages/portal/MisSalones'))
 const MiPerfil = lazy(() => import('./pages/portal/MiPerfil'))
 const BancoDocente = lazy(() => import('./pages/portal/BancoDocente'))
 const ZonaDocumentos = lazy(() => import('./pages/portal/ZonaDocumentos'))
+const CentroAyuda = lazy(() => import('./pages/portal/CentroAyuda'))
 
 const cuenta = { id: 'cuenta', label: 'My account', icon: 'key' }
+const ayuda = { id: 'ayuda', label: 'Help', icon: 'info' }
 const items = {
-  estudiante: [{ id: 'cursos', label: 'My courses', icon: 'play' }, { id: 'zona', label: 'Student Zone', icon: 'book' }, cuenta],
-  docente: [{ id: 'salones', label: 'My classrooms', icon: 'building' }, { id: 'banco', label: 'Exercise bank', icon: 'pen' }, { id: 'perfil', label: 'My profile', icon: 'user' }, { id: 'zona', label: 'Teacher Zone', icon: 'book' }, cuenta],
+  estudiante: [{ id: 'cursos', label: 'My courses', icon: 'play' }, { id: 'zona', label: 'Student Zone', icon: 'book' }, ayuda, cuenta],
+  docente: [{ id: 'salones', label: 'My classrooms', icon: 'building' }, { id: 'banco', label: 'Exercise bank', icon: 'pen' }, { id: 'perfil', label: 'My profile', icon: 'user' }, { id: 'zona', label: 'Teacher Zone', icon: 'book' }, ayuda, cuenta],
   postulante: [{ id: 'perfil', label: 'My registration', icon: 'user' }, cuenta],
+}
+
+const AVISO_KEY = 'universa:ayuda-vista'
+const avisoVisto = () => {
+  try {
+    return localStorage.getItem(AVISO_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+// Aviso de bienvenida (una sola vez por navegador) que lleva al Centro de ayuda.
+function AvisoAyuda({ onVer }) {
+  const [visible, setVisible] = useState(() => !avisoVisto())
+  if (!visible) return null
+  const cerrar = (ir) => {
+    try {
+      localStorage.setItem(AVISO_KEY, '1')
+    } catch {
+      /* sin almacenamiento: reaparecerá la próxima vez */
+    }
+    setVisible(false)
+    if (ir) onVer()
+  }
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 ring-1 ring-brand-100">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+        <Icon name="info" className="h-5 w-5" />
+      </span>
+      <p className="min-w-0 flex-1 text-sm text-brand-900">
+        <strong className="font-semibold">New here?</strong> Read the short guides to learn how the platform works. You can find them any time in <strong className="font-semibold">Help</strong>, in the menu.
+      </p>
+      <button type="button" onClick={() => cerrar(true)} className="rounded-xl bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700">
+        See the guides
+      </button>
+      <button type="button" onClick={() => cerrar(false)} className="rounded-xl px-2 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-100">
+        Dismiss
+      </button>
+    </div>
+  )
 }
 
 function MiCuenta({ email }) {
@@ -49,8 +91,11 @@ export default function PortalApp({ vista, email, vistas, onCambiarVista, onSign
   return (
     <Layout base={base} current={pagina} onNavigate={(id) => navigate(`${base}/${id}`)} usuario={{ email, rol: vista }} onSignOut={onSignOut} items={items[vista]} vistas={vistas} vista={vista} onCambiarVista={onCambiarVista}>
       {vista === 'estudiante' && <EncuestaClase />}
+      {pagina !== 'ayuda' && (vista === 'estudiante' || vista === 'docente') && <AvisoAyuda onVer={() => navigate(`${base}/ayuda`)} />}
       <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading…</p>}>
-      {pagina === 'cuenta' ? (
+      {pagina === 'ayuda' ? (
+        <CentroAyuda rol={vista} />
+      ) : pagina === 'cuenta' ? (
         <MiCuenta email={email} />
       ) : pagina === 'zona' ? (
         <ZonaDocumentos zona={vista === 'docente' ? 'docentes' : 'estudiantes'} />

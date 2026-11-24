@@ -108,6 +108,7 @@ export default function AsistenciaEstudiante({ historial, conteo, totalClases = 
                     <p className="text-sm font-medium text-slate-900">
                       Class {h.numero} <span className="font-normal text-slate-400">· {formatFecha(h.fecha)}</span>
                     </p>
+                    {h.tipo === 'extra' && <Badge color="peach">Extra · {h.etiqueta}</Badge>}
                     {e ? <Badge color={e.color}>{e.label}</Badge> : <Badge color="slate">{h.estado_registro === 'pendiente' ? 'To be recorded' : 'No mark'}</Badge>}
                   </div>
                   {h.tema && <p className="mt-0.5 text-sm text-slate-600">{h.tema}</p>}

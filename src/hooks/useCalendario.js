@@ -58,5 +58,8 @@ export default function useCalendario(salonId, alCambiar) {
       await cargar()
     },
     proponer: api.proponerRecuperacion,
+    proponerExtra: () => api.proponerClaseExtra(salonId),
+    agregarExtra: (v) => ejecutar(() => api.agregarClaseExtra(salonId, v)),
+    eliminarExtra: (id) => ejecutar(() => api.eliminarClaseExtra(id)),
   }
 }

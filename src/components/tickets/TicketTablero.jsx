@@ -1,7 +1,7 @@
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
 import Icon from '../ui/Icon'
-import { ESTADOS, ESTILO_ESTADO, ESTILO_PRIORIDAD, colorAvatar, etiquetaPrioridad, etiquetaTipo, nombreCorto, ordenarTickets, responsablesDe, vencido } from '../../lib/tickets'
+import { ESTADOS, ESTILO_ESTADO, colorAvatar, diasSinMovimiento, estancado, etiquetaPrioridad, etiquetaTipo, hoyLima, nombreCorto, ordenarTickets, progresoChecklist, responsablesDe, vencido } from '../../lib/tickets'
 
 const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
 
@@ -9,8 +9,8 @@ const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('en-US'
 function Responsable({ id, nombre }) {
   if (!id)
     return (
-      <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-amber-700">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-amber-400 bg-amber-50">
+      <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-peach-700">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-peach-500 bg-peach-50">
           <Icon name="user" className="h-3.5 w-3.5" />
         </span>
         Unassigned
@@ -46,49 +46,68 @@ function Responsables({ ids, nombre }) {
   )
 }
 
-function Tarjeta({ ticket, nombre, flotante = false }) {
+// Punto de color por prioridad: la tarjeta es blanca y sobria; el color solo aparece donde informa.
+const PUNTO_PRIORIDAD = { urgente: 'bg-rose-500', alta: 'bg-peach-500', media: 'bg-brand-200', baja: 'bg-slate-300' }
+
+function Tarjeta({ ticket, nombre, flotante = false, posicion = 0 }) {
   const atrasado = vencido(ticket)
-  const p = ESTILO_PRIORIDAD[ticket.prioridad] ?? ESTILO_PRIORIDAD.media
+  const hoyEs = ticket.fecha_limite === hoyLima() && ticket.estado !== 'realizado'
   const hecho = ticket.estado === 'realizado'
+  const lista = progresoChecklist(ticket)
+  const parado = estancado(ticket)
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl border text-left shadow-sm transition ${p.fondo} ${
-        flotante ? 'rotate-2 scale-105 border-brand-400 shadow-xl' : 'border-slate-200 hover:border-brand-300 hover:shadow-md'
-      } ${hecho ? 'opacity-70' : ''}`}
+      className={`w-full rounded-xl border bg-white p-3 text-left transition ${
+        flotante ? 'rotate-1 scale-105 border-brand-300 shadow-xl' : 'border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md'
+      } ${hecho ? 'opacity-60' : ''}`}
     >
-      <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 ${p.franja}`} />
-      <div className="py-2 pl-4 pr-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex min-w-0 items-center gap-1 text-[11px] font-semibold text-slate-400">
-            <Icon name="list" className="h-3.5 w-3.5 shrink-0 text-slate-300" /> {ticket.codigo}
-            <span className="truncate font-normal">· {etiquetaTipo(ticket.tipo)}</span>
+      <div className="flex items-center justify-between gap-2 text-[11px]">
+        <span className="min-w-0 truncate font-medium text-slate-400">
+          {posicion > 0 && <span className="mr-1.5 rounded bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600" title="Position in the queue: 1 is the next one to attend">#{posicion}</span>}
+          {ticket.codigo} · {etiquetaTipo(ticket.tipo)}
+        </span>
+        {ticket.prioridad === 'urgente' ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 font-semibold text-white">
+            <Icon name="alert" className="h-3 w-3" /> Urgent
           </span>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${p.chip}`}>
-            <Icon name={p.icono} className="h-3 w-3" /> {etiquetaPrioridad(ticket.prioridad)}
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-1.5 text-slate-500" title={`${etiquetaPrioridad(ticket.prioridad)} priority`}>
+            <span aria-hidden className={`h-2 w-2 rounded-full ${PUNTO_PRIORIDAD[ticket.prioridad] ?? PUNTO_PRIORIDAD.media}`} />
+            <span className={ticket.prioridad === 'alta' ? 'font-semibold text-peach-700' : ''}>{etiquetaPrioridad(ticket.prioridad)}</span>
           </span>
-        </div>
-        <p className={`mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-slate-900 ${hecho ? 'line-through decoration-slate-300' : ''}`}>{ticket.titulo}</p>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <Responsables ids={responsablesDe(ticket)} nombre={nombre} />
-          <span className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
-            {ticket.n_comentarios > 0 && (
-              <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>
-                <Icon name="doc" className="h-3.5 w-3.5" /> {ticket.n_comentarios}
-              </span>
-            )}
-            {ticket.fecha_limite && (
-              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 ${atrasado ? 'bg-rose-100 font-semibold text-rose-700' : 'bg-slate-100'}`}>
-                <Icon name={atrasado ? 'alert' : 'calendar'} className="h-3 w-3" /> {formatoFecha(ticket.fecha_limite)}
-              </span>
-            )}
-          </span>
-        </div>
+        )}
+      </div>
+      <p className={`mt-1.5 line-clamp-3 text-[14px] font-medium leading-snug text-slate-900 ${hecho ? 'line-through decoration-slate-300' : ''}`}>{ticket.titulo}</p>
+      {parado && (
+        <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-peach-700" title="No activity on this ticket">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-peach-500" /> Stalled · {diasSinMovimiento(ticket)}d
+        </p>
+      )}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <Responsables ids={responsablesDe(ticket)} nombre={nombre} />
+        <span className="flex shrink-0 items-center gap-2.5 text-[11px] text-slate-500">
+          {lista.total > 0 && (
+            <span className={`inline-flex items-center gap-0.5 ${lista.completo ? 'font-semibold text-brand-700' : ''}`} title={`Checklist: ${lista.hechos} of ${lista.total} steps done`}>
+              <Icon name="check" className="h-3.5 w-3.5" /> {lista.hechos}/{lista.total}
+            </span>
+          )}
+          {ticket.n_comentarios > 0 && (
+            <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>
+              <Icon name="doc" className="h-3.5 w-3.5" /> {ticket.n_comentarios}
+            </span>
+          )}
+          {ticket.fecha_limite && (
+            <span className={`inline-flex items-center gap-1 ${atrasado ? 'rounded-md bg-rose-50 px-1.5 py-0.5 font-semibold text-rose-700' : hoyEs ? 'rounded-md bg-peach-50 px-1.5 py-0.5 font-semibold text-peach-700' : ''}`}>
+              <Icon name={atrasado ? 'alert' : 'calendar'} className="h-3 w-3" /> {formatoFecha(ticket.fecha_limite)}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   )
 }
 
-function TarjetaArrastrable({ ticket, nombre, onAbrir }) {
+function TarjetaArrastrable({ ticket, nombre, onAbrir, posicion }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: ticket.id })
   return (
     <div
@@ -102,7 +121,7 @@ function TarjetaArrastrable({ ticket, nombre, onAbrir }) {
       onKeyDown={(e) => e.key === 'Enter' && onAbrir(ticket.id)}
       className={`cursor-grab touch-manipulation rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:cursor-grabbing ${isDragging ? 'opacity-30' : ''}`}
     >
-      <Tarjeta ticket={ticket} nombre={nombre} />
+      <Tarjeta ticket={ticket} nombre={nombre} posicion={posicion} />
     </div>
   )
 }
@@ -120,28 +139,28 @@ function Columna({ estado, tickets, nombre, onAbrir, arrastrando, visibleEnMovil
   const restantes = tickets.length - mostrados.length
   const atrasados = tickets.filter((t) => vencido(t)).length
   return (
-    <section aria-label={estado.label} className={`${visibleEnMovil ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl bg-slate-100/80 p-2.5 lg:flex lg:flex-1`}>
-      <h2 className={`flex items-center gap-2 px-1.5 pb-2.5 pt-1 text-sm font-bold ${e.cab}`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${e.punto}`} />
+    <section aria-label={estado.label} className={`${visibleEnMovil ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200/70 lg:flex lg:flex-1`}>
+      <h2 className="flex items-center gap-2 px-2 pb-2 pt-1.5 text-[13px] font-semibold text-slate-700">
+        <span className={`h-2 w-2 rounded-full ${e.punto}`} />
         {estado.label}
+        <span className="text-xs font-medium text-slate-400">{tickets.length}</span>
         {atrasados > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700" title={`${atrasados} overdue`}>
-            <Icon name="alert" className="h-3 w-3" /> {atrasados}
+          <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600" title={`${atrasados} overdue`}>
+            <Icon name="alert" className="h-3 w-3" /> {atrasados} overdue
           </span>
         )}
-        <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-500 shadow-sm">{tickets.length}</span>
       </h2>
       <div
         ref={setNodeRef}
-        className={`max-h-[65vh] min-h-28 flex-1 space-y-2 overflow-y-auto overscroll-contain rounded-xl p-1 [scrollbar-width:thin] transition-colors ${
+        className={`max-h-[70vh] min-h-28 flex-1 space-y-2.5 overflow-y-auto overscroll-contain rounded-xl p-1 [scrollbar-width:thin] transition-colors ${
           isOver ? `${e.soltar} ring-2 ring-inset` : arrastrando ? 'bg-white/50 ring-1 ring-dashed ring-inset ring-slate-300' : ''
         }`}
       >
-        {mostrados.map((t) => (
-          <TarjetaArrastrable key={t.id} ticket={t} nombre={nombre} onAbrir={onAbrir} />
+        {mostrados.map((t, i) => (
+          <TarjetaArrastrable key={t.id} ticket={t} nombre={nombre} onAbrir={onAbrir} posicion={estado.value === 'realizado' ? 0 : i + 1} />
         ))}
         {tickets.length === 0 && (
-          <p className="px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Drop here to move to “${estado.label}”` : 'No tickets'}</p>
+          <p className="rounded-xl border border-dashed border-slate-200 px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Drop here to move to “${estado.label}”` : 'No tickets'}</p>
         )}
         {restantes > 0 && (
           <button type="button" onClick={() => setLimite((l) => l + LOTE)} className="w-full rounded-xl border border-dashed border-slate-300 bg-white/70 py-2 text-xs font-semibold text-brand-700 hover:bg-white">
@@ -186,7 +205,7 @@ export default function TicketTablero({ tickets, nombre, onAbrir, onMover }) {
           )
         })}
       </div>
-      <div className="lg:flex lg:items-start lg:gap-3">
+      <div className="lg:flex lg:items-start lg:gap-4">
         {ESTADOS.map((e) => (
           <Columna
             key={e.value}

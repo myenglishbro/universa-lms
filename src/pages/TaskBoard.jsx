@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ErrorBoundary from '../components/ui/ErrorBoundary'
+import EquipoCarga from '../components/tickets/EquipoCarga'
 import TicketDetalle from '../components/tickets/TicketDetalle'
+import TicketCalendario from '../components/tickets/TicketCalendario'
 import TicketNuevo from '../components/tickets/TicketNuevo'
 import TicketTablero from '../components/tickets/TicketTablero'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
-import { inputClass } from '../components/ui/Field'
+import Field, { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import PageHeader from '../components/ui/PageHeader'
 import useCarga from '../hooks/useCarga'
@@ -18,6 +21,7 @@ const VISTAS = [
   { id: 'creados', label: 'Created by me' },
   { id: 'urgentes', label: 'Urgent' },
   { id: 'vencidos', label: 'Overdue' },
+  { id: 'estancados', label: 'Stalled' },
   { id: 'archivados', label: 'Archived' },
 ]
 const SIN_FILTROS = { estado: '', prioridad: '', tipo: '', responsable: '', texto: '' }
@@ -32,6 +36,8 @@ export default function TaskBoard({ miId, notif }) {
   const error = errorTickets || errorPersonal
   const [tickets, setTickets] = useState([])
   const [vista, setVista] = useState('todos')
+  const [modo, setModo] = useState('tablero') // tablero | calendario
+  const [verFiltros, setVerFiltros] = useState(false)
   const [filtros, setFiltros] = useState(SIN_FILTROS)
   const [abierto, setAbierto] = useState(null)
   const [nuevo, setNuevo] = useState(false)
@@ -85,7 +91,15 @@ export default function TaskBoard({ miId, notif }) {
 
   const ticketAbierto = tickets.find((t) => t.id === abierto)
   const setF = (k) => (e) => setFiltros((p) => ({ ...p, [k]: e.target.value }))
-  const hayFiltros = Object.values(filtros).some(Boolean)
+  const nFiltros = Object.values(filtros).filter(Boolean).length
+  const etiquetaFiltro = {
+    estado: (v) => ESTADOS.find((o) => o.value === v)?.label,
+    prioridad: (v) => `${PRIORIDADES.find((o) => o.value === v)?.label} priority`,
+    tipo: (v) => TIPOS.find((o) => o.value === v)?.label,
+    responsable: (v) => (v === 'sin' ? 'Unassigned' : nombreCorto(nombre(v), 'Someone')),
+    texto: (v) => `“${v}”`,
+  }
+  const chipsFiltros = Object.entries(filtros).filter(([, v]) => v).map(([k, v]) => [k, etiquetaFiltro[k](v)])
 
   const abrirDesdeNotificacion = async (n) => {
     setCampana(false)
@@ -134,60 +148,66 @@ export default function TaskBoard({ miId, notif }) {
         }
       />
 
-      <div className="mb-3 flex flex-wrap gap-2" role="tablist" aria-label="Vistas">
+      <ErrorBoundary nombre="Team office" mensaje="The team office could not be shown, but the board works normally.">
+        <EquipoCarga tickets={tickets} personal={personal} miId={miId} elegido={filtros.responsable} onElegir={(id) => setFiltros((p) => ({ ...p, responsable: id }))} />
+      </ErrorBoundary>
+
+      {/* Fila 1: modo, búsqueda y filtros. Fila 2: vistas. Los filtros se abren solo cuando se necesitan. */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="flex rounded-lg bg-slate-100 p-0.5" role="tablist" aria-label="Layout">
+          {[['tablero', 'Board'], ['calendario', 'Calendar']].map(([id, label]) => (
+            <button key={id} type="button" role="tab" aria-selected={modo === id} onClick={() => setModo(id)} className={`rounded-md px-3.5 py-1.5 text-sm font-medium ${modo === id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="relative min-w-40 flex-1 sm:max-w-xs">
+          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input type="search" aria-label="Search by title or code" placeholder="Search tickets…" className={inputClass} style={{ paddingLeft: '2.25rem' }} value={filtros.texto} onChange={setF('texto')} />
+        </div>
+        <button type="button" onClick={() => setVerFiltros((v) => !v)} aria-expanded={verFiltros} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium ${verFiltros || nFiltros > 0 ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'}`}>
+          <Icon name="filter" className="h-4 w-4" /> Filters
+          {nFiltros > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white">{nFiltros}</span>}
+        </button>
+      </div>
+      {verFiltros && (
+        <div className="mb-3 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Status" options={[{ value: '', label: 'All statuses' }, ...ESTADOS]} value={filtros.estado} onChange={setF('estado')} />
+          <Field label="Priority" options={[{ value: '', label: 'Any priority' }, ...PRIORIDADES]} value={filtros.prioridad} onChange={setF('prioridad')} />
+          <Field label="Type" options={[{ value: '', label: 'All types' }, ...TIPOS]} value={filtros.tipo} onChange={setF('tipo')} />
+          <Field
+            label="Assignee"
+            options={[{ value: '', label: 'All assignees' }, { value: 'sin', label: 'Unassigned' }, ...personal.map((p) => ({ value: p.user_id, label: `${nombreCorto(p.correo)}${p.activo ? '' : ' (inactive)'}` }))]}
+            value={filtros.responsable}
+            onChange={setF('responsable')}
+          />
+        </div>
+      )}
+      {nFiltros > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
+          {chipsFiltros.map(([clave, texto]) => (
+            <span key={clave} className="inline-flex items-center gap-1 rounded-full bg-brand-50 py-0.5 pl-2.5 pr-1.5 font-medium text-brand-800">
+              {texto}
+              <button type="button" aria-label={`Remove filter: ${texto}`} onClick={() => setFiltros((p) => ({ ...p, [clave]: '' }))} className="rounded-full px-1 text-brand-500 hover:text-brand-900">
+                ×
+              </button>
+            </span>
+          ))}
+          <span className="text-slate-500">{visibles.length} result(s)</span>
+          <button type="button" className="font-medium text-brand-700 hover:underline" onClick={() => setFiltros(SIN_FILTROS)}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="Vistas">
         {VISTAS.map((v) => (
-          <button key={v.id} type="button" role="tab" aria-selected={vista === v.id} onClick={() => setVista(v.id)} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors ${vista === v.id ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-brand-50'}`}>
+          <button key={v.id} type="button" role="tab" aria-selected={vista === v.id} onClick={() => setVista(v.id)} className={`-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${vista === v.id ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             {v.label}
-            <span className={`text-xs ${vista === v.id ? 'text-brand-100' : 'text-slate-400'}`}>{conteo(v.id)}</span>
+            <span className={`rounded-full px-1.5 text-[11px] ${vista === v.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'}`}>{conteo(v.id)}</span>
           </button>
         ))}
       </div>
-
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-        <input type="search" aria-label="Search by title or code" placeholder="Search by title or code" className={`${inputClass} lg:col-span-2`} value={filtros.texto} onChange={setF('texto')} />
-        <select aria-label="Filter by status" className={inputClass} value={filtros.estado} onChange={setF('estado')}>
-          <option value="">All statuses</option>
-          {ESTADOS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Filter by priority" className={inputClass} value={filtros.prioridad} onChange={setF('prioridad')}>
-          <option value="">Any priority</option>
-          {PRIORIDADES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Filter by type" className={inputClass} value={filtros.tipo} onChange={setF('tipo')}>
-          <option value="">All types</option>
-          {TIPOS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Filter by assignee" className={inputClass} value={filtros.responsable} onChange={setF('responsable')}>
-          <option value="">All assignees</option>
-          <option value="sin">Unassigned</option>
-          {personal.map((p) => (
-            <option key={p.user_id} value={p.user_id}>
-              {nombreCorto(p.correo)}
-              {p.activo ? '' : ' (inactivo)'}
-            </option>
-          ))}
-        </select>
-      </div>
-      {hayFiltros && (
-        <p className="mb-3 text-xs text-slate-500">
-          {visibles.length} resultado(s).{' '}
-          <button type="button" className="font-medium text-brand-700 hover:underline" onClick={() => setFiltros(SIN_FILTROS)}>
-            Clear filters
-          </button>
-        </p>
-      )}
       {aviso && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{aviso}</p>}
 
       {vista === 'archivados' ? (
@@ -203,6 +223,8 @@ export default function TaskBoard({ miId, notif }) {
           ))}
           {visibles.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">There are no archived tickets.</p>}
         </Card>
+      ) : modo === 'calendario' ? (
+        <TicketCalendario tickets={visibles} onAbrir={setAbierto} />
       ) : (
         <TicketTablero tickets={visibles} nombre={nombre} onAbrir={setAbierto} onMover={mover} />
       )}

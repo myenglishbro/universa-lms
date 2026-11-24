@@ -22,9 +22,10 @@ export function porcentajeAvance(realizadas, total) {
 export const NOTA_PROGRESO = 'Progress by calendar sessions. It does not indicate academic approval.'
 
 // Cuenta estados de una lista [{ asistencia }].
+// Las clases extra se registran pero no cuentan para el porcentaje ni para el 25 % de inasistencias.
 export function contarAsistencia(filas, campo = 'asistencia') {
   const c = { presente: 0, ausente: 0, tardanza: 0, justificado: 0 }
-  for (const f of filas) if (f[campo] in c) c[f[campo]]++
+  for (const f of filas) if (f.tipo !== 'extra' && f[campo] in c) c[f[campo]]++
   return c
 }
 

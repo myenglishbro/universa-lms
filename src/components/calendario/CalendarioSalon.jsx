@@ -3,6 +3,7 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import useCalendario from '../../hooks/useCalendario'
 import CancelarSesionModal from './CancelarSesionModal'
+import ClaseExtraModal from './ClaseExtraModal'
 import EvaluacionModal from './EvaluacionModal'
 import ProgresoSalon from './ProgresoSalon'
 import SesionModal from './SesionModal'
@@ -35,6 +36,7 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
         reprogramar: (sesion) => setModal({ tipo: 'reprogramar', sesion }),
         recuperar: (sesion) => setModal({ tipo: 'recuperar', sesion }),
         corregir: (sesion) => setModal({ tipo: 'corregir', sesion }),
+        eliminarExtra: (s) => window.confirm('Delete this extra class?') && correr(() => cal.eliminarExtra(s.id)),
         evaluacion: (sesion) => setModal({ tipo: 'evaluacion', sesion }),
       }
     : null
@@ -82,6 +84,13 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
     contenido = (
       <>
         <ProgresoSalon salon={salon} ocupado={ocupado} onCompletar={puedeEditar ? () => correr(cal.generar) : null} />
+        {puedeEditar && (
+          <div className="mt-3 flex justify-end">
+            <Button variant="secondary" onClick={() => setModal({ tipo: 'extra' })}>
+              + Add extra class
+            </Button>
+          </div>
+        )}
         <SesionesLista
           sesiones={cal.sesiones}
           conflictos={cal.conflictos}
@@ -118,7 +127,8 @@ export default function CalendarioSalon({ salon, puedeEditar, onCambio }) {
           onClose={() => setModal(null)}
         />
       )}
-      {modal && modal.tipo !== 'cancelar' && modal.tipo !== 'evaluacion' && (
+      {modal?.tipo === 'extra' && <ClaseExtraModal proponer={cal.proponerExtra} onSave={cal.agregarExtra} onClose={() => setModal(null)} />}
+      {modal && !['cancelar', 'evaluacion', 'extra'].includes(modal.tipo) && (
         <SesionModal modo={modal.tipo} sesion={modal.sesion} proponer={cal.proponer} onSave={guardarModal} onClose={() => setModal(null)} />
       )}
     </section>

@@ -227,6 +227,13 @@ export function clasificarNota(nota) {
   return { oficial, resultado, etiqueta: RESULTADOS[resultado] }
 }
 
+// Nota mínima para aprobar: por debajo (ya redondeada a la nota oficial) la matriz lo marca.
+export const NOTA_MINIMA = 70
+export const notaBaja = (nota) => {
+  const c = clasificarNota(nota)
+  return c != null && c.oficial < NOTA_MINIMA
+}
+
 // Texto corto de lo que contiene una celda: «80», «5/10 clases», «—».
 export function textoCelda(c) {
   if (!c) return '—'

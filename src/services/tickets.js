@@ -6,6 +6,10 @@ const rpc = async (nombre, args) => datos(await supabase.rpc(nombre, args))
 // Lecturas: las filtra RLS (solo personal activo). Las escrituras pasan únicamente por funciones SQL.
 export const listarTickets = async () => datos(await supabase.from('tickets').select('*').order('updated_at', { ascending: false }).limit(1000))
 export const personalTickets = () => rpc('ticket_personal')
+// Personaje de cada persona del equipo (estilo y color) y cambio del propio.
+export const avataresTickets = () => rpc('ticket_avatares_listar')
+export const guardarAvatar = (config) => rpc('ticket_avatar_guardar', { p_config: config })
+export const guardarPresencia = (estado, mensaje, rincon, fecha) => rpc('ticket_presencia_guardar', { p_estado: estado, p_mensaje: mensaje, p_rincon: rincon, p_fecha: fecha })
 export const comentariosDe = async (id) => datos(await supabase.from('ticket_comentarios').select('*').eq('ticket_id', id).order('created_at'))
 export const historialDe = async (id) => datos(await supabase.from('ticket_historial').select('*').eq('ticket_id', id).order('created_at', { ascending: false }))
 export const misNotificaciones = async () =>
@@ -23,6 +27,8 @@ export const crearTicket = (t) =>
 // cambios: solo las claves a modificar (titulo, descripcion, tipo, prioridad, estado, responsables [lista de usuarios], fecha_limite).
 export const actualizarTicket = (id, cambios) => rpc('ticket_actualizar', { p_id: id, p_cambios: cambios })
 export const comentarTicket = (id, texto) => rpc('ticket_comentar', { p_id: id, p_texto: texto })
+// Guarda la lista completa de pasos [{ id, texto, hecho }] y devuelve la lista normalizada.
+export const guardarChecklist = (id, items) => rpc('ticket_checklist_guardar', { p_id: id, p_items: items })
 export const archivarTicket = (id, archivar = true) => rpc('ticket_archivar', { p_id: id, p_archivar: archivar })
 export const marcarLeidas = (ids = null) => rpc('ticket_marcar_leidas', { p_ids: ids })
 

@@ -36,3 +36,6 @@ export function cuando(fecha, hoy = hoyISO()) {
   if (fecha === sumarDias(hoy, 1)) return 'Tomorrow'
   return nombreDia(fecha)
 }
+
+// Motivos habituales de una clase extra (la etiqueta también puede escribirse libremente).
+export const ETIQUETAS_EXTRA = ['Extra class', 'Boost week', 'Review']

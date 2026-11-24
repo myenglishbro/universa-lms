@@ -9,7 +9,7 @@ export async function listarSesiones(salonId) {
   const filas = datos(
     await supabase
       .from('salon_sesiones')
-      .select('id, fecha, hora_inicio, hora_fin, estado, tipo, recupera_a, manual, nota')
+      .select('id, fecha, hora_inicio, hora_fin, estado, tipo, etiqueta, recupera_a, manual, nota')
       .eq('salon_id', salonId)
       .order('fecha')
       .order('hora_inicio'),
@@ -21,6 +21,7 @@ export async function listarSesiones(salonId) {
     horaFin: hora(r.hora_fin),
     estado: r.estado,
     tipo: r.tipo,
+    etiqueta: r.etiqueta ?? '',
     recuperaA: r.recupera_a,
     manual: r.manual,
     nota: r.nota ?? '',
@@ -72,6 +73,12 @@ export const registrarRealizada = async (id, nota) =>
 // Devuelve { fecha, hora_inicio, hora_fin } o null si el salón no tiene horarios. No escribe nada.
 export const proponerRecuperacion = async (id) =>
   datos(await supabase.rpc('proponer_recuperacion', { p_sesion_id: id }))
+
+// Clases extra (solo admin): no cuentan para el total del curso. proponerClaseExtra devuelve el siguiente hueco libre del horario semanal o null.
+export const proponerClaseExtra = async (salonId) => datos(await supabase.rpc('extra_proponer', { p_salon: salonId }))
+export const agregarClaseExtra = async (salonId, { fecha, horaInicio, horaFin, etiqueta, nota }) =>
+  datos(await supabase.rpc('agregar_clase_extra', { p_salon: salonId, p_fecha: fecha, p_hora_inicio: horaInicio, p_hora_fin: horaFin, p_etiqueta: etiqueta, p_nota: nota || null }))
+export const eliminarClaseExtra = async (id) => datos(await supabase.rpc('eliminar_clase_extra', { p_sesion: id }))
 
 // recuperacion: { fecha, hora_inicio, hora_fin } para crearla al cancelar, o null para dejarla pendiente.
 export const cancelarSesion = async (id, nota, recuperacion) =>
