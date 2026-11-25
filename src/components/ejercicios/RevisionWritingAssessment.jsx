@@ -73,7 +73,7 @@ function CorregirTarea({ tarea, entrega, nota, criterios, texto, servicio, onHec
 // Revisión de un Writing Assessment: por estudiante, sus dos textos, cuánto tardó, cuántas veces salió de la página y la calificación por tarea.
 export default function RevisionWritingAssessment({ asignacionId, servicio = servicioReal, onVolver }) {
   const cargar = useCallback(() => servicio.writingAssessmentRevision(asignacionId), [servicio, asignacionId])
-  const { datos, cargando, error, recargar } = useCarga(cargar, [])
+  const { datos, cargando, error, recargar } = useCarga(cargar, null)
   const [abierto, setAbierto] = useState(null)
 
   if (cargando && !datos) return <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
