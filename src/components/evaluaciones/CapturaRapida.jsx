@@ -9,7 +9,34 @@ import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/evaluaciones'
 import * as servicioEjercicios from '../../services/ejercicios'
 
-const claseInput = 'w-16 rounded-md border border-slate-300 px-2 py-1 text-right text-sm focus:border-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500'
+// Selector de nivel 0–5: lo bastante ancho para leer «4 · Achieved» o «0 · Not demonstrated» completo; el color indica el nivel.
+const claseSelectNivel = 'w-44 rounded-xl border px-2.5 py-2 text-left text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-70'
+const TONO_NIVEL = {
+  vacio: 'border-slate-300 bg-white text-slate-500',
+  0: 'border-rose-200 bg-rose-50 text-rose-800',
+  1: 'border-orange-200 bg-orange-50 text-orange-800',
+  2: 'border-amber-200 bg-amber-50 text-amber-800',
+  3: 'border-sky-200 bg-sky-50 text-sky-800',
+  4: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  5: 'border-brand-300 bg-brand-100 text-brand-800',
+}
+const claseInput = 'w-20 rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold tabular-nums focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-slate-50 disabled:text-slate-500'
+
+const iniciales = (nombre) =>
+  String(nombre ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((x) => x[0].toUpperCase())
+    .join('')
+
+function Estado({ clase, punto, children }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${clase}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${punto}`} /> {children}
+    </span>
+  )
+}
 
 // Enter baja a la misma casilla del estudiante siguiente (como en una hoja de cálculo).
 function irAlSiguiente(e, tabla) {
@@ -101,34 +128,53 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
   }
 
   const sinNota = alumnos.filter((a) => !publicada(a) && nota(a) == null).length
+  const nSinGuardar = alumnos.filter((a) => !publicada(a) && cambiada(a)).length
+  const nPublicadas = alumnos.filter(publicada).length
+  const etiquetaCriterio = (c) => (u && String(c.nombre).startsWith(`${u} · `) ? String(c.nombre).slice(u.length + 3) : c.nombre)
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-slate-200" ref={tabla}>
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs text-slate-600">
-            <tr>
-              <th className="px-3 py-2">Student</th>
-              {criterios.length > 0 ? criterios.map((c) => <th key={c.id} className="px-2 py-2 text-right">{u && String(c.nombre).startsWith(`${u} · `) ? String(c.nombre).slice(u.length + 3) : c.nombre} <span className="font-normal text-slate-400">/{c.max_puntaje}</span></th>) : <th className="px-2 py-2 text-right">Grade (0–100)</th>}
-              <th className="px-3 py-2 text-right">Total /100</th>
-              <th className="px-3 py-2 text-right">{evaluacion.tipo === 'formative' ? 'Unit' : 'Contribution'}</th>
-              <th className="px-3 py-2">Estado</th>
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm" ref={tabla}>
+        <table className="w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <th className="sticky left-0 z-10 border-b border-slate-200 bg-slate-50 px-4 py-3">Student</th>
+              {criterios.length > 0 ? (
+                criterios.map((c) => (
+                  <th key={c.id} className="border-b border-slate-200 bg-slate-50 px-2 py-3 align-bottom">
+                    <span className="block max-w-[10rem] normal-case leading-tight tracking-normal text-slate-700">{etiquetaCriterio(c)}</span>
+                    <span className="mt-1 inline-block rounded-full bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-inset ring-slate-200">{fmtNota(c.max_puntaje)} pts</span>
+                  </th>
+                ))
+              ) : (
+                <th className="border-b border-slate-200 bg-slate-50 px-2 py-3 text-right">Grade (0–100)</th>
+              )}
+              <th className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right">Total /100</th>
+              <th className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right">{evaluacion.tipo === 'formative' ? 'Unit' : 'Contribution'}</th>
+              <th className="border-b border-slate-200 bg-slate-50 px-3 py-3">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {alumnos.map((a, i) => {
               const bloqueada = publicada(a)
               const n = nota(a)
+              const sucia = cambiada(a) && !bloqueada
+              const fondo = sucia ? 'bg-amber-50/60' : 'bg-white'
               return (
-                <tr key={a.alumno_id}>
-                  <td className="px-3 py-2 font-medium text-slate-900">{a.nombre}</td>
+                <tr key={a.alumno_id} className="group">
+                  <td className={`sticky left-0 z-10 border-b border-slate-100 px-4 py-3 ${fondo}`}>
+                    <span className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{iniciales(a.nombre)}</span>
+                      <span className="min-w-[8rem] max-w-[11rem] text-sm font-medium leading-snug text-slate-900">{a.nombre}</span>
+                    </span>
+                  </td>
                   {criterios.length > 0 ? (
                     criterios.map((c, j) => (
-                      <td key={c.id} className="px-2 py-1 text-right">
+                      <td key={c.id} className={`border-b border-slate-100 px-2 py-3 ${fondo}`}>
                         {esPorNiveles(c) ? (
                           // Criterio por niveles 0–5: la captura rápida elige el nivel; los puntos salen solos (nivel ÷ 5 × peso).
                           <select
-                            className={claseInput}
+                            className={`${claseSelectNivel} ${TONO_NIVEL[nivelDePuntaje(c, actual(a).valores[c.id])] ?? TONO_NIVEL.vacio}`}
                             data-col={`c${j}`}
                             data-fila={i}
                             aria-label={`${c.nombre} for ${a.nombre}`}
@@ -137,10 +183,10 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
                             onChange={(e) => poner(a, { valores: { ...actual(a).valores, [c.id]: e.target.value === '' ? '' : puntajeDeNivel(c, e.target.value) } })}
                             onKeyDown={(e) => irAlSiguiente(e, tabla)}
                           >
-                            <option value="">—</option>
-                            {NIVELES_RUBRICA.map((n) => (
-                              <option key={n.nivel} value={n.nivel}>
-                                {n.nivel} · {n.etiqueta}
+                            <option value="">— Select —</option>
+                            {NIVELES_RUBRICA.map((nv) => (
+                              <option key={nv.nivel} value={nv.nivel}>
+                                {nv.nivel} · {nv.etiqueta}
                               </option>
                             ))}
                           </select>
@@ -163,7 +209,7 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
                       </td>
                     ))
                   ) : (
-                    <td className="px-2 py-1 text-right">
+                    <td className={`border-b border-slate-100 px-2 py-3 text-right ${fondo}`}>
                       <input
                         type="number"
                         min="0"
@@ -180,10 +226,15 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
                       />
                     </td>
                   )}
-                  <td className="px-3 py-2 text-right font-semibold text-slate-900">{fmtNota(n)}</td>
-                  <td className="px-3 py-2 text-right text-slate-600">{n == null ? '—' : evaluacion.tipo === 'formative' ? (u || '—') : fmtNota((Number(evaluacion.peso) * n) / 100)}</td>
-                  <td className="px-3 py-2">
-                    {bloqueada ? <Badge color="brand">Published</Badge> : filaDe(a) && !cambiada(a) ? <Badge color="peach">Draft</Badge> : cambiada(a) ? <Badge color="peach">Unsaved</Badge> : <Badge color="slate">No grade</Badge>}
+                  <td className={`border-b border-slate-100 px-3 py-3 text-right ${fondo}`}>
+                    <span className={`text-lg font-bold tabular-nums ${n == null ? 'text-slate-300' : 'text-slate-900'}`}>{n == null ? '—' : fmtNota(n)}</span>
+                    <span className="mt-1 block h-1 w-16 overflow-hidden rounded-full bg-slate-100 ml-auto" aria-hidden="true">
+                      <span className={`block h-full rounded-full ${n == null ? '' : n >= 70 ? 'bg-emerald-500' : n >= 50 ? 'bg-brand-500' : 'bg-peach-500'}`} style={{ width: `${n == null ? 0 : Math.min(100, n)}%` }} />
+                    </span>
+                  </td>
+                  <td className={`border-b border-slate-100 px-3 py-3 text-right text-slate-600 tabular-nums ${fondo}`}>{n == null ? '—' : evaluacion.tipo === 'formative' ? (u || '—') : fmtNota((Number(evaluacion.peso) * n) / 100)}</td>
+                  <td className={`border-b border-slate-100 px-3 py-3 ${fondo}`}>
+                    {bloqueada ? <Estado clase="bg-emerald-50 text-emerald-700" punto="bg-emerald-500">Published</Estado> : cambiada(a) ? <Estado clase="bg-amber-50 text-amber-800" punto="bg-amber-400">Unsaved</Estado> : filaDe(a) ? <Estado clase="bg-peach-100 text-peach-700" punto="bg-peach-500">Draft</Estado> : <Estado clase="bg-slate-100 text-slate-500" punto="bg-slate-300">No grade</Estado>}
                   </td>
                 </tr>
               )
@@ -191,16 +242,26 @@ function CapturaNotas({ evaluacionId, unidad, servicio, onCambio }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">Type the grade and press Enter to move to the next student. A published grade is corrected from its record in the matrix (with a reason).</p>
-      {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800" role="status">{aviso}</p>}
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" disabled={ocupado || pendientesGuardar.length === 0} onClick={() => ejecutar(() => guardar(false))}>
-          Save drafts
-        </Button>
-        <Button disabled={ocupado} onClick={() => ejecutar(() => guardar(true))}>
-          Save and publish completed ones{sinNota > 0 ? ` (${sinNota} without a grade stay pending)` : ''}
-        </Button>
+      <p className="text-xs text-slate-500">
+        {criterios.some(esPorNiveles) ? 'Pick a level for each criterion; ' : 'Type the grade and '}press <kbd className="rounded border border-slate-300 bg-white px-1 text-[10px]">Enter</kbd> to jump to the same box of the next student. A published grade is corrected from its record in the matrix (with a reason).
+      </p>
+      {aviso && <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status">{aviso}</p>}
+      {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+          <span><strong className="text-slate-900">{alumnos.length}</strong> students</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> {nPublicadas} published</span>
+          {nSinGuardar > 0 && <span className="inline-flex items-center gap-1.5 text-amber-800"><span className="h-2 w-2 rounded-full bg-amber-400" /> {nSinGuardar} unsaved</span>}
+          {sinNota > 0 && <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-slate-300" /> {sinNota} without a grade</span>}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" disabled={ocupado || pendientesGuardar.length === 0} onClick={() => ejecutar(() => guardar(false))}>
+            Save drafts
+          </Button>
+          <Button disabled={ocupado} onClick={() => ejecutar(() => guardar(true))}>
+            Save and publish completed ones
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -259,7 +320,7 @@ function CapturaParticipacion({ evaluacionId, servicio, onCambio }) {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs text-slate-600">
             <tr>
@@ -277,13 +338,18 @@ function CapturaParticipacion({ evaluacionId, servicio, onCambio }) {
                   )}
                 </th>
               ))}
-              <th className="px-3 py-2">Estado</th>
+              <th className="px-3 py-2">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {alumnos.map((a) => (
               <tr key={a.alumno_id}>
-                <td className="px-3 py-2 font-medium text-slate-900">{a.nombre}</td>
+                <td className="px-3 py-2">
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{iniciales(a.nombre)}</span>
+                    <span className="min-w-[8rem] text-sm font-medium text-slate-900">{a.nombre}</span>
+                  </span>
+                </td>
                 {sesiones.map((s) => {
                   const m = marca(a, s)
                   const texto = !s.hecha ? '·' : m === true ? '✓' : m === false ? '✗' : '?'
@@ -294,7 +360,7 @@ function CapturaParticipacion({ evaluacionId, servicio, onCambio }) {
                         aria-label={`Class ${s.numero} for ${a.nombre}: ${!s.hecha ? 'not held yet' : m === true ? 'met' : m === false ? 'did not meet' : 'pending'}`}
                         disabled={!s.hecha || !editable(a) || ocupado}
                         onClick={() => setEdits((p) => ({ ...p, [k(a, s)]: ciclo(m) }))}
-                        className={`h-8 w-8 rounded-md border text-sm font-semibold disabled:opacity-40 ${m === true ? 'border-brand-300 bg-brand-50 text-brand-700' : m === false ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-300 text-slate-500'}`}
+                        className={`h-9 w-9 rounded-xl border text-sm font-semibold transition disabled:opacity-40 ${m === true ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : m === false ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-300 text-slate-400 hover:border-brand-400 hover:bg-brand-50'}`}
                       >
                         {texto}
                       </button>
@@ -307,7 +373,7 @@ function CapturaParticipacion({ evaluacionId, servicio, onCambio }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">Toca una casilla para alternar: ? pendiente → ✓ cumplió → ✗ no cumplió. Una casilla pendiente nunca cuenta como «no cumplió». Para cambiar una participación ya publicada usa su ficha (con motivo).</p>
+      <p className="text-xs text-slate-500">Tap a box to cycle it: ? pending → ✓ met → ✗ did not meet. A pending box never counts as “did not meet”. To change a published participation use its record (with a reason).</p>
       {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800" role="status">{aviso}</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
@@ -348,11 +414,11 @@ function Captura({ datos, servicio, onCambio }) {
   const unidades = [...(ev.unidades ?? []), ...(conParticipacion ? [PARTE_PARTICIPACION] : [])]
   const u = unidades.includes(unidad) ? unidad : (unidades[0] ?? '')
   const esParticipacion = ev.tipo === 'participacion' || u === PARTE_PARTICIPACION
-  const sel = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm'
+  const sel = 'rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
   return (
-    <Card className="space-y-3 p-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="text-xs text-slate-600">
+    <Card className="space-y-4 p-4 sm:p-5">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-slate-50 p-3">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
           Module
           <select aria-label="Module to record" className={`${sel} mt-1 block`} value={modulo.id} onChange={(e) => { setModuloId(e.target.value); setEvalId('') }}>
             {modulos.map((m) => (
@@ -360,16 +426,16 @@ function Captura({ datos, servicio, onCambio }) {
             ))}
           </select>
         </label>
-        <label className="text-xs text-slate-600">
-          Componente
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Component
           <select aria-label="Component to record" className={`${sel} mt-1 block`} value={ev.id} onChange={(e) => setEvalId(e.target.value)}>
             {modulo.evaluaciones.map((e) => (
-              <option key={e.id} value={e.id}>{e.nombre} (peso {fmtNota(e.peso)})</option>
+              <option key={e.id} value={e.id}>{e.nombre} (weight {fmtNota(e.peso)})</option>
             ))}
           </select>
         </label>
         {unidades.length > 0 && ev.tipo !== 'participacion' && (
-          <label className="text-xs text-slate-600">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             {conParticipacion ? 'Part' : 'Unit'}
             <select aria-label="Unit to record" className={`${sel} mt-1 block`} value={u} onChange={(e) => setUnidad(e.target.value)}>
               {unidades.map((x) => (

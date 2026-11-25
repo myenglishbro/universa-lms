@@ -126,23 +126,24 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500">
-        {evaluacion.modulo} · {evaluacion.componente} · weight {fmtNota(evaluacion.peso)} points. The student only sees what is published.
+      <p className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+        <span className="rounded-full bg-brand-50 px-2.5 py-1 font-medium text-brand-700">Weight {fmtNota(evaluacion.peso)} pts</span>
+        <span>The student only sees what is published.</span>
       </p>
 
       {unidades.length > 0 && (
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Units">
+        <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Units">
           {unidades.map((u) => (
             <button
               key={u}
               role="tab"
               aria-selected={unidad === u}
               onClick={() => setUnidad(u)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${unidad === u ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${unidad === u ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
             >
               {u}
-              {porTareas && pesoUnidad(todos, u) != null ? ` · ${fmtNota(pesoUnidad(todos, u))} pts` : ''}
-              {filaDe(u)?.estado === 'publicada' ? ' ✓' : ''}
+              {porTareas && pesoUnidad(todos, u) != null && <span className="text-xs font-normal text-slate-400">{fmtNota(pesoUnidad(todos, u))} pts</span>}
+              {filaDe(u)?.estado === 'publicada' && <span className="h-2 w-2 rounded-full bg-emerald-500" title="Published" />}
             </button>
           ))}
         </div>
@@ -181,7 +182,8 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
         </div>
       )}
 
-      <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900" role="status">
+      <div className="grid items-stretch gap-3 lg:grid-cols-2">
+      <div className="space-y-1 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white px-4 py-3 text-sm text-slate-700" role="status">
         {criterios.length > 0 && (
           <p>
             {esFormative ? `Total for ${unidad || 'the unit'}` : 'Rubric total'}:{' '}
@@ -231,8 +233,9 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       </div>
 
       {editable ? (
-        <input
-          className={inputClass}
+        <textarea
+          rows={3}
+          className={`${inputClass} h-full min-h-[5.5rem] resize-none`}
           aria-label="Comment for the student"
           placeholder="Comment for the student (optional)"
           maxLength={2000}
@@ -243,8 +246,10 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
         fila?.comentario && <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">Comment: {fila.comentario}</p>
       )}
 
+      </div>
+
       {fila && (
-        <p className="text-xs text-slate-500">
+        <p className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           Status: <Badge color={publicada ? 'brand' : 'peach'}>{publicada ? (fila.corregida ? 'Corrected' : 'Published') : 'Draft'}</Badge>
           {fila.corregida && (
             <button type="button" className="ml-2 underline" onClick={verHistorial}>
@@ -282,8 +287,8 @@ function Formulario({ detalle, alumnoId, servicio, onCambio, onClose, mensaje, s
       {mensaje && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{mensaje}</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" onClick={onClose}>
+      <div className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-wrap items-center justify-end gap-2 rounded-b-3xl border-t border-slate-100 bg-white/95 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-6 sm:px-7">
+        <Button variant="ghost" onClick={onClose}>
           Close
         </Button>
         {publicada && !ed.corrigiendo ? (
@@ -336,7 +341,7 @@ export function ContenidoCelda({ evaluacionId, alumnoId, servicio = servicioReal
 // Editor de una celda de la matriz (un estudiante en una evaluación): nota directa o rúbrica, por unidad si corresponde.
 export default function CeldaNota({ evaluacionId, alumnoId, titulo, servicio = servicioReal, onClose, onCambio }) {
   return (
-    <Modal title={titulo} onClose={onClose} wide="xl">
+    <Modal title={String(titulo ?? '').split(' · ')[0]} subtitulo={String(titulo ?? '').split(' · ').slice(1).join(' · ')} onClose={onClose} wide="2xl">
       <ContenidoCelda evaluacionId={evaluacionId} alumnoId={alumnoId} servicio={servicio} onClose={onClose} onCambio={onCambio} />
     </Modal>
   )

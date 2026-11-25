@@ -50,7 +50,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
     ev.currentTarget.parentElement.children[sig]?.focus()
   }
   return (
-    <div className={`rounded-xl border px-3 py-2.5 ${nivel == null ? 'border-slate-200 bg-white' : 'border-brand-200 bg-brand-50/40'} ${enGrupo ? 'ml-3' : ''}`}>
+    <div className={`rounded-2xl border px-4 py-3 shadow-sm transition-colors ${nivel == null ? 'border-slate-200 bg-white' : 'border-brand-200 bg-white ring-1 ring-brand-100'}`} data-en-grupo={enGrupo || undefined}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-900">{etiqueta}</p>
@@ -65,7 +65,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         </div>
       </div>
 
-      <div role="radiogroup" aria-label={`${c.nombre}${etiquetaSufijo}`} className="mt-2 grid grid-cols-6 gap-1.5" onMouseLeave={() => setPrevio(null)}>
+      <div role="radiogroup" aria-label={`${c.nombre}${etiquetaSufijo}`} className="mt-3 grid grid-cols-6 gap-2" onMouseLeave={() => setPrevio(null)}>
         {NIVELES_RUBRICA.map((n) => {
           const activo = nivel === n.nivel
           return (
@@ -83,7 +83,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
               onFocus={() => setPrevio(n.nivel)}
               onBlur={() => setPrevio(null)}
               title={n.etiqueta}
-              className={`flex h-10 items-center justify-center rounded-lg border text-base font-bold tabular-nums transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${activo ? 'border-brand-600 bg-brand-600 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50'}`}
+              className={`flex h-11 items-center justify-center rounded-xl border text-base font-bold tabular-nums transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${activo ? 'border-brand-600 bg-brand-600 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50'}`}
             >
               {n.nivel}
             </button>
@@ -91,7 +91,7 @@ export function CampoNivel({ c, etiqueta, enGrupo = false, valor, onCambiar, des
         })}
       </div>
 
-      <p className={`mt-2 rounded-lg px-2.5 py-1.5 text-xs leading-snug ${banda ? (previo != null && previo !== nivel ? 'bg-slate-50 text-slate-600' : 'bg-white text-slate-800') : 'text-slate-400'}`} aria-live="polite">
+      <p className={`mt-3 rounded-xl px-3 py-2 text-xs leading-snug ${banda ? (previo != null && previo !== nivel ? 'bg-slate-50 text-slate-600' : 'bg-brand-50/60 text-slate-800') : 'bg-slate-50 text-slate-400'}`} aria-live="polite">
         {banda ? (
           <>
             <span className="font-semibold text-brand-800">
@@ -156,7 +156,7 @@ function RadarRubrica({ criterios, valores }) {
   const nivelDe = (c) => nivelDePuntaje(c, valores?.[c.id])
   const poligono = criterios.map((c, i) => punto(i, (nivelDe(c) ?? 0) / 5).join(',')).join(' ')
   return (
-    <svg viewBox="0 0 300 236" className="mx-auto block h-auto w-full max-w-xs text-brand-600" role="img" aria-label="Student profile by criterion">
+    <svg viewBox="-50 0 400 236" className="mx-auto block h-auto w-full max-w-sm overflow-visible text-brand-600" role="img" aria-label="Student profile by criterion">
       {[0.2, 0.4, 0.6, 0.8, 1].map((f) => (
         <polygon key={f} points={anillo(f)} fill="none" className="stroke-slate-200" strokeWidth="1" />
       ))}
@@ -190,7 +190,7 @@ function AvanceRubrica({ criterios, valores }) {
   const suma = criterios.reduce((s, c) => s + (valores?.[c.id] !== '' && valores?.[c.id] != null && !Number.isNaN(Number(valores[c.id])) ? Number(valores[c.id]) : 0), 0)
   const completo = hechos === criterios.length && criterios.length > 0
   return (
-    <div className="sticky top-0 z-10 mb-2 rounded-xl border border-brand-100 bg-white/95 px-3 py-2 shadow-sm backdrop-blur" role="status" aria-live="polite">
+    <div className="sticky top-[4.75rem] z-10 mb-3 rounded-2xl border border-brand-100 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur" role="status" aria-live="polite">
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="font-medium text-slate-700">
           {completo ? '✓ All criteria graded' : `${hechos} of ${criterios.length} criteria graded`}
@@ -276,7 +276,7 @@ export default function CriteriosRubrica({ criterios, valores, onCambiar, deshab
 
   const conNiveles = criterios.some(esPorNiveles)
   return (
-    <div className={titulo ? 'rounded-2xl border border-brand-100 bg-white px-4 py-3' : ''}>
+    <div className={`@container ${titulo ? 'rounded-2xl border border-brand-100 bg-white px-4 py-3' : ''}`}>
       {conNiveles && <AvanceRubrica criterios={criterios} valores={valores} />}
       {titulo && (
         <div className="mb-1 flex items-center justify-between gap-3">
@@ -284,25 +284,26 @@ export default function CriteriosRubrica({ criterios, valores, onCambiar, deshab
           <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-800">{fmtNota(total)} pts</span>
         </div>
       )}
-      <div className={conNiveles && criterios.length >= 3 ? 'gap-4 lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start' : ''}>
+      <div className={conNiveles && criterios.length >= 3 ? 'gap-5 @3xl:grid @3xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)] @3xl:items-start' : ''}>
       {conNiveles && criterios.length >= 3 && (
-        <div className="mb-3 rounded-xl border border-slate-200 bg-white p-2 lg:sticky lg:top-24 lg:mb-0">
+        <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm @3xl:sticky @3xl:top-40 @3xl:mb-0">
+          <p className="mb-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">Student profile</p>
           <RadarRubrica criterios={criterios} valores={valores} />
         </div>
       )}
-      <ul className={conNiveles ? 'space-y-2' : 'divide-y divide-slate-100'}>
+      <ul className={conNiveles ? 'grid content-start gap-3 @5xl:grid-cols-2' : 'divide-y divide-slate-100'}>
         {agruparCriterios(criterios).map((g) => {
           if (!g.grupo) return <li key={g.items[0].id}>{campo(g.items[0], g.items[0].nombre, false)}</li>
           const sub = subtotalGrupo(g.items, valores)
           return (
-            <li key={g.grupo} className="py-1">
-              <div className="flex items-center justify-between gap-3 pt-1.5">
+            <li key={g.grupo} className={conNiveles ? 'rounded-2xl border border-brand-100 bg-brand-50/40 p-2.5 @5xl:col-span-2' : 'py-1'}>
+              <div className="mb-2 flex items-center justify-between gap-3 px-1.5 pt-0.5">
                 <span className="text-sm font-semibold text-slate-900">{g.grupo}</span>
-                <span className="text-xs font-medium text-slate-600" aria-label={`Subtotal of ${g.grupo}`}>
+                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold tabular-nums text-brand-800 ring-1 ring-inset ring-brand-100" aria-label={`Subtotal of ${g.grupo}`}>
                   {fmtNota(sub.suma)} / {fmtNota(g.max)}
                 </span>
               </div>
-              {g.items.map((c) => campo(c, nombreEnGrupo(c, g.grupo), true))}
+              <div className={conNiveles ? 'grid gap-2 @5xl:grid-cols-2' : ''}>{g.items.map((c) => campo(c, nombreEnGrupo(c, g.grupo), true))}</div>
             </li>
           )
         })}
