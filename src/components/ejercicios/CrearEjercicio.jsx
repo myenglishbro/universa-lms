@@ -5,7 +5,20 @@ import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
 import EditorEjercicio from './EditorEjercicio'
 import EjercicioJugador from './EjercicioJugador'
-import { CICLOS, MODULOS, NIVELES, TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+import { CICLOS, MODULOS, NIVELES, TIPOS, UNIDADES, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+
+// Ciclo, módulo, unidad y uso: obligatorios, se eligen al empezar (con IA o a mano) y se pueden cambiar al final.
+function Clasificacion({ meta, setMeta }) {
+  const poner = (k) => (e) => setMeta((m) => ({ ...m, [k]: e.target.value }))
+  return (
+    <div className="grid gap-3 sm:grid-cols-4">
+      <Field label="Cycle" options={[{ value: '', label: 'Choose…' }, ...CICLOS.map((c) => ({ value: String(c), label: `Cycle ${c}` }))]} value={String(meta.ciclo ?? '')} onChange={poner('ciclo')} />
+      <Field label="Module" options={[{ value: '', label: 'Choose…' }, ...MODULOS.map((c) => ({ value: String(c), label: `Module ${c}` }))]} value={String(meta.modulo ?? '')} onChange={poner('modulo')} />
+      <Field label="Unit" options={[{ value: '', label: 'Choose…' }, ...UNIDADES.map((c) => ({ value: String(c), label: `Unit ${c}` }))]} value={String(meta.unidad ?? '')} onChange={poner('unidad')} />
+      <Field label="Use" options={[{ value: '', label: 'Choose…' }, ...USOS.map((u) => ({ value: u.id, label: u.label }))]} value={meta.uso ?? ''} onChange={poner('uso')} />
+    </div>
+  )
+}
 
 function Pasos({ paso }) {
   const pasos = ['Type', 'AI prompt', 'Edit and save']
@@ -29,19 +42,20 @@ function Pasos({ paso }) {
 export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose }) {
   const [paso, setPaso] = useState(ejercicio ? 2 : 0)
   const [tipo, setTipo] = useState(ejercicio?.tipo ?? '')
-  const [params, setParams] = useState({ tema: '', nivel: 'A2', cantidad: 5, extra: '', texto: '', transcripcion: '' })
+  const [params, setParams] = useState({ imagen: true, modo: 'adaptar', tema: '', nivel: 'A2', cantidad: '', extra: '', texto: '', transcripcion: '' })
   const [pegado, setPegado] = useState('')
   const [errorIA, setErrorIA] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [datos, setDatos] = useState(ejercicio?.datos ?? null)
-  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', nivel: ejercicio?.nivel ?? '', tema: ejercicio?.tema ?? '', ciclo: ejercicio?.ciclo ?? '', modulo: ejercicio?.modulo ?? '', uso: ejercicio?.uso ?? '' })
+  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', nivel: ejercicio?.nivel ?? '', tema: ejercicio?.tema ?? '', ciclo: ejercicio?.ciclo ?? '', modulo: ejercicio?.modulo ?? '', unidad: ejercicio?.unidad ?? '', uso: ejercicio?.uso ?? '' })
   const [vista, setVista] = useState('editar')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
   const t = tipoDe(tipo)
-  const prompt = useMemo(() => (tipo ? construirPrompt(tipo, { ...params, cantidad: Number(params.cantidad) || 5 }) : ''), [tipo, params])
+  const prompt = useMemo(() => (tipo ? construirPrompt(tipo, { ...params, ciclo: meta.ciclo, modulo: meta.modulo, unidad: meta.unidad, cantidad: Number(params.cantidad) || (params.imagen ? null : 5) }) : ''), [tipo, params, meta.ciclo, meta.modulo, meta.unidad])
   const setP = (k) => (e) => setParams((p) => ({ ...p, [k]: e.target.value }))
+  const faltaClas = faltaClasificacion({ ...meta, nivel: meta.nivel || params.nivel })
   const errorValidacion = datos ? validar(tipo, datos) : ''
   const previa = useMemo(() => {
     if (!datos || validar(tipo, datos)) return null
@@ -81,6 +95,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
   const guardar = async () => {
     setError('')
     if (!meta.titulo.trim()) return setError('Give the exercise a title')
+    if (faltaClasificacion(meta)) return setError(faltaClasificacion(meta))
     if (errorValidacion) return setError(errorValidacion)
     setGuardando(true)
     try {
@@ -129,35 +144,64 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
             </div>
           </div>
 
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-900">Where does it belong?</p>
+            <Clasificacion meta={meta} setMeta={setMeta} />
+          </div>
+
+          <div className="rounded-2xl border border-brand-100 bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={params.imagen} onChange={(e) => setParams((p) => ({ ...p, imagen: e.target.checked }))} className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">I will attach a screenshot from the book</span>
+                <span className="block text-xs text-slate-500">The prompt will tell the AI to use your image as the reference. Attach it in the AI chat together with the prompt.</span>
+              </span>
+            </label>
+            {params.imagen && (
+              <div role="group" aria-label="What should the AI do with the image" className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  ['adaptar', 'Adapt it', 'Same format and difficulty, new content (not a copy of the book).'],
+                  ['fiel', 'Copy it faithfully', 'Same items, options and order as in the screenshot.'],
+                ].map(([v, t, d]) => (
+                  <button key={v} type="button" aria-pressed={params.modo === v} onClick={() => setParams((p) => ({ ...p, modo: v }))} className={`rounded-xl border px-3 py-2 text-left transition ${params.modo === v ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20' : 'border-slate-200 hover:border-brand-300'}`}>
+                    <span className="block text-sm font-semibold text-slate-900">{t}</span>
+                    <span className="block text-xs text-slate-500">{d}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field className="sm:col-span-2" label="Topic" value={params.tema} onChange={setP('tema')} placeholder="E.g. Daily routines, travel, past simple…" />
+            <Field className="sm:col-span-2" label={params.imagen ? 'Topic (optional)' : 'Topic'} value={params.tema} onChange={setP('tema')} placeholder={params.imagen ? 'Leave empty to use the topic of the screenshot' : 'E.g. Daily routines, travel, past simple…'} />
             <Field label="Level" options={NIVELES} value={params.nivel} onChange={setP('nivel')} />
             {t.auto && tipo !== 'matching' && (
-              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' ? 'Statements' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} />
+              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' ? 'Statements' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />
             )}
-            {tipo === 'matching' && <Field label="Number of pairs" type="number" min="2" max="12" value={params.cantidad} onChange={setP('cantidad')} />}
+            {tipo === 'matching' && <Field label="Number of pairs" type="number" min="2" max="12" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />}
           </div>
-          {tipo === 'reading' && <Field as="textarea" rows={4} label="Your own text (optional)" value={params.texto} onChange={setP('texto')} hint="If you leave it empty, the AI will write an original text." />}
+          {tipo === 'reading' && <Field as="textarea" rows={4} label="Your own text (optional)" value={params.texto} onChange={setP('texto')} hint={params.imagen ? 'If you leave it empty, the AI will take the text from the screenshot.' : 'If you leave it empty, the AI will write an original text.'} />}
           {tipo === 'listening' && (
             <>
               <Field as="textarea" rows={4} label="Audio transcript" value={params.transcripcion} onChange={setP('transcripcion')} hint="The AI cannot hear the audio: paste here what is said so the questions match." />
               <Field label="Audio link on Google Drive" value={params.audio_url ?? ''} onChange={setP('audio_url')} placeholder="https://drive.google.com/file/d/…/view" hint="We will use it in the next step. You can also add it later." />
             </>
           )}
-          <Field label="Additional instructions (optional)" value={params.extra} onChange={setP('extra')} placeholder="E.g. Use restaurant vocabulary; make it a bit difficult." />
+          <Field label={params.imagen ? 'What should the AI change? (optional)' : 'Additional instructions (optional)'} value={params.extra} onChange={setP('extra')} placeholder={params.imagen ? 'E.g. Change the names and places; make it one level easier; only use the first 5 items.' : 'E.g. Use restaurant vocabulary; make it a bit difficult.'} />
 
           <div className="rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="flex items-center gap-2 text-sm font-semibold text-brand-800">
                 <Icon name="sparkle" className="h-4 w-4" /> Your prompt is ready
               </p>
-              <Button type="button" onClick={copiar}>
+              <Button type="button" onClick={copiar} disabled={!!faltaClas}>
                 <Icon name={copiado ? 'check' : 'copy'} className="h-4 w-4" /> {copiado ? 'Copied!' : 'Copy prompt'}
               </Button>
             </div>
+            {faltaClas && <p className="mb-2 text-sm font-medium text-peach-700">{faltaClas}: the prompt uses them to fit the exercise to that point of the course.</p>}
             <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-xl bg-white p-3 text-xs leading-5 text-slate-700">{prompt}</pre>
             <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
-              <li>Copia el prompt y pégalo en tu IA favorita (ChatGPT, Claude, Gemini…).</li>
+              <li>Copy the prompt and paste it in your favorite AI (ChatGPT, Claude, Gemini…).{params.imagen && ' Attach your screenshot of the book in the same message.'}</li>
               <li>Copy the complete answer it gives you.</li>
               <li>Paste it below and review the result before saving it.</li>
             </ol>
@@ -173,7 +217,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
             <Button type="button" variant="ghost" onClick={manual}>
               I would rather write it myself
             </Button>
-            <Button type="button" onClick={leer} disabled={!pegado.trim()}>
+            <Button type="button" onClick={leer} disabled={!pegado.trim() || !!faltaClas}>
               Use this answer
             </Button>
           </div>
@@ -184,13 +228,9 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <Field className="sm:col-span-2" label="Exercise title" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`E.g. ${t.label}: daily routines`} autoFocus />
-            <Field label="Level" options={[{ value: '', label: 'No level' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
+            <Field label="Level" options={[{ value: '', label: 'Choose…' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Cycle" options={[{ value: '', label: 'No cycle' }, ...CICLOS.map((c) => ({ value: String(c), label: `Cycle ${c}` }))]} value={String(meta.ciclo)} onChange={(e) => setMeta((m) => ({ ...m, ciclo: e.target.value }))} />
-            <Field label="Module" options={[{ value: '', label: 'No module' }, ...MODULOS.map((c) => ({ value: String(c), label: `Module ${c}` }))]} value={String(meta.modulo)} onChange={(e) => setMeta((m) => ({ ...m, modulo: e.target.value }))} />
-            <Field label="Use" options={[{ value: '', label: 'Not set' }, ...USOS.map((u) => ({ value: u.id, label: u.label }))]} value={meta.uso} onChange={(e) => setMeta((m) => ({ ...m, uso: e.target.value }))} />
-          </div>
+          <Clasificacion meta={meta} setMeta={setMeta} />
           <Field label="Topic (optional)" value={meta.tema} onChange={(e) => setMeta((m) => ({ ...m, tema: e.target.value }))} placeholder="To find it more easily in the bank" />
 
           <div role="group" aria-label="Modo" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">

@@ -30,13 +30,19 @@ export const NIVELES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 // Clasificación del banco: ciclo (1 al 12), módulo dentro del ciclo (1 o 2) y uso. Los tres son opcionales.
 export const CICLOS = Array.from({ length: 12 }, (_, i) => i + 1)
 export const MODULOS = [1, 2]
+export const UNIDADES = Array.from({ length: 12 }, (_, i) => i + 1)
 export const USOS = [
   { id: 'formative', label: 'Formative' },
   { id: 'assessment', label: 'Assessment' },
 ]
 export const usoLabel = (id) => USOS.find((u) => u.id === id)?.label ?? ''
-// «Cycle 3 · Module 1 · Formative» (solo lo que esté definido).
-export const clasificacionTexto = (e) => [e.ciclo ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
+// «Cycle 3 · Module 1 · Unit 5 · Formative» (solo lo que esté definido).
+export const clasificacionTexto = (e) => [e.ciclo ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', e.unidad ? `Unit ${e.unidad}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
+// Para guardar: ciclo, módulo, unidad, uso y nivel son obligatorios. Devuelve el mensaje de lo que falta ('' si está completo).
+export function faltaClasificacion(m) {
+  const faltan = [['ciclo', 'cycle'], ['modulo', 'module'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)'], ['nivel', 'level']].filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
+  return faltan.length ? `Choose the ${faltan.join(', ')} before saving` : ''
+}
 
 export const TONOS = {
   brand: 'bg-brand-100 text-brand-700',
@@ -301,30 +307,49 @@ const ESQUEMAS = {
 }`,
 }
 
+// «exactly 5» o, si no se indicó cantidad (captura de referencia), «as many as the screenshot shows».
+const cuantas = (p, cosa) => (p.cantidad ? `exactly ${p.cantidad} ${cosa}` : `the same number of ${cosa} as the screenshot shows`)
+
 const REGLAS = {
-  multiple_choice: (p) => `- Create exactly ${p.cantidad} multiple-choice questions with 4 options each and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0 (0 = first option).\n- Vary the position of the correct answer and avoid "all of the above".`,
+  multiple_choice: (p) => `- Create ${cuantas(p, 'multiple-choice questions')} with 4 options each and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0 (0 = first option).\n- Vary the position of the correct answer and avoid "all of the above".`,
   listening: (p) =>
-    `- The student will listen to an audio (you cannot hear it). Base the questions ONLY on this transcript:\n"""\n${p.transcripcion || '[PASTE THE AUDIO TRANSCRIPT HERE]'}\n"""\n- Create exactly ${p.cantidad} multiple-choice questions with 4 options and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0.`,
-  fill_gap: (p) => `- Create exactly ${p.cantidad} sentences. In each one, mark the word or phrase the student must fill in between double square brackets: [[answer]].\n- If more than one answer is valid, separate them with | inside the brackets: [[are|'re]].\n- Each sentence can have 1 or 2 gaps. The answer must be unambiguous from the context.`,
-  matching: (p) => `- Create exactly ${p.cantidad} pairs. Each "izq" item matches ONE "der" item (for example word ↔ definition, or question ↔ answer).\n- All "der" items must be different from each other and unambiguous.`,
-  order_sentences: (p) => `- Create exactly ${p.cantidad} complete, correct sentences of 6 to 12 words. The student will receive the words shuffled and must put them in order.\n- Each sentence must have only one natural word order.`,
+    `- The student will listen to an audio (you cannot hear it). Base the answers ONLY on this transcript${p.imagen && !p.transcripcion ? ' (if the screenshot shows the audioscript or the answer key, use that)' : ''}:\n"""\n${p.transcripcion || (p.imagen ? '[NO TRANSCRIPT PROVIDED: use the audioscript or answer key in the screenshot if there is one]' : '[PASTE THE AUDIO TRANSCRIPT HERE]')}\n"""\n- Create ${cuantas(p, 'multiple-choice questions')} with 4 options and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0.`,
+  fill_gap: (p) => `- Create ${cuantas(p, 'sentences')}. In each one, mark the word or phrase the student must fill in between double square brackets: [[answer]].\n- If more than one answer is valid, separate them with | inside the brackets: [[are|'re]].\n- Each sentence can have 1 or 2 gaps. The answer must be unambiguous from the context.`,
+  matching: (p) => `- Create ${cuantas(p, 'pairs')}. Each "izq" item matches ONE "der" item (for example word ↔ definition, or question ↔ answer).\n- All "der" items must be different from each other and unambiguous.`,
+  order_sentences: (p) => `- Create ${cuantas(p, 'complete, correct sentences')} (6 to 12 words each unless the screenshot shows otherwise). The student will receive the words shuffled and must put them in order.\n- Each sentence must have only one natural word order.`,
   reading: (p) =>
-    `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : 'Write an original reading text of 120 to 200 words.'}\n- Create exactly ${p.cantidad} statements about the text to mark as true or false. "verdadero" is true or false.\n- Mix true and false statements; none may depend on outside knowledge.`,
+    `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : p.imagen ? 'Use the reading text that appears in the screenshot.' : 'Write an original reading text of 120 to 200 words.'}\n- Create ${cuantas(p, 'statements')} about the text to mark as true or false. "verdadero" is true or false.\n- Mix true and false statements; none may depend on outside knowledge.`,
   writing: () => `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" appropriate for the level.`,
   speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.`,
 }
 
+// «Course position» para que la IA ajuste la dificultad al punto del curso (ciclo, módulo, unidad).
+const contexto = (p) => {
+  const x = [p.ciclo ? `Cycle ${p.ciclo}` : '', p.modulo ? `Module ${p.modulo}` : '', p.unidad ? `Unit ${p.unidad}` : ''].filter(Boolean)
+  return x.length ? `- Position in the course: ${x.join(', ')} (of a 12-cycle English program). Keep the vocabulary and grammar appropriate for that point.` : ''
+}
+
+// Con `p.imagen` el prompt se escribe para adjuntar una captura del libro: modo 'adaptar' (ejercicio nuevo con el mismo formato) o 'fiel' (copia).
 export function construirPrompt(tipo, p) {
   const t = tipoDe(tipo)
-  const lineas = [
-    'You are an expert teacher of English as a foreign language and you design exercises for Spanish-speaking students.',
-    '',
-    `Create an exercise of type "${t.label}" with these characteristics:`,
-    `- Student level (CEFR): ${p.nivel || 'A2'}`,
-    `- Topic: ${p.tema?.trim() || 'your choice, appropriate for the level'}`,
-    '- All the exercise content (instructions, texts, questions, options) must be in English.',
-    REGLAS[tipo](p),
-  ]
+  const lineas = ['You are an expert teacher of English as a foreign language and you design exercises for Spanish-speaking students.', '']
+  if (p.imagen) {
+    lineas.push(
+      `I am attaching a screenshot of an exercise from an English textbook. Use it as your reference to create an exercise of type "${t.label}".`,
+      p.modo === 'fiel'
+        ? '- Recreate the exercise as faithfully as possible: same instructions, same items and options, same order. Transcribe the text exactly.'
+        : '- Use the screenshot as a model: keep the same format, difficulty and grammar/vocabulary focus, but write NEW content (new sentences, texts and options). Do not copy the original wording.',
+      '- If the screenshot shows the answers (answer key, circled or filled-in answers), use them. If not, solve the exercise carefully yourself.',
+      '- Ignore page numbers, logos, decorations and pictures that cannot be turned into text. If part of the screenshot is unreadable, do not invent it: leave it out.',
+      `- Student level (CEFR): ${p.nivel || 'A2'}`,
+      `- Topic: ${p.tema?.trim() || 'the one in the screenshot'}`,
+    )
+    if (contexto(p)) lineas.push(contexto(p))
+  } else {
+    lineas.push(`Create an exercise of type "${t.label}" with these characteristics:`, `- Student level (CEFR): ${p.nivel || 'A2'}`, `- Topic: ${p.tema?.trim() || 'your choice, appropriate for the level'}`)
+    if (contexto(p)) lineas.push(contexto(p))
+  }
+  lineas.push('- All the exercise content (instructions, texts, questions, options) must be in English.', REGLAS[tipo](p))
   if (p.extra?.trim()) lineas.push(`- Additional instructions: ${p.extra.trim()}`)
   lineas.push(
     '',

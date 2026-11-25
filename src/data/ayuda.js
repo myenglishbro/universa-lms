@@ -252,10 +252,10 @@ export const GUIAS_DOCENTE = [
     tema: 'ejercicios',
     icono: 'book',
     titulo: 'Use the exercise bank',
-    resumen: 'Administration exercises, or create your own.',
+    resumen: 'Browse the exercises published by administration.',
     pasos: [
       'Open **Exercise bank** in the left menu.',
-      'Pick one of the exercises from administration, or create your own with the help of the AI.',
+      'Browse the exercises published by administration. Only administration creates or removes them.',
       'Check the preview before using it.',
     ],
   },

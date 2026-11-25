@@ -8,15 +8,46 @@ import Modal from '../ui/Modal'
 import CrearEjercicio from './CrearEjercicio'
 import EjercicioJugador from './EjercicioJugador'
 import useCarga from '../../hooks/useCarga'
-import { CICLOS, MODULOS, TIPOS, TONOS, USOS, cantidadItems, clasificacionTexto, compilar, tipoDe } from '../../lib/ejercicios'
+import { CICLOS, MODULOS, TIPOS, TONOS, UNIDADES, USOS, cantidadItems, clasificacionTexto, compilar, tipoDe } from '../../lib/ejercicios'
 import { supabase } from '../../lib/supabase'
 import * as servicioReal from '../../services/ejercicios'
+
+// Filtro compacto (el inputClass es w-full y no se deja encoger).
+const selCls = 'h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200'
 
 const sinTildes = (s) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
 function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQuitar, onElegir }) {
   const t = tipoDe(e.tipo)
   const n = cantidadItems(e.tipo, e.datos)
+  if (onElegir) {
+    // Selector para asignar: toda la tarjeta es el botón. Solo lo necesario para decidir.
+    return (
+      <div className="group relative flex items-stretch rounded-2xl border border-slate-200 bg-white transition hover:border-brand-400 hover:shadow-md">
+        <button type="button" onClick={() => onElegir(e)} className="flex min-w-0 flex-1 items-start gap-3 rounded-2xl p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${TONOS[t.tono]}`}>
+            <Icon name={t.icono} className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="line-clamp-2 block pr-8 text-[15px] font-semibold leading-snug text-slate-900 group-hover:text-brand-700">{e.titulo}</span>
+            <span className="mt-0.5 block text-xs text-slate-500">
+              {t.label}
+              {n != null && ` · ${n} ${n === 1 ? 'item' : 'items'}`}
+              {!t.auto && ' · you grade it'}
+            </span>
+            <span className="mt-2 flex flex-wrap gap-1.5">
+              {clasificacionTexto(e) && <Badge color="brand">{clasificacionTexto(e)}</Badge>}
+              {e.nivel && <Badge color="slate">{e.nivel}</Badge>}
+            </span>
+          </span>
+          <Icon name="plus" className="mt-1 h-5 w-5 shrink-0 text-slate-300 transition group-hover:text-brand-600" />
+        </button>
+        <button type="button" onClick={() => onVer(e)} aria-label={`Preview ${e.titulo}`} title="Preview" className="absolute right-12 top-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-brand-50 hover:text-brand-700">
+          <Icon name="eye" className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
   return (
     <Card className="flex flex-col p-4 transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-3">
@@ -68,7 +99,7 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
   )
 }
 
-// Banco de ejercicios. Administración: crea y edita el banco. Docente: ve el banco, crea los suyos y puede usar uno como base.
+// Banco de ejercicios. Solo administración crea, edita y quita ejercicios. El docente los ve y los asigna a sus salones.
 // Con `onElegir` funciona como selector (para asignar a un salón).
 export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, onElegir = null, servicio = servicioReal }) {
   const [userIdAuth, setUserIdAuth] = useState(null)
@@ -81,7 +112,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
   const [busqueda, setBusqueda] = useState('')
   const [tipo, setTipo] = useState('')
   const [alcance, setAlcance] = useState('todos') // todos | banco | mios
-  const [clasif, setClasif] = useState({ ciclo: '', modulo: '', uso: '' }) // '' = todos; ciclo 'sin' = sin clasificar
+  const [clasif, setClasif] = useState({ ciclo: '', modulo: '', unidad: '', uso: '' }) // '' = todos; ciclo 'sin' = sin clasificar
   const [form, setForm] = useState(null) // { ejercicio }
   const [ver, setVer] = useState(null)
   const [falla, setFalla] = useState('')
@@ -95,6 +126,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           (!tipo || e.tipo === tipo) &&
           (!clasif.ciclo || (clasif.ciclo === 'sin' ? !e.ciclo : String(e.ciclo) === clasif.ciclo)) &&
           (!clasif.modulo || String(e.modulo) === clasif.modulo) &&
+          (!clasif.unidad || String(e.unidad) === clasif.unidad) &&
           (!clasif.uso || e.uso === clasif.uso) &&
           (alcance === 'todos' || (alcance === 'banco' ? e.publico : !e.publico)) &&
           (!texto || sinTildes(`${e.titulo} ${e.tema ?? ''} ${e.nivel ?? ''} ${e.autor_nombre}`).includes(texto)),
@@ -127,20 +159,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by title, topic or level" className={`${inputClass} pl-9`} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!esAdmin && !onElegir && (
-            <div role="group" aria-label="View" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
-              {[
-                ['todos', 'All'],
-                ['banco', 'Bank'],
-                ['mios', 'Míos'],
-              ].map(([v, t]) => (
-                <button key={v} type="button" aria-pressed={alcance === v} onClick={() => setAlcance(v)} className={`rounded-lg px-3 py-1.5 text-sm ${alcance === v ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600'}`}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          )}
-          {!onElegir && (
+          {!onElegir && esAdmin && (
             <Button type="button" onClick={() => setForm({ ejercicio: null })}>
               <Icon name="plus" className="h-4 w-4" /> New exercise
             </Button>
@@ -149,7 +168,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by cycle, module and use">
-        <select value={clasif.ciclo} onChange={(e) => setClasif({ ...clasif, ciclo: e.target.value })} className={`${inputClass} w-auto`} aria-label="Cycle">
+        <select value={clasif.ciclo} onChange={(e) => setClasif({ ...clasif, ciclo: e.target.value })} className={selCls} aria-label="Cycle">
           <option value="">All cycles</option>
           {CICLOS.map((c) => (
             <option key={c} value={c}>
@@ -158,7 +177,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           ))}
           <option value="sin">Not classified</option>
         </select>
-        <select value={clasif.modulo} onChange={(e) => setClasif({ ...clasif, modulo: e.target.value })} className={`${inputClass} w-auto`} aria-label="Module">
+        <select value={clasif.modulo} onChange={(e) => setClasif({ ...clasif, modulo: e.target.value })} className={selCls} aria-label="Module">
           <option value="">All modules</option>
           {MODULOS.map((m) => (
             <option key={m} value={m}>
@@ -166,16 +185,24 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
             </option>
           ))}
         </select>
-        <select value={clasif.uso} onChange={(e) => setClasif({ ...clasif, uso: e.target.value })} className={`${inputClass} w-auto`} aria-label="Use">
-          <option value="">Formative and Assessment</option>
+        <select value={clasif.unidad} onChange={(e) => setClasif({ ...clasif, unidad: e.target.value })} className={selCls} aria-label="Unit">
+          <option value="">All units</option>
+          {UNIDADES.map((u) => (
+            <option key={u} value={u}>
+              Unit {u}
+            </option>
+          ))}
+        </select>
+        <select value={clasif.uso} onChange={(e) => setClasif({ ...clasif, uso: e.target.value })} className={selCls} aria-label="Use">
+          <option value="">All uses</option>
           {USOS.map((u) => (
             <option key={u.id} value={u.id}>
               {u.label}
             </option>
           ))}
         </select>
-        {(clasif.ciclo || clasif.modulo || clasif.uso) && (
-          <button type="button" onClick={() => setClasif({ ciclo: '', modulo: '', uso: '' })} className="text-sm font-medium text-brand-700 hover:underline">
+        {(clasif.ciclo || clasif.modulo || clasif.unidad || clasif.uso) && (
+          <button type="button" onClick={() => setClasif({ ciclo: '', modulo: '', unidad: '', uso: '' })} className="text-sm font-medium text-brand-700 hover:underline">
             Clear
           </button>
         )}
@@ -185,7 +212,7 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
         <button type="button" aria-pressed={!tipo} onClick={() => setTipo('')} className={`rounded-full border px-3.5 py-1.5 text-sm transition ${!tipo ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'}`}>
           All <span className="opacity-70">{lista.length}</span>
         </button>
-        {TIPOS.map((t) => (
+        {TIPOS.filter((t) => !onElegir || conteo(t.id) > 0 || tipo === t.id).map((t) => (
           <button key={t.id} type="button" aria-pressed={tipo === t.id} onClick={() => setTipo(tipo === t.id ? '' : t.id)} className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition ${tipo === t.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'}`}>
             <Icon name={t.icono} className="h-4 w-4" /> {t.label} <span className="opacity-70">{conteo(t.id)}</span>
           </button>
@@ -209,8 +236,8 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
             <Icon name="sparkle" className="h-7 w-7" />
           </span>
           <p className="mt-4 text-base font-semibold text-slate-900">{esAdmin ? 'The bank is empty' : 'There are no exercises yet'}</p>
-          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Create the first exercise: all teachers will be able to use it.' : 'Create your first exercise or wait for administration to publish exercises in the bank.'}</p>
-          {!onElegir && (
+          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Create the first exercise: all teachers will be able to use it.' : 'Administration has not published exercises in the bank yet.'}</p>
+          {!onElegir && esAdmin && (
             <Button className="mt-5" onClick={() => setForm({ ejercicio: null })}>
               <Icon name="plus" className="h-4 w-4" /> Create exercise
             </Button>
@@ -219,13 +246,13 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       ) : visibles.length === 0 ? (
         <p className="py-10 text-center text-sm text-slate-500">No exercise matches your search.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={`grid gap-3 sm:grid-cols-2 ${onElegir ? '' : 'gap-4 xl:grid-cols-3'}`}>
           {visibles.map((e) => (
             <TarjetaEjercicio
               key={e.id}
               e={e}
               esMio={esMio(e)}
-              puedeEditar
+              puedeEditar={esAdmin}
               onVer={setVer}
               onEditar={(x) => setForm({ ejercicio: x })}
               onBase={(x) => setForm({ ejercicio: { ...x, id: null } })}

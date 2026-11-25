@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
+import useSinCopiar from '../../hooks/useSinCopiar'
 import { palabras } from '../../lib/ejercicios'
 
 const clave = (id) => `universa:examen:${id}`
@@ -22,6 +23,7 @@ export default function ExamenWriting({ ejercicio, entrega, servicio, onEnviado 
     }
   })
   const [tarea, setTarea] = useState(0)
+  const sinCopiar = useSinCopiar()
   const [resta, setResta] = useState(null)
   const [salidas, setSalidas] = useState(examen?.salidas ?? 0)
   const [aviso, setAviso] = useState(false)
@@ -158,6 +160,9 @@ export default function ExamenWriting({ ejercicio, entrega, servicio, onEnviado 
             <li>
               <strong>Do not leave this page.</strong> Switching tabs or windows is recorded and your teacher will see it.
             </li>
+            <li>
+              <strong>Copy and paste are disabled</strong> in this exam: you must type your answers yourself.
+            </li>
             <li>When the time ends, what you wrote is submitted automatically.</li>
           </ul>
         </div>
@@ -212,15 +217,27 @@ export default function ExamenWriting({ ejercicio, entrega, servicio, onEnviado 
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Task {tarea + 1} · {peso} points{t.genero ? ` · ${t.genero}` : ''}
           </p>
-          <p className="mb-3 whitespace-pre-line rounded-2xl border border-brand-100 bg-white p-5 text-base text-slate-900 shadow-sm">{t.consigna}</p>
+          <p {...sinCopiar.props} className="mb-3 select-none whitespace-pre-line rounded-2xl border border-brand-100 bg-white p-5 text-base text-slate-900 shadow-sm">
+            {t.consigna}
+          </p>
           <textarea
             value={textos[tarea]}
             onChange={(e) => setTextos((x) => x.map((v, i) => (i === tarea ? e.target.value : v)))}
             rows={14}
+            {...sinCopiar.props}
+            autoComplete="off"
             aria-label={`Your answer for Task ${tarea + 1}`}
             placeholder="Write your answer here…"
             className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-[15px] leading-7 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           />
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+            <span aria-hidden="true">⌨</span> Copy and paste are disabled: type your answer.
+          </p>
+          {sinCopiar.aviso && (
+            <p role="alert" className="mt-1 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+              Copy and paste are not allowed in this exam. Please type your answer.
+            </p>
+          )}
           <p className={`mt-1 text-right text-xs ${t.min_palabras && palabras(textos[tarea]) < t.min_palabras ? 'text-slate-500' : 'text-emerald-700'}`}>
             {palabras(textos[tarea])} words{t.min_palabras ? ` · suggested minimum ${t.min_palabras}` : ''}
           </p>
