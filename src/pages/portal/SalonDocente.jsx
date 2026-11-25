@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import GestionContenido from '../../components/portal/GestionContenido'
+import EnlaceRecursos from '../../components/portal/EnlaceRecursos'
 import Card from '../../components/ui/Card'
 import Icon from '../../components/ui/Icon'
 import EvaluacionesPanel from '../../components/evaluaciones/EvaluacionesPanel'
@@ -29,6 +30,9 @@ export default function SalonDocente({ salon, onVolver, servicio = servicioReal,
         <p className="mt-2 text-sm text-white/90">
           {horariosTexto(salon.horarios)} · {salon.estudiantes} of {salon.capacidad} students
         </p>
+      </div>
+      <div className="mb-6 empty:hidden">
+        <EnlaceRecursos salonId={salon.salon_id} tarjeta />
       </div>
 
       <div className="mb-4 flex gap-1 border-b border-slate-200" role="tablist">

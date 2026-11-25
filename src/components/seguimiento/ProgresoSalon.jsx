@@ -1,5 +1,15 @@
 import { NOTA_PROGRESO, porcentajeAvance } from '../../lib/asistencia'
 import { minutosTexto } from '../../lib/paquetes'
+import { Anillo } from '../ui/Anillo'
+
+function Cifra({ valor, etiqueta, alerta = false }) {
+  return (
+    <div className={`min-w-[5.5rem] rounded-xl px-3 py-2 text-center ${alerta ? 'bg-peach-50 text-peach-700' : 'bg-slate-50 text-slate-900'}`}>
+      <dd className="text-lg font-bold leading-none">{valor}</dd>
+      <dt className="mt-1 text-[11px] text-slate-500">{etiqueta}</dt>
+    </div>
+  )
+}
 
 function Barra({ valor, total, etiqueta }) {
   const pct = total ? Math.min(100, Math.round((valor / total) * 100)) : 0
@@ -37,24 +47,32 @@ export default function ProgresoSalon({ progreso }) {
   }
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm font-medium text-slate-900">
-          {total ? `${realizadas} of ${total} sessions held` : `${realizadas} sessions held`}
-          {pct !== null && <span className="ml-2 text-brand-700">{pct}%</span>}
-        </p>
-        <p className="text-xs text-slate-500">
-          {programadas} {programadas === 1 ? 'programada' : 'programadas'}
-          {porRegistrar > 0 && ` · ${porRegistrar} to record`}
-        </p>
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div className="flex items-center gap-4">
+          <Anillo valor={pct} size={76} grosor={8} etiqueta="Classroom progress" />
+          <div>
+            <p className="text-2xl font-bold leading-none text-slate-900">
+              {realizadas}
+              {total ? <span className="text-base font-medium text-slate-400"> / {total}</span> : null}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{total ? 'sessions held' : 'sessions held (no total defined)'}</p>
+          </div>
+        </div>
+        <dl className="flex flex-wrap gap-2">
+          <Cifra valor={programadas} etiqueta="Scheduled" />
+          <Cifra valor={porRegistrar} etiqueta="To record" alerta={porRegistrar > 0} />
+          {total ? <Cifra valor={Math.max(total - realizadas, 0)} etiqueta="Remaining" /> : null}
+        </dl>
       </div>
-      {total ? <div className="mt-2"><Barra valor={realizadas} total={total} etiqueta="Classroom progress" /></div> : <p className="mt-1 text-xs text-slate-400">This classroom has no total number of sessions defined yet.</p>}
       {ciclos.length > 0 && (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-4 grid gap-x-6 gap-y-2 border-t border-slate-100 pt-4 sm:grid-cols-2">
           {ciclos.map((c) => (
             <li key={c.ciclo}>
-              <p className="flex justify-between text-xs text-slate-600">
-                <span>Cycle {c.ciclo}</span>
-                <span>{c.realizadas} de {c.sesiones} sesiones</span>
+              <p className="mb-1 flex justify-between text-xs text-slate-600">
+                <span className="font-medium">Cycle {c.ciclo}</span>
+                <span>
+                  {c.realizadas} of {c.sesiones} sessions
+                </span>
               </p>
               <Barra valor={c.realizadas} total={c.sesiones} etiqueta={`Progress of cycle ${c.ciclo}`} />
             </li>

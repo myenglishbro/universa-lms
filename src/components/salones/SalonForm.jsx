@@ -15,6 +15,7 @@ import { choquesHorarioSalon } from '../../services/salones'
 import { aConjunto, cubreHorarios } from '../../lib/disponibilidad'
 import { estados, salonVacio } from '../../lib/salones'
 import { resumenSalon } from '../../lib/resumenSalon'
+import { proveedorDe } from '../../lib/recursos'
 
 function Bloque({ numero, titulo, subtitulo, children }) {
   return (
@@ -34,7 +35,7 @@ function Bloque({ numero, titulo, subtitulo, children }) {
 const grid = 'grid gap-4 sm:grid-cols-2'
 
 // Crea o edita un salón. `salon` null = crear. El código lo genera Supabase al crear y es de solo lectura al editar.
-// Bloques: 1 Datos básicos · 2 Configuración académica · 3 Programación de clases · 4 Información adicional · 5 Resumen.
+// Bloques: 1 Datos básicos · 2 Configuración académica · 3 Programación de clases · 4 Recursos · 5 Información adicional · 6 Resumen.
 export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, onCrearDocente, onClose }) {
   const [values, setValues] = useState({ ...salonVacio, ...salon })
   const [usaPlan, setUsaPlan] = useState(Boolean(salon?.planId))
@@ -152,6 +153,7 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
     if (usaPlan && !values.planId) e.plan = 'Complete the academic plan or turn it off.'
     if (usaFrecuencia && !values.frecuenciaId) e.frecuencia = 'Choose a frequency or turn it off.'
     if (avisos.some((a) => a.severidad === 'error')) e.horarios = 'Fix the schedule so it matches the frequency or plan'
+    if (values.enlaceRecursos.trim() && proveedorDe(values.enlaceRecursos) === null) e.enlaceRecursos = 'The link must start with https:// and cannot contain spaces'
     if (tieneCalendario && values.totalSesiones === '') e.totalSesiones = 'Cannot be removed: the classroom already has sessions'
     else if (values.totalSesiones !== '' && salon?.progreso && Number(values.totalSesiones) < salon.progreso.realizadas)
       e.totalSesiones = `Cannot be less than the sessions already held (${salon.progreso.realizadas})`
@@ -171,6 +173,8 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
         ...values,
         capacidad: Number(values.capacidad),
         totalSesiones: values.totalSesiones === '' ? '' : Number(values.totalSesiones),
+        enlaceRecursos: values.enlaceRecursos.trim(),
+        enlaceRecursosOriginal: (salon?.enlaceRecursos ?? '').trim(),
       })
     } catch (err) {
       setErrorGeneral(err.message)
@@ -295,7 +299,31 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
                 </div>
               </Bloque>
 
-              <Bloque numero="4" titulo="Additional information">
+              <Bloque numero="4" titulo="Course resources" subtitulo="Optional. A Google Drive folder or document with the course materials.">
+                <Field
+                  label="Resources link"
+                  name="enlaceRecursos"
+                  type="url"
+                  value={values.enlaceRecursos}
+                  onChange={cambiar}
+                  error={errors.enlaceRecursos}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                />
+                {values.enlaceRecursos.trim() && proveedorDe(values.enlaceRecursos) ? (
+                  <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-emerald-700">
+                    ✓ {proveedorDe(values.enlaceRecursos) === 'drive' ? 'Google Drive link recognized.' : 'Link recognized.'}
+                    <a href={values.enlaceRecursos.trim()} target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-emerald-900">
+                      Open to check it
+                    </a>
+                  </p>
+                ) : (
+                  <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    In Drive: right-click the folder → <em>Share</em> → “Anyone with the link” → <em>Copy link</em>. Teachers and students of this classroom will see a “Course materials” button.
+                  </p>
+                )}
+              </Bloque>
+
+              <Bloque numero="5" titulo="Additional information">
                 <div className={grid}>
                   <Field label="Maximum capacity" name="capacidad" type="number" min="1" step="1" value={values.capacidad} onChange={cambiar} required />
                   <Field label="Notes" name="observaciones" as="textarea" rows="2" value={values.observaciones} onChange={cambiar} className="sm:col-span-2" />
@@ -306,7 +334,7 @@ export default function SalonForm({ salon, niveles, docentes, catalogo, onSave, 
             <div>
               <div className="lg:sticky lg:top-4">
                 <h3 className="mb-3 flex items-center gap-3 text-base font-semibold leading-6 text-slate-900">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">5</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">6</span>
                   Summary
                 </h3>
                 <ResumenSalon datos={resumen} />

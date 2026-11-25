@@ -3,11 +3,10 @@ import Ayuda from '../components/ui/Ayuda'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
-import Field from '../components/ui/Field'
+import Field, { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import Modal from '../components/ui/Modal'
 import PageHeader from '../components/ui/PageHeader'
-import Tabs from '../components/ui/Tabs'
 import useCarga from '../hooks/useCarga'
 import { validarEnlace } from '../lib/recursos'
 import * as servicioReal from '../services/zonas'
@@ -81,6 +80,20 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
   )
 }
 
+// Botón de icono para las acciones de cada documento (con texto alternativo y sugerencia al pasar el mouse).
+function Accion({ titulo, onClick, href, peligro = false, children }) {
+  const clase = `inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition ${peligro ? 'hover:bg-rose-50 hover:text-rose-600' : 'hover:bg-brand-50 hover:text-brand-700'}`
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" title={titulo} aria-label={titulo} className={clase}>
+      {children}
+    </a>
+  ) : (
+    <button type="button" title={titulo} aria-label={titulo} onClick={onClick} className={clase}>
+      {children}
+    </button>
+  )
+}
+
 // Administración publica aquí los documentos de la Teacher Zone (docentes) y de la Student Zone (estudiantes).
 export default function ZonasAdmin({ servicio = servicioReal }) {
   const [zona, setZona] = useState('docentes')
@@ -89,9 +102,17 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
   const [form, setForm] = useState(null) // { doc } (null = nuevo)
   const [borrando, setBorrando] = useState(null)
   const [fallo, setFallo] = useState('')
+  const [busqueda, setBusqueda] = useState('')
+  const [categoria, setCategoria] = useState('')
   const info = ZONAS.find((z) => z.id === zona)
   const categorias = [...new Set(datos.map((d) => d.categoria))]
+  const ocultos = datos.filter((d) => d.oculto).length
 
+  const cambiarZona = (id) => {
+    setZona(id)
+    setBusqueda('')
+    setCategoria('')
+  }
   const guardar = async (v) => {
     await servicio.guardarDocumento(form.doc?.id ?? null, v)
     await recargar()
@@ -107,8 +128,10 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
     }
   }
 
+  const t = busqueda.trim().toLowerCase()
+  const visibles = datos.filter((d) => (!categoria || d.categoria === categoria) && (!t || `${d.titulo} ${d.descripcion ?? ''} ${d.categoria}`.toLowerCase().includes(t)))
   const grupos = new Map()
-  for (const d of datos) grupos.set(d.categoria, [...(grupos.get(d.categoria) ?? []), d])
+  for (const d of visibles) grupos.set(d.categoria, [...(grupos.get(d.categoria) ?? []), d])
 
   return (
     <>
@@ -131,73 +154,142 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
         </p>
       </Ayuda>
 
-      <Tabs tabs={ZONAS.map((z) => ({ id: z.id, label: z.label, conteo: z.id === zona ? datos.length : null }))} activa={zona} onCambiar={setZona} etiqueta="Zona" />
+      {/* Selector de zona: dos tarjetas grandes en lugar de pestañas, con a quién va dirigida cada una. */}
+      <div role="tablist" aria-label="Zone" className="mb-5 grid gap-3 sm:grid-cols-2">
+        {ZONAS.map((z) => {
+          const on = z.id === zona
+          return (
+            <button
+              key={z.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => cambiarZona(z.id)}
+              className={`flex items-center gap-4 rounded-2xl border p-4 text-left transition ${
+                on ? 'border-brand-500 bg-white shadow-md ring-2 ring-brand-500/20' : 'border-brand-100 bg-white/60 hover:border-brand-300 hover:bg-white'
+              }`}
+            >
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${on ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-600'}`}>
+                <Icon name={z.id === 'docentes' ? 'teacher' : 'users'} className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-slate-900">{z.label}</span>
+                <span className="block text-xs text-slate-500">Visible only to {z.para}</span>
+              </span>
+              {on && !cargando && (
+                <span className="text-right leading-tight">
+                  <span className="block text-2xl font-bold text-brand-700">{datos.length}</span>
+                  <span className="block text-xs text-slate-500">{datos.length === 1 ? 'document' : 'documents'}</span>
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
 
-      <div className="pt-6">
-        {fallo && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
-        {cargando ? (
-          <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
-        ) : error ? (
-          <p className="py-10 text-center text-sm text-red-600">Could not load the documents: {error}</p>
-        ) : datos.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-12 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
-              <Icon name="doc" className="h-6 w-6" />
-            </span>
-            <p className="mt-3 font-medium text-slate-900">There are no documents for {info.para} yet</p>
-            <p className="mt-1 text-sm text-slate-500">Add the first one with “Add document”.</p>
+      {fallo && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
+      {cargando ? (
+        <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
+      ) : error ? (
+        <p className="py-10 text-center text-sm text-red-600">Could not load the documents: {error}</p>
+      ) : datos.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-14 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+            <Icon name="doc" className="h-7 w-7" />
+          </span>
+          <p className="mt-4 font-semibold text-slate-900">There are no documents for {info.para} yet</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">Publish regulations, guides or forms and they will show up in their portal.</p>
+          <Button className="mt-5" onClick={() => setForm({ doc: null })}>
+            <Icon name="plus" className="h-4 w-4" /> Add the first document
+          </Button>
+        </div>
+      ) : (
+        <>
+          {/* Búsqueda y filtro por categoría */}
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:max-w-xs">
+              <Icon name="search" className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search documents" className={`${inputClass} pl-9`} />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {['', ...categorias].map((c) => (
+                <button
+                  key={c || 'todas'}
+                  type="button"
+                  onClick={() => setCategoria(c)}
+                  aria-pressed={categoria === c}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${categoria === c ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 ring-1 ring-inset ring-brand-100 hover:bg-brand-50'}`}
+                >
+                  {c || 'All'}
+                </button>
+              ))}
+            </div>
+            {ocultos > 0 && (
+              <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-peach-700">
+                <Icon name="eyeoff" className="h-4 w-4" /> {ocultos} hidden
+              </span>
+            )}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {[...grupos].map(([categoria, docs]) => (
-              <Card key={categoria} className="overflow-hidden">
-                <h2 className="border-b border-brand-100 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-800">{categoria}</h2>
-                <ul className="divide-y divide-slate-100">
-                  {docs.map((d) => (
-                    <li key={d.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                        <Icon name="doc" className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900">
-                          {d.titulo} {d.oculto && <Badge color="peach">Oculto</Badge>}
-                        </p>
-                        {d.descripcion && <p className="truncate text-sm text-slate-500">{d.descripcion}</p>}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1">
-                        <a href={d.url} target="_blank" rel="noopener noreferrer" className="rounded-full px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50">
-                          Open
-                        </a>
-                        <Button variant="ghost" className="px-3 py-1" onClick={() => accion(() => servicio.guardarDocumento(d.id, { ...d, descripcion: d.descripcion ?? '', oculto: !d.oculto }))}>
-                          {d.oculto ? 'Show' : 'Hide'}
-                        </Button>
-                        <Button variant="ghost" className="px-3 py-1" onClick={() => setForm({ doc: d })}>
-                          Edit
-                        </Button>
-                        {borrando === d.id ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-sm text-rose-700">
-                            Delete?
-                            <button type="button" className="rounded px-2 font-semibold hover:bg-rose-100" onClick={() => (setBorrando(null), accion(() => servicio.eliminarDocumento(d.id)))}>
-                              Sí
-                            </button>
-                            <button type="button" className="rounded px-2 hover:bg-rose-100" onClick={() => setBorrando(null)}>
-                              No
-                            </button>
-                          </span>
-                        ) : (
-                          <button type="button" aria-label={`Delete ${d.titulo}`} onClick={() => setBorrando(d.id)} className="rounded-full p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600">
-                            <Icon name="trash" className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+
+          {visibles.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No document matches your search.</p>}
+          <div className="space-y-5">
+            {[...grupos].map(([cat, docs]) => (
+              <section key={cat}>
+                <h2 className="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  {cat} <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] normal-case tracking-normal text-slate-500">{docs.length}</span>
+                </h2>
+                <Card className="overflow-hidden">
+                  <ul className="divide-y divide-slate-100">
+                    {docs.map((d) => (
+                      <li key={d.id} className={`flex flex-wrap items-center gap-3 px-4 py-3 transition hover:bg-brand-50/40 ${d.oculto ? 'bg-slate-50/70' : ''}`}>
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${d.oculto ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600'}`}>
+                          <Icon name="doc" className="h-5 w-5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className={`flex flex-wrap items-center gap-2 font-medium ${d.oculto ? 'text-slate-500' : 'text-slate-900'}`}>
+                            {d.titulo}
+                            {d.oculto && <Badge color="peach">Hidden</Badge>}
+                          </p>
+                          {d.descripcion && <p className="truncate text-sm text-slate-500">{d.descripcion}</p>}
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          <Accion titulo="Open document" href={d.url}>
+                            <Icon name="external" className="h-4 w-4" />
+                          </Accion>
+                          <Accion
+                            titulo={d.oculto ? 'Show to ' + info.para : 'Hide from ' + info.para}
+                            onClick={() => accion(() => servicio.guardarDocumento(d.id, { ...d, descripcion: d.descripcion ?? '', oculto: !d.oculto }))}
+                          >
+                            <Icon name={d.oculto ? 'eye' : 'eyeoff'} className="h-4 w-4" />
+                          </Accion>
+                          <Accion titulo="Edit" onClick={() => setForm({ doc: d })}>
+                            <Icon name="pencil" className="h-4 w-4" />
+                          </Accion>
+                          {borrando === d.id ? (
+                            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-sm text-rose-700">
+                              Delete?
+                              <button type="button" className="rounded px-2 font-semibold hover:bg-rose-100" onClick={() => (setBorrando(null), accion(() => servicio.eliminarDocumento(d.id)))}>
+                                Yes
+                              </button>
+                              <button type="button" className="rounded px-2 hover:bg-rose-100" onClick={() => setBorrando(null)}>
+                                No
+                              </button>
+                            </span>
+                          ) : (
+                            <Accion titulo={`Delete ${d.titulo}`} peligro onClick={() => setBorrando(d.id)}>
+                              <Icon name="trash" className="h-4 w-4" />
+                            </Accion>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </section>
             ))}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {form && <DocumentoForm key={form.doc?.id ?? 'nuevo'} zona={zona} doc={form.doc} categorias={categorias} onSave={guardar} onClose={() => setForm(null)} />}
     </>

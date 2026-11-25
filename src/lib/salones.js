@@ -36,6 +36,7 @@ export const salonVacio = {
   totalSesiones: '',
   estado: 'pendiente',
   observaciones: '',
+  enlaceRecursos: '',
   horarios: [],
   // Plan académico (opcional). modalidad/nivel/horario/tipo solo sirven para elegir el plan en el formulario.
   planId: '',

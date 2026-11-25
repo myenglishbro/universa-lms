@@ -4,10 +4,8 @@ import * as asistenciaReal from '../../services/asistencia'
 import { minutosTexto } from '../../lib/paquetes'
 import Button from '../ui/Button'
 import { Anillo } from '../ui/Anillo'
-import { inputClass } from '../ui/Field'
 import Icon from '../ui/Icon'
 import SalonNav from './SalonNav'
-import Tile from '../ui/Tile'
 import CalendarioSalon from '../calendario/CalendarioSalon'
 import EjerciciosSalon from '../ejercicios/EjerciciosSalon'
 import GestionContenido from '../portal/GestionContenido'
@@ -16,6 +14,7 @@ import EvaluacionesPanel from '../evaluaciones/EvaluacionesPanel'
 import ModulosAdmin from '../evaluaciones/ModulosAdmin'
 import SeguimientoSalon from '../seguimiento/SeguimientoSalon'
 import BotonCompendio from './BotonCompendio'
+import EnlaceRecursos from '../portal/EnlaceRecursos'
 import EstadoBadge from './EstadoBadge'
 import MatriculasSalon from './MatriculasSalon'
 import MatriculasSalonAuto from './MatriculasSalonAuto'
@@ -26,6 +25,25 @@ import { porcentajeAvance } from '../../lib/asistencia'
 import { cuposSalon } from '../../lib/matriculas'
 import { portadaDe } from '../../lib/recursos'
 import { diasParaFin, estados, formatHorario } from '../../lib/salones'
+
+// Indicador de la franja inferior de la cabecera; con `onClick` es un acceso directo.
+function Dato({ icono, valor, etiqueta, nota, alerta = false, onClick }) {
+  const Raiz = onClick ? 'button' : 'div'
+  return (
+    <Raiz type={onClick ? 'button' : undefined} onClick={onClick} className={`flex items-center gap-3 px-4 py-3 text-left ${onClick ? 'transition hover:bg-white/10' : ''}`}>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${alerta ? 'bg-peach-200 text-peach-800' : 'bg-white/20 text-white'}`}>
+        <Icon name={icono} className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 leading-tight">
+        <span className="block text-xl font-bold">{valor}</span>
+        <span className="block truncate text-xs text-white/80">
+          {etiqueta}
+          {nota ? ` · ${nota}` : ''}
+        </span>
+      </span>
+    </Raiz>
+  )
+}
 
 // Detalle de un salón para la administración: cabecera con indicadores, avisos «Por atender» y pestañas por tema.
 export default function SalonDetalle({ salon, salones = [], estudiantes, puedeEditar, onVolver, onEditar, onCambiarEstado, onEliminar, onRecargar, onVerEstudiante, onVerDocente }) {
@@ -103,86 +121,103 @@ Its schedule and calendar will be deleted and the teacher will be freed up.${hor
         <Icon name="back" className="h-4 w-4" /> Back to classrooms
       </button>
 
-      <div className={`relative mb-5 overflow-hidden rounded-3xl bg-gradient-to-br p-6 text-white shadow-md sm:p-8 ${portadaDe(salon.nombre)}`}>
+      <div className={`relative mb-4 overflow-hidden rounded-3xl bg-gradient-to-br text-white shadow-md ${portadaDe(salon.nombre)}`}>
         <span className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <span className="pointer-events-none absolute -bottom-24 right-32 h-52 w-52 rounded-full bg-white/10" />
-        <div className="relative flex flex-wrap items-start justify-between gap-6">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">{salon.codigo}</span>
-              <EstadoBadge estado={salon.estado} />
-              {horas && <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">Hour package</span>}
+        <div className="relative p-6 pb-5 sm:p-7 sm:pb-5">
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">{salon.codigo}</span>
+                <EstadoBadge estado={salon.estado} />
+                {horas && <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">Hour package</span>}
+              </div>
+              <h1 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">{salon.nombre}</h1>
+              <p className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/90">
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="box" className="h-4 w-4" /> {salon.nivel || 'No level'}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="teacher" className="h-4 w-4" /> {salon.docente || 'No teacher'}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="clock" className="h-4 w-4" /> {formatHorario(salon.horarios)}
+                </span>
+              </p>
             </div>
-            <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{salon.nombre}</h1>
-            <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/90">
-              <span className="inline-flex items-center gap-1.5">
-                <Icon name="box" className="h-4 w-4" /> {salon.nivel || 'No level'}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Icon name="teacher" className="h-4 w-4" /> {salon.docente || 'No teacher'}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Icon name="clock" className="h-4 w-4" /> {formatHorario(salon.horarios)}
-              </span>
-            </p>
-            {puedeEditar && (
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <select value={salon.estado} onChange={cambiarEstado} disabled={cambiando} className={`${inputClass} w-auto`} aria-label="Change status">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/95 p-3 pr-5 text-slate-900 shadow-lg">
+              <Anillo valor={pct} size={64} grosor={7} etiqueta="Classroom progress" />
+              <div>
+                <p className="text-xs text-slate-500">Classroom progress</p>
+                <p className="text-sm font-semibold text-brand-800">
+                  {horas ? `${minutosTexto(horas.consumidas)} of ${minutosTexto(horas.contratadas)} used` : p?.total ? `${p.realizadas} of ${p.total} classes` : 'No total defined'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {puedeEditar && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <label className="inline-flex items-center gap-2 text-xs font-medium text-white/80">
+                Status
+                <select
+                  value={salon.estado}
+                  onChange={cambiarEstado}
+                  disabled={cambiando}
+                  className="rounded-xl border-0 bg-white/95 py-2 pl-3 pr-8 text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-white/60"
+                  aria-label="Change status"
+                >
                   {estados.map((e) => (
                     <option key={e.value} value={e.value}>
                       {e.label}
                     </option>
                   ))}
                 </select>
-                <Button variant="secondary" onClick={onEditar}>
-                  <Icon name="pencil" className="h-4 w-4" /> Edit classroom
-                </Button>
-                <BotonCompendio salon={salon} />
-                {onEliminar && (
-                  <Button variant="secondary" onClick={eliminar}>
-                    <Icon name="trash" className="h-4 w-4" /> Delete
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-white/95 p-3 pr-5 text-slate-900 shadow-lg">
-            <Anillo valor={pct} size={72} grosor={8} etiqueta="Classroom progress" />
-            <div>
-              <p className="text-xs text-slate-500">Classroom progress</p>
-              <p className="text-sm font-semibold text-brand-800">
-                {horas ? `${minutosTexto(horas.consumidas)} of ${minutosTexto(horas.contratadas)} used` : p?.total ? `${p.realizadas} of ${p.total} classes` : 'No total defined'}
-              </p>
+              </label>
+              <span className="mx-1 hidden h-6 w-px bg-white/25 sm:block" />
+              <Button variant="secondary" onClick={onEditar}>
+                <Icon name="pencil" className="h-4 w-4" /> Edit
+              </Button>
+              <BotonCompendio salon={salon} />
+              <EnlaceRecursos salonId={salon.id} url={salon.enlaceRecursos ?? ''} claro />
+              {onEliminar && (
+                <button
+                  type="button"
+                  onClick={eliminar}
+                  title="Delete classroom"
+                  aria-label="Delete classroom"
+                  className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur transition hover:bg-rose-500"
+                >
+                  <Icon name="trash" className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Indicadores dentro de la cabecera: ahorran una fila entera y siguen siendo accesos directos. */}
+        <div className="relative grid grid-cols-2 divide-x divide-white/15 border-t border-white/20 bg-black/10 backdrop-blur-sm sm:grid-cols-4">
+          <Dato icono="users" valor={cupos ? `${cupos.ocupados}/${cupos.capacidad}` : '…'} etiqueta="Enrolled students" onClick={() => ir('estudiantes')} />
+          {horas ? (
+            <Dato icono="clock" valor={minutosTexto(Math.max(horas.disponibles, 0))} etiqueta="Hours remaining" nota={`${p?.realizadas ?? 0} held`} onClick={() => ir('calendario')} />
+          ) : (
+            <Dato icono="check" valor={p ? p.realizadas : '—'} etiqueta="Classes held" nota={p?.restantes != null ? `${p.restantes} left` : undefined} onClick={() => ir('calendario')} />
+          )}
+          <Dato icono="flag" valor={dias === null ? '—' : dias < 0 ? 'Overdue' : dias === 0 ? 'Today' : `${dias} d`} etiqueta="Until estimated end" alerta={dias !== null && dias <= 14} />
+          <Dato
+            icono="alert"
+            valor={alertas.length}
+            etiqueta={alertas.length === 1 ? 'Item to review' : 'Items to review'}
+            alerta={alertas.length > 0}
+            onClick={alertas.length ? () => document.getElementById('por-atender')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : undefined}
+          />
         </div>
       </div>
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile icono="users" tono="brand" valor={cupos ? `${cupos.ocupados}/${cupos.capacidad}` : '…'} etiqueta="Enrolled students" onClick={() => ir('estudiantes')} />
-        {horas ? (
-          <Tile icono="clock" tono="brand" valor={minutosTexto(Math.max(horas.disponibles, 0))} etiqueta="Hours remaining" nota={`${p?.realizadas ?? 0} classes held`} onClick={() => ir('calendario')} />
-        ) : (
-          <Tile icono="check" tono="brand" valor={p ? p.realizadas : '—'} etiqueta="Classes held" nota={p?.restantes != null ? `${p.restantes} remaining` : undefined} onClick={() => ir('calendario')} />
-        )}
-        <Tile
-          icono="flag"
-          tono={dias !== null && dias <= 14 ? 'peach' : 'slate'}
-          valor={dias === null ? '—' : dias < 0 ? 'Overdue' : dias === 0 ? 'Today' : `${dias} d`}
-          etiqueta="Until estimated end"
-        />
-        <Tile
-          icono="alert"
-          tono={alertas.length ? 'peach' : 'slate'}
-          valor={alertas.length}
-          etiqueta={alertas.length === 1 ? 'Item to review' : 'Items to review'}
-        />
-      </div>
-
       <PorAtender alertas={alertas} onIr={ir} aviso={puedeEditar ? mensajeAviso(salon) : ''} />
 
-      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-5 lg:grid-cols-[264px_minmax(0,1fr)] lg:items-start">
       <SalonNav grupos={grupos} activa={tab} onCambiar={setTab} />
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="min-w-0">

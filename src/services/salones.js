@@ -38,6 +38,7 @@ function aSalon(r) {
     archivadoAt: r.archivado_at ?? null,
     cicloArchivo: r.ciclo_archivo ?? '',
     observaciones: r.observaciones ?? '',
+    enlaceRecursos: r.enlace_recursos ?? '',
     horarios: r.salon_horarios
       .map((h) => ({ dia: h.dia, horaInicio: hora(h.hora_inicio), horaFin: hora(h.hora_fin) }))
       .sort((a, b) => a.dia - b.dia || a.horaInicio.localeCompare(b.horaInicio)),
@@ -122,7 +123,7 @@ export async function listarDocentes() {
 
 // Crea (id null) o edita un salón junto con sus horarios en una sola transacción (función guardar_salon).
 export async function guardarSalon(id, s) {
-  datos(
+  const salonId = datos(
     await supabase.rpc('guardar_salon', {
       p_id: id,
       p_salon: {
@@ -142,6 +143,16 @@ export async function guardarSalon(id, s) {
       p_horarios: s.horarios.map((h) => ({ dia: h.dia, hora_inicio: h.horaInicio, hora_fin: h.horaFin })),
     }),
   )
+  // Enlace opcional a los recursos (Drive): se guarda aparte; al editar solo se toca si cambió.
+  const enlace = (s.enlaceRecursos ?? '').trim()
+  if (id === null || id === undefined ? enlace : enlace !== (s.enlaceRecursosOriginal ?? enlace)) {
+    datos(await supabase.rpc('guardar_enlace_recursos', { p_salon: id ?? salonId, p_url: enlace }))
+  }
+}
+
+// Enlace de recursos del curso para administración, docente o estudiante del salón ('' si no hay).
+export async function enlaceRecursos(salonId) {
+  return datos(await supabase.rpc('portal_enlace_recursos', { p_salon: salonId })) ?? ''
 }
 
 // Elimina un salón creado por error (libera horario y docente). La base lo rechaza si ya tiene estudiantes, ejercicios o archivo.

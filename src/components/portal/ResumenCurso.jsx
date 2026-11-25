@@ -1,5 +1,6 @@
 import Card from '../ui/Card'
 import Icon from '../ui/Icon'
+import EnlaceRecursos from './EnlaceRecursos'
 import { Anillo } from '../ui/Anillo'
 import { NOTA_PROGRESO, porcentajeAsistencia, porcentajeAvance, riesgoAsistencia } from '../../lib/asistencia'
 import { AvisoInasistencias } from './AsistenciaEstudiante'
@@ -47,6 +48,7 @@ export default function ResumenCurso({ curso, progreso, conteoAsistencia, proxim
   return (
     <div className="space-y-6">
       {(riesgo.enRiesgo || riesgo.cercano) && <AvisoInasistencias riesgo={riesgo} conteo={conteoAsistencia} />}
+      <EnlaceRecursos salonId={curso.salon_id} tarjeta />
       <Card className="flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
         <span className="inline-flex items-center gap-2 text-sm text-slate-700">
           <Icon name="teacher" className="h-4 w-4 text-brand-500" /> {curso.docente || 'Teacher to be assigned'}
