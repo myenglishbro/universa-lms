@@ -23,6 +23,8 @@ export const etiquetaFormative = (f) =>
   !f ? 'Practice' : `Formative · ${f.modulo} · ${f.unidad} · ${nombreHabilidad(f.habilidad)}`
 
 // Dos decimales solo al mostrar; el valor completo se conserva.
+// El estudiante siempre ve el Formative sobre 100: internamente cada elemento va de 0 a 5 (max), aquí se lleva a 0–100.
+export const aCien = (valor, max = 5) => (valor == null || valor === '' || Number.isNaN(Number(valor)) || !(Number(max) > 0) ? null : (Number(valor) / Number(max)) * 100)
 export const nota2 = (n) => (n == null || n === '' || Number.isNaN(Number(n)) ? '—' : Number(n).toFixed(2))
 
 const redondeo2 = (n) => Math.round(Number(n) * 100) / 100

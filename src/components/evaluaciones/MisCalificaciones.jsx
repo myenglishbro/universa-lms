@@ -3,6 +3,7 @@ import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import useCarga from '../../hooks/useCarga'
 import { etiquetaUnidad, fmtNota, textoFaltan } from '../../lib/evaluaciones'
+import { aCien } from '../../lib/formativeBanco'
 import { descargarInforme } from '../../lib/informeNotas'
 import Button from '../ui/Button'
 import ComoMeEvaluan from './ComoMeEvaluan'
@@ -20,7 +21,7 @@ function Nota({ n, tipo }) {
       {n.participacion && <span className="ml-1">({n.participacion.cumplidas} of {n.participacion.total} classes with participation)</span>}
       {Array.isArray(n.criterios) && n.criterios.length > 0 && (
         <span className="ml-1 text-slate-500">
-          ({n.criterios.map((c) => `${c.criterio} ${fmtNota(c.puntaje)}/${fmtNota(c.max)}`).join(' · ')})
+          ({n.criterios.map((c) => (tipo === 'formative' && aCien(c.puntaje, c.max) != null ? `${c.criterio} ${fmtNota(Math.round(aCien(c.puntaje, c.max) * 10) / 10)}/100` : `${c.criterio} ${fmtNota(c.puntaje)}/${fmtNota(c.max)}`)).join(' · ')})
         </span>
       )}
       {n.corregida && <span className="ml-1 text-slate-400">(corrected)</span>}

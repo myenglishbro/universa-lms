@@ -438,7 +438,8 @@ const conAuto = (d, manual) => {
 }
 
 // Puntos de un criterio: «16/20».
-const pts = (c) => (c ? `${fmtNota(c.puntaje)}<span class="mut">/${fmtNota(c.max)}</span>` : vacio)
+const cien = (c) => (c && Number(c.max) > 0 ? (Number(c.puntaje) / Number(c.max)) * 100 : null)
+const pts = (c) => (cien(c) == null ? vacio : `${fmtNota(redondeo1(cien(c)))}<span class="mut">/100</span>`)
 const promedioDe = (vs) => {
   const ok = vs.filter((v) => v != null && !Number.isNaN(v))
   return ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null
@@ -468,16 +469,16 @@ function hojaFormative(d, h) {
         .map((k) => {
           const vals = unidades.map((u) => (nota(u)?.criterios ?? []).find((c) => c.criterio === k))
           for (const v of vals) if (v) porHabilidad[k].push((Number(v.puntaje) / Number(v.max)) * 100)
-          const prom = promedioDe(vals.map((v) => (v ? Number(v.puntaje) : null)))
-          return `<tr><td>${esc(k)}</td>${vals.map((v) => `<td class="n">${pts(v)}</td>`).join('')}<td class="n">${prom == null ? vacio : `<strong>${fmtNota(prom)}</strong>`}</td></tr>`
+          const prom = promedioDe(vals.map(cien))
+          return `<tr><td>${esc(k)}</td>${vals.map((v) => `<td class="n">${pts(v)}</td>`).join('')}<td class="n">${prom == null ? vacio : `<strong>${fmtNota(redondeo1(prom))}</strong>`}</td></tr>`
         })
         .join('')
       const totales = unidades.map((u) => {
         const cs = nota(u)?.criterios ?? []
-        return cs.length ? { suma: cs.reduce((s, c) => s + Number(c.puntaje), 0), max: cs.reduce((s, c) => s + Number(c.max), 0) } : null
+        return cs.length ? { suma: promedioDe(cs.map(cien)) } : null
       })
       const promU = promedioDe(unidades.map((u) => (nota(u) ? Number(nota(u).puntaje) : null)))
-      const filaTotal = `<tr class="tot"><td>Unit total</td>${totales.map((t) => `<td class="n">${t ? `${fmtNota(t.suma)}<span class="mut">/${fmtNota(t.max)}</span>` : vacio}</td>`).join('')}<td class="n">${promU == null ? vacio : `${fmtNota(promU)}<span class="mut"> /100</span>`}</td></tr>`
+      const filaTotal = `<tr class="tot"><td>Unit total</td>${totales.map((t) => `<td class="n">${t ? `${fmtNota(redondeo1(t.suma))}<span class="mut">/100</span>` : vacio}</td>`).join('')}<td class="n">${promU == null ? vacio : `${fmtNota(promU)}<span class="mut"> /100</span>`}</td></tr>`
       const cp = part?.participacion
       const filaPart =
         pp > 0
@@ -485,7 +486,7 @@ function hojaFormative(d, h) {
           : ''
       const final = notaComponente(e, m)
       const filaFinal = `<tr class="tot"><td colspan="${unidades.length + 1}">Formative score (/100)${final == null ? ' — in progress' : ''}</td><td class="n">${final == null ? vacio : fmtNota(final)}</td></tr>`
-      return `<h2>${esc(m.nombre)} · Formative Assessment</h2><table class="form"><thead><tr><th>Skill (points)</th>${cab}<th class="n">Average</th></tr></thead><tbody>${filas}${filaTotal}${filaPart}${filaFinal}</tbody></table>`
+      return `<h2>${esc(m.nombre)} · Formative Assessment</h2><table class="form"><thead><tr><th>Skill (out of 100)</th>${cab}<th class="n">Average</th></tr></thead><tbody>${filas}${filaTotal}${filaPart}${filaFinal}</tbody></table>`
     })
     .join('')
 
