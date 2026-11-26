@@ -399,6 +399,32 @@ function CapturaParticipacion({ evaluacionId, servicio, onCambio }) {
   )
 }
 
+// Fila de botones (en vez de listas desplegables): lo elegido se ve de un vistazo y cambiar es un solo clic.
+function Pildoras({ etiqueta, opciones, valor, onCambio }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{etiqueta}</p>
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={etiqueta}>
+        {opciones.map((o) => {
+          const on = o.id === valor
+          return (
+            <button
+              key={o.id}
+              role="tab"
+              aria-selected={on}
+              onClick={() => onCambio(o.id)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}
+            >
+              {o.texto}
+              {o.nota && <span className={`text-[11px] ${on ? 'text-white/80' : 'text-slate-400'}`}>{o.nota}</span>}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // Captura rápida: se elige módulo y componente y se llena toda la lista de estudiantes de una vez.
 function Captura({ datos, servicio, onCambio }) {
   const modulos = datos.modulos.filter((m) => m.evaluaciones?.length)
@@ -414,35 +440,15 @@ function Captura({ datos, servicio, onCambio }) {
   const unidades = [...(ev.unidades ?? []), ...(conParticipacion ? [PARTE_PARTICIPACION] : [])]
   const u = unidades.includes(unidad) ? unidad : (unidades[0] ?? '')
   const esParticipacion = ev.tipo === 'participacion' || u === PARTE_PARTICIPACION
-  const sel = 'rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
   return (
     <Card className="space-y-4 p-4 sm:p-5">
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-slate-50 p-3">
-        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Module
-          <select aria-label="Module to record" className={`${sel} mt-1 block`} value={modulo.id} onChange={(e) => { setModuloId(e.target.value); setEvalId('') }}>
-            {modulos.map((m) => (
-              <option key={m.id} value={m.id}>{m.nombre}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Component
-          <select aria-label="Component to record" className={`${sel} mt-1 block`} value={ev.id} onChange={(e) => setEvalId(e.target.value)}>
-            {modulo.evaluaciones.map((e) => (
-              <option key={e.id} value={e.id}>{e.nombre} (weight {fmtNota(e.peso)})</option>
-            ))}
-          </select>
-        </label>
+      <div className="space-y-3 rounded-2xl bg-slate-50 p-3 sm:p-4">
+        {modulos.length > 1 && (
+          <Pildoras etiqueta="Module" valor={modulo.id} onCambio={(id) => { setModuloId(id); setEvalId('') }} opciones={modulos.map((m) => ({ id: m.id, texto: m.nombre }))} />
+        )}
+        <Pildoras etiqueta="Component" valor={ev.id} onCambio={setEvalId} opciones={modulo.evaluaciones.map((e) => ({ id: e.id, texto: e.nombre, nota: `${fmtNota(e.peso)} pts` }))} />
         {unidades.length > 0 && ev.tipo !== 'participacion' && (
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            {conParticipacion ? 'Part' : 'Unit'}
-            <select aria-label="Unit to record" className={`${sel} mt-1 block`} value={u} onChange={(e) => setUnidad(e.target.value)}>
-              {unidades.map((x) => (
-                <option key={x} value={x}>{x === PARTE_PARTICIPACION ? 'Participation per class' : x}</option>
-              ))}
-            </select>
-          </label>
+          <Pildoras etiqueta={conParticipacion ? 'Part' : 'Unit'} valor={u} onCambio={setUnidad} opciones={unidades.map((x) => ({ id: x, texto: x === PARTE_PARTICIPACION ? 'Participation per class' : x }))} />
         )}
       </div>
       {esParticipacion ? (

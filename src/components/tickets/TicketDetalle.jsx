@@ -4,7 +4,8 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
 import useCarga from '../../hooks/useCarga'
-import { COLOR_PRIORIDAD, diasSinMovimiento, estancado, etiquetaPrioridad, ESTADOS, GUIA_PRIORIDAD, PRIORIDADES, TIPOS, nombreCorto, responsablesDe, textoHistorial, vencido } from '../../lib/tickets'
+import Icon from '../ui/Icon'
+import { AREAS, COLOR_PRIORIDAD, areaDe, diasSinMovimiento, estancado, etiquetaPrioridad, ESTADOS, GUIA_PRIORIDAD, PRIORIDADES, TIPOS, nombreCorto, responsablesDe, textoHistorial, vencido } from '../../lib/tickets'
 import ChecklistTicket from './ChecklistTicket'
 import ResponsablesPicker from './ResponsablesPicker'
 import { actualizarTicket, archivarTicket, comentarTicket, comentariosDe, historialDe, suscribirTickets } from '../../services/tickets'
@@ -13,7 +14,7 @@ const fechaHora = (iso) => new Date(iso).toLocaleString('en-US', { day: '2-digit
 
 // Formulario de edición. Se reinicia solo cuando cambian los valores guardados (key en el padre).
 function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
-  const inicial = { titulo: ticket.titulo, descripcion: ticket.descripcion ?? '', tipo: ticket.tipo, prioridad: ticket.prioridad, estado: ticket.estado, responsables: responsablesDe(ticket), fecha_limite: ticket.fecha_limite ?? '' }
+  const inicial = { titulo: ticket.titulo, descripcion: ticket.descripcion ?? '', tipo: ticket.tipo, area: ticket.area ?? '', prioridad: ticket.prioridad, estado: ticket.estado, responsables: responsablesDe(ticket), fecha_limite: ticket.fecha_limite ?? '' }
   const [f, setF] = useState(inicial)
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -45,6 +46,7 @@ function Formulario({ ticket, personal, miId, deshabilitado, onGuardado }) {
           <Field label="Status" options={ESTADOS} value={f.estado} onChange={cambiar('estado')} />
           <Field label="Priority" options={PRIORIDADES} value={f.prioridad} onChange={cambiar('prioridad')} hint={GUIA_PRIORIDAD[f.prioridad]?.cuando} />
           <Field label="Type" options={TIPOS} value={f.tipo} onChange={cambiar('tipo')} />
+          <Field label="Area" options={[{ value: '', label: 'No area' }, ...AREAS.map((a) => ({ value: a.value, label: a.label }))]} value={f.area} onChange={cambiar('area')} />
           <Field type="date" label="Due date" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
           <div className="sm:col-span-2">
             <ResponsablesPicker personal={personal} valor={f.responsables} miId={miId} conservar={inicial.responsables} deshabilitado={deshabilitado} onChange={(responsables) => setF((p) => ({ ...p, responsables }))} />
@@ -121,11 +123,16 @@ export default function TicketDetalle({ ticket, personal, nombre, miId, onCerrar
     }
   }
 
-  const clave = [ticket.titulo, ticket.descripcion, ticket.tipo, ticket.prioridad, ticket.estado, responsablesDe(ticket).join(','), ticket.fecha_limite, ticket.archivado].join('|')
+  const clave = [ticket.titulo, ticket.descripcion, ticket.tipo, ticket.area, ticket.prioridad, ticket.estado, responsablesDe(ticket).join(','), ticket.fecha_limite, ticket.archivado].join('|')
 
   return (
     <Modal title={`${ticket.codigo} · Details`} wide="xl" onClose={onCerrar}>
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+        {areaDe(ticket.area) && (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${areaDe(ticket.area).chip}`}>
+            <Icon name={areaDe(ticket.area).icono} className="h-3.5 w-3.5" /> {areaDe(ticket.area).label}
+          </span>
+        )}
         <Badge color={COLOR_PRIORIDAD[ticket.prioridad]}>{etiquetaPrioridad(ticket.prioridad)}</Badge>
         {ticket.archivado && <Badge color="slate">Archived</Badge>}
         {vencido(ticket) && <Badge color="rose">Overdue</Badge>}

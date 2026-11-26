@@ -3,6 +3,7 @@ import VisorDocumento from '../../components/portal/VisorDocumento'
 import Icon from '../../components/ui/Icon'
 import useCarga from '../../hooks/useCarga'
 import { inputClass } from '../../components/ui/Field'
+import { claseDeEnlace } from '../../lib/recursos'
 import * as servicioReal from '../../services/zonas'
 
 const ZONAS = {
@@ -112,16 +113,18 @@ export default function ZonaDocumentos({ zona, servicio = servicioReal }) {
                   {cat} <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] normal-case tracking-normal text-slate-500">{docs.length}</span>
                 </h2>
                 <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {docs.map((d) => (
+                  {docs.map((d) => {
+                    const k = claseDeEnlace(d.url) ?? { icono: 'link', etiqueta: 'Link', accion: 'Open link', dentro: false }
+                    return (
                     <li key={d.id}>
                       <button
                         type="button"
-                        onClick={() => setAbierto(d)}
+                        onClick={() => (k.dentro ? setAbierto(d) : window.open(d.url, '_blank', 'noopener,noreferrer'))}
                         className="group flex h-full w-full flex-col rounded-2xl border border-brand-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-md"
                       >
                         <span className="flex items-start gap-3">
                           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
-                            <Icon name="doc" className="h-5 w-5" />
+                            <Icon name={k.icono} className="h-5 w-5" />
                           </span>
                           <span className="min-w-0">
                             <span className="block font-semibold leading-snug text-slate-900">{d.titulo}</span>
@@ -129,14 +132,15 @@ export default function ZonaDocumentos({ zona, servicio = servicioReal }) {
                           </span>
                         </span>
                         <span className="mt-auto flex items-center justify-between pt-4 text-xs">
-                          <span className="rounded-full bg-brand-50 px-2.5 py-0.5 font-medium text-brand-700">{d.categoria}</span>
+                          <span className="rounded-full bg-brand-50 px-2.5 py-0.5 font-medium text-brand-700">{k.etiqueta}</span>
                           <span className="inline-flex items-center gap-1 font-semibold text-brand-700 transition group-hover:gap-2">
-                            Read <Icon name="back" className="h-3.5 w-3.5 rotate-180" />
+                            {k.accion} <Icon name={k.dentro ? 'back' : 'external'} className={`h-3.5 w-3.5 ${k.dentro ? 'rotate-180' : ''}`} />
                           </span>
                         </span>
                       </button>
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               </section>
             ))}

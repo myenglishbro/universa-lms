@@ -6,7 +6,7 @@ import Icon from '../ui/Icon'
 import LeccionForm from './LeccionForm'
 import SeccionForm from './SeccionForm'
 import useCarga from '../../hooks/useCarga'
-import { agruparContenido, moverId, tipoLabel } from '../../lib/recursos'
+import { agruparContenido, claseDeEnlace, moverId, tipoLabel } from '../../lib/recursos'
 import { formatFecha } from '../../lib/salones'
 import * as servicioReal from '../../services/portal'
 
@@ -105,14 +105,19 @@ export default function GestionContenido({ salonId, servicio = servicioReal }) {
                     const ids = s.lecciones.map((x) => x.id)
                     return (
                       <li key={l.id} className={`flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 ${l.oculta ? 'opacity-60' : ''}`}>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-900">
-                            {l.titulo} {l.oculta && <Badge color="slate">Oculta</Badge>}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {tipoLabel(l.tipo)}
-                            {l.sesionFecha && ` · Class of ${formatFecha(l.sesionFecha)}`}
-                          </p>
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                            <Icon name={claseDeEnlace(l.url)?.icono ?? 'link'} className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-900">
+                              {l.titulo} {l.oculta && <Badge color="slate">Oculta</Badge>}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {tipoLabel(l.tipo)}
+                              {l.sesionFecha && ` · Class of ${formatFecha(l.sesionFecha)}`}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center">
                           <Accion icono="up" etiqueta={`Move lesson ${l.titulo} up`} disabled={j === 0} onClick={() => mover(ids, l.id, -1, (n) => servicio.reordenarLecciones(s.id, n))} />

@@ -104,3 +104,10 @@ test('carga por persona: abiertos, ánimo y cerrados de la semana', async () => 
   const muchos = Array.from({ length: 8 }, (_, i) => t({ id: 10 + i, responsables: ['a'] }))
   assert.equal(cargaPorPersona(muchos, [{ user_id: 'a', correo: 'a' }], ahora, '2026-02-10')[0].animo, 'agobiado')
 })
+
+test('filtrar por área: una concreta o los que no tienen área', () => {
+  const lista = [t({ id: 'a', area: 'finanzas' }), t({ id: 'b', area: 'academica' }), t({ id: 'c' })]
+  assert.deepEqual(filtrarTickets(lista, { area: 'finanzas' }, 'x').map((x) => x.id), ['a'])
+  assert.deepEqual(filtrarTickets(lista, { area: 'sin' }, 'x').map((x) => x.id), ['c'])
+  assert.equal(filtrarTickets(lista, {}, 'x').length, 3)
+})

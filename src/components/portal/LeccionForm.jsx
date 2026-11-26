@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Modal from '../ui/Modal'
-import { incrustarDe, proveedorDe, tiposRecurso, validarEnlace } from '../../lib/recursos'
+import { claseDeEnlace, incrustarDe, proveedorDe, tiposRecurso, validarEnlace } from '../../lib/recursos'
 import { formatFecha } from '../../lib/salones'
 
 // Formulario corto de lección: título, tipo, enlace y, opcionalmente, descripción y clase del calendario.
@@ -17,7 +17,19 @@ export default function LeccionForm({ leccion, sesiones = [], onSave, onClose })
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [tocado, setTocado] = useState(false)
+  const [tipoManual, setTipoManual] = useState(Boolean(leccion))
   const cambiar = (e) => setV({ ...v, [e.target.name]: e.target.value })
+  // Al pegar el enlace el tipo se elige solo (PDF de Drive → documento, YouTube o Vimeo → video, otro sitio → enlace); se puede cambiar a mano.
+  const cambiarUrl = (e) => {
+    const url = e.target.value
+    const k = tipoManual ? null : claseDeEnlace(url)
+    const tipo = !k ? v.tipo : k.tipo === 'video' && v.tipo === 'grabacion' ? 'grabacion' : k.tipo
+    setV({ ...v, url, tipo })
+  }
+  const cambiarTipo = (e) => {
+    setTipoManual(true)
+    cambiar(e)
+  }
   const errorEnlace = v.url.trim() ? validarEnlace(v.url.trim(), v.tipo) : ''
   const ayuda = tiposRecurso.find((t) => t.value === v.tipo)?.ayuda
   const prov = v.url.trim() ? proveedorDe(v.url.trim()) : null
@@ -43,16 +55,15 @@ export default function LeccionForm({ leccion, sesiones = [], onSave, onClose })
     <Modal title={leccion ? 'Edit lesson' : 'New lesson'} onClose={onClose}>
       <form onSubmit={enviar} className="space-y-4">
         <Field label="Title" name="titulo" value={v.titulo} onChange={cambiar} placeholder="E.g.: Class 3 · Present perfect" autoFocus />
-        <Field label="Resource type" name="tipo" value={v.tipo} onChange={cambiar} options={tiposRecurso.map((t) => ({ value: t.value, label: t.label }))} />
         <Field
           label="Link"
           name="url"
           type="url"
           inputMode="url"
           value={v.url}
-          onChange={cambiar}
-          placeholder="https://"
-          hint={`${ayuda}. Remember to share the file with your students on that platform.`}
+          onChange={cambiarUrl}
+          placeholder="Paste a link: PDF on Drive, YouTube, Vimeo or any website"
+          hint="PDFs and videos open inside the platform; any other link opens in a new tab. Share Drive files with “Anyone with the link”."
           error={(tocado || v.url.trim()) && errorEnlace ? errorEnlace : ''}
         />
         {v.url.trim() && !errorEnlace && (
@@ -62,11 +73,7 @@ export default function LeccionForm({ leccion, sesiones = [], onSave, onClose })
               : 'This link cannot be displayed inside the platform: the student will get a button to open it.'}
           </p>
         )}
-        {v.url.trim() === '' && (
-          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <strong>Videos and PDFs on Drive:</strong> in Drive right-click the file → <em>Share</em> → “Anyone with the link” → <em>Copy link</em> and paste it here.
-          </p>
-        )}
+        <Field label="Resource type" name="tipo" value={v.tipo} onChange={cambiarTipo} options={tiposRecurso.map((t) => ({ value: t.value, label: t.label }))} hint={`Chosen automatically from the link. ${ayuda}.`} />
         <Field label="Description (optional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
         {sesiones.length > 0 && (
           <Field

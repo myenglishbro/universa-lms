@@ -1,7 +1,7 @@
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useState } from 'react'
 import Icon from '../ui/Icon'
-import { ESTADOS, ESTILO_ESTADO, colorAvatar, diasSinMovimiento, estancado, etiquetaPrioridad, etiquetaTipo, hoyLima, nombreCorto, ordenarTickets, progresoChecklist, responsablesDe, vencido } from '../../lib/tickets'
+import { ESTADOS, ESTILO_ESTADO, areaDe, colorAvatar, diasSinMovimiento, estancado, etiquetaTipo, hoyLima, nombreCorto, ordenarTickets, progresoChecklist, responsablesDe, vencido } from '../../lib/tickets'
 
 const formatoFecha = (f) => new Date(`${f}T00:00:00`).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
 
@@ -46,68 +46,110 @@ function Responsables({ ids, nombre }) {
   )
 }
 
-// Punto de color por prioridad: la tarjeta es blanca y sobria; el color solo aparece donde informa.
-const PUNTO_PRIORIDAD = { urgente: 'bg-rose-500', alta: 'bg-peach-500', media: 'bg-brand-200', baja: 'bg-slate-300' }
+// Tarjeta ligera: un icono de color por área, el título y poco más. Sin bordes pesados ni líneas internas: lo importante se lee de un vistazo.
+function Anillo({ hechos, total, completo }) {
+  const r = 6.5
+  const c = 2 * Math.PI * r
+  return (
+    <span className="inline-flex items-center gap-1" title={`Checklist: ${hechos} of ${total} steps done`}>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="-rotate-90">
+        <circle cx="8" cy="8" r={r} fill="none" strokeWidth="2" className="stroke-slate-200" />
+        <circle cx="8" cy="8" r={r} fill="none" strokeWidth="2" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - hechos / total)} className={`transition-all duration-500 ${completo ? 'stroke-emerald-500' : 'stroke-brand-500'}`} />
+      </svg>
+      <span className={`tabular-nums ${completo ? 'font-semibold text-emerald-700' : ''}`}>
+        {hechos}/{total}
+      </span>
+    </span>
+  )
+}
 
-function Tarjeta({ ticket, nombre, flotante = false, posicion = 0 }) {
+function Tarjeta({ ticket, nombre, flotante = false, posicion = 0, onCompletar, indice = 0 }) {
   const atrasado = vencido(ticket)
   const hoyEs = ticket.fecha_limite === hoyLima() && ticket.estado !== 'realizado'
   const hecho = ticket.estado === 'realizado'
   const lista = progresoChecklist(ticket)
   const parado = estancado(ticket)
+  const area = areaDe(ticket.area)
+  const [listo, setListo] = useState(false)
   return (
     <div
-      className={`w-full rounded-xl border bg-white p-3 text-left transition ${
-        flotante ? 'rotate-1 scale-105 border-brand-300 shadow-xl' : 'border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:shadow-md'
+      style={flotante ? undefined : { animationDelay: `${Math.min(indice, 8) * 30}ms` }}
+      className={`group relative w-full rounded-2xl bg-white p-3.5 text-left transition duration-200 ${
+        flotante
+          ? 'rotate-2 scale-105 shadow-2xl ring-2 ring-brand-300'
+          : 'tk-in shadow-[0_1px_3px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/5 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(15,23,42,0.18)] hover:ring-slate-900/10 active:scale-[0.985]'
       } ${hecho ? 'opacity-60' : ''}`}
     >
-      <div className="flex items-center justify-between gap-2 text-[11px]">
-        <span className="min-w-0 truncate font-medium text-slate-400">
-          {posicion > 0 && <span className="mr-1.5 rounded bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600" title="Position in the queue: 1 is the next one to attend">#{posicion}</span>}
-          {ticket.codigo} · {etiquetaTipo(ticket.tipo)}
+      <div className="flex items-start gap-3">
+        <span
+          title={area ? area.label : 'No area'}
+          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-3 ${area ? area.chip : 'bg-slate-50 text-slate-300 ring-slate-200'}`}
+        >
+          <Icon name={area ? area.icono : 'inbox'} className="h-[18px] w-[18px]" />
         </span>
-        {ticket.prioridad === 'urgente' ? (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 font-semibold text-white">
-            <Icon name="alert" className="h-3 w-3" /> Urgent
-          </span>
-        ) : (
-          <span className="inline-flex shrink-0 items-center gap-1.5 text-slate-500" title={`${etiquetaPrioridad(ticket.prioridad)} priority`}>
-            <span aria-hidden className={`h-2 w-2 rounded-full ${PUNTO_PRIORIDAD[ticket.prioridad] ?? PUNTO_PRIORIDAD.media}`} />
-            <span className={ticket.prioridad === 'alta' ? 'font-semibold text-peach-700' : ''}>{etiquetaPrioridad(ticket.prioridad)}</span>
-          </span>
-        )}
+        <div className="min-w-0 flex-1 pr-6">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <span className="truncate">{area ? area.label : 'No area'}</span>
+            {ticket.prioridad === 'urgente' && <span className="rounded-full bg-rose-600 px-1.5 py-px text-[10px] normal-case tracking-normal text-white">Urgent</span>}
+            {ticket.prioridad === 'alta' && <span className="rounded-full bg-peach-100 px-1.5 py-px text-[10px] normal-case tracking-normal text-peach-700">High</span>}
+          </p>
+          <p className={`mt-0.5 line-clamp-3 text-[14px] font-semibold leading-snug text-slate-900 ${hecho ? 'line-through decoration-slate-300' : ''}`}>{ticket.titulo}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400">
+            {posicion > 0 && <span className="rounded bg-slate-100 px-1 font-bold text-slate-500" title="Position in the queue: 1 is the next one to attend">#{posicion}</span>}
+            <span className="truncate">
+              {ticket.codigo} · {etiquetaTipo(ticket.tipo)}
+            </span>
+            {parado && <span className="shrink-0 text-peach-700" title="No activity on this ticket">· stalled {diasSinMovimiento(ticket)}d</span>}
+          </p>
+        </div>
       </div>
-      <p className={`mt-1.5 line-clamp-3 text-[14px] font-medium leading-snug text-slate-900 ${hecho ? 'line-through decoration-slate-300' : ''}`}>{ticket.titulo}</p>
-      {parado && (
-        <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-peach-700" title="No activity on this ticket">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-peach-500" /> Stalled · {diasSinMovimiento(ticket)}d
-        </p>
+
+      {(responsablesDe(ticket).length > 0 || ticket.n_comentarios > 0 || lista.total > 0 || ticket.fecha_limite) && (
+        <div className="mt-3 flex items-center justify-between gap-2 pl-12">
+          <Responsables ids={responsablesDe(ticket)} nombre={nombre} />
+          <span className="flex shrink-0 items-center gap-2.5 text-[11px] text-slate-400">
+            {lista.total > 0 && <Anillo hechos={lista.hechos} total={lista.total} completo={lista.completo} />}
+            {ticket.n_comentarios > 0 && (
+              <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>
+                <Icon name="doc" className="h-3.5 w-3.5" /> {ticket.n_comentarios}
+              </span>
+            )}
+            {ticket.fecha_limite && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 ${atrasado ? 'bg-rose-50 font-semibold text-rose-700' : hoyEs ? 'bg-peach-50 font-semibold text-peach-700' : ''}`}>
+                <Icon name={atrasado ? 'alert' : 'calendar'} className="h-3 w-3" /> {formatoFecha(ticket.fecha_limite)}
+              </span>
+            )}
+          </span>
+        </div>
       )}
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <Responsables ids={responsablesDe(ticket)} nombre={nombre} />
-        <span className="flex shrink-0 items-center gap-2.5 text-[11px] text-slate-500">
-          {lista.total > 0 && (
-            <span className={`inline-flex items-center gap-0.5 ${lista.completo ? 'font-semibold text-brand-700' : ''}`} title={`Checklist: ${lista.hechos} of ${lista.total} steps done`}>
-              <Icon name="check" className="h-3.5 w-3.5" /> {lista.hechos}/{lista.total}
-            </span>
-          )}
-          {ticket.n_comentarios > 0 && (
-            <span className="inline-flex items-center gap-0.5" title={`${ticket.n_comentarios} comments`}>
-              <Icon name="doc" className="h-3.5 w-3.5" /> {ticket.n_comentarios}
-            </span>
-          )}
-          {ticket.fecha_limite && (
-            <span className={`inline-flex items-center gap-1 ${atrasado ? 'rounded-md bg-rose-50 px-1.5 py-0.5 font-semibold text-rose-700' : hoyEs ? 'rounded-md bg-peach-50 px-1.5 py-0.5 font-semibold text-peach-700' : ''}`}>
-              <Icon name={atrasado ? 'alert' : 'calendar'} className="h-3 w-3" /> {formatoFecha(ticket.fecha_limite)}
-            </span>
-          )}
-        </span>
-      </div>
+      {responsablesDe(ticket).length === 0 && !flotante && (
+        <p className="mt-2 pl-12 text-[11px] font-medium text-peach-700">Unassigned</p>
+      )}
+
+      {onCompletar && !flotante && (
+        <button
+          type="button"
+          title={hecho ? 'Reopen' : 'Mark as done'}
+          aria-label={`${hecho ? 'Reopen' : 'Mark as done'} ${ticket.codigo}`}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            setListo(true)
+            setTimeout(() => onCompletar(ticket.id, hecho ? 'pendiente' : 'realizado'), 220)
+          }}
+          className={`absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full border text-slate-300 opacity-0 transition duration-200 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 focus:opacity-100 focus-visible:ring-2 focus-visible:ring-emerald-400 group-hover:opacity-100 ${listo ? 'tk-pop border-emerald-500 bg-emerald-500 text-white opacity-100' : 'border-slate-200 bg-white'}`}
+        >
+          <Icon name={hecho ? 'back' : 'check'} className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }
 
-function TarjetaArrastrable({ ticket, nombre, onAbrir, posicion }) {
+function TarjetaArrastrable({ ticket, nombre, onAbrir, posicion, onCompletar, indice }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: ticket.id })
   return (
     <div
@@ -119,9 +161,9 @@ function TarjetaArrastrable({ ticket, nombre, onAbrir, posicion }) {
       aria-label={`${ticket.codigo} ${ticket.titulo}`}
       onClick={() => onAbrir(ticket.id)}
       onKeyDown={(e) => e.key === 'Enter' && onAbrir(ticket.id)}
-      className={`cursor-grab touch-manipulation rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:cursor-grabbing ${isDragging ? 'opacity-30' : ''}`}
+      className={`cursor-grab touch-manipulation rounded-2xl transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:cursor-grabbing ${isDragging ? 'opacity-30' : ''}`}
     >
-      <Tarjeta ticket={ticket} nombre={nombre} posicion={posicion} />
+      <Tarjeta ticket={ticket} nombre={nombre} posicion={posicion} onCompletar={onCompletar} indice={indice} />
     </div>
   )
 }
@@ -131,7 +173,7 @@ const INICIAL = { realizado: 5 }
 const LOTE = 10
 const INICIAL_POR_DEFECTO = 8
 
-function Columna({ estado, tickets, nombre, onAbrir, arrastrando, visibleEnMovil }) {
+function Columna({ estado, tickets, nombre, onAbrir, onCompletar, arrastrando, visibleEnMovil }) {
   const { setNodeRef, isOver } = useDroppable({ id: estado.value })
   const e = ESTILO_ESTADO[estado.value]
   const [limite, setLimite] = useState(INICIAL[estado.value] ?? INICIAL_POR_DEFECTO)
@@ -139,11 +181,11 @@ function Columna({ estado, tickets, nombre, onAbrir, arrastrando, visibleEnMovil
   const restantes = tickets.length - mostrados.length
   const atrasados = tickets.filter((t) => vencido(t)).length
   return (
-    <section aria-label={estado.label} className={`${visibleEnMovil ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200/70 lg:flex lg:flex-1`}>
+    <section aria-label={estado.label} className={`${visibleEnMovil ? 'flex' : 'hidden'} min-w-0 flex-col rounded-3xl bg-slate-100/60 p-2.5 lg:flex lg:flex-1`}>
       <h2 className="flex items-center gap-2 px-2 pb-2 pt-1.5 text-[13px] font-semibold text-slate-700">
         <span className={`h-2 w-2 rounded-full ${e.punto}`} />
         {estado.label}
-        <span className="text-xs font-medium text-slate-400">{tickets.length}</span>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-500 shadow-sm">{tickets.length}</span>
         {atrasados > 0 && (
           <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600" title={`${atrasados} overdue`}>
             <Icon name="alert" className="h-3 w-3" /> {atrasados} overdue
@@ -152,15 +194,15 @@ function Columna({ estado, tickets, nombre, onAbrir, arrastrando, visibleEnMovil
       </h2>
       <div
         ref={setNodeRef}
-        className={`max-h-[70vh] min-h-28 flex-1 space-y-2.5 overflow-y-auto overscroll-contain rounded-xl p-1 [scrollbar-width:thin] transition-colors ${
-          isOver ? `${e.soltar} ring-2 ring-inset` : arrastrando ? 'bg-white/50 ring-1 ring-dashed ring-inset ring-slate-300' : ''
+        className={`max-h-[70vh] min-h-28 flex-1 space-y-3 overflow-y-auto overscroll-contain rounded-2xl p-1 [scrollbar-width:thin] transition duration-200 ${
+          isOver ? `${e.soltar} scale-[1.01] ring-2 ring-inset` : arrastrando ? 'bg-white/50 ring-1 ring-dashed ring-inset ring-slate-300' : ''
         }`}
       >
         {mostrados.map((t, i) => (
-          <TarjetaArrastrable key={t.id} ticket={t} nombre={nombre} onAbrir={onAbrir} posicion={estado.value === 'realizado' ? 0 : i + 1} />
+          <TarjetaArrastrable key={t.id} ticket={t} nombre={nombre} onAbrir={onAbrir} onCompletar={onCompletar} indice={i} posicion={estado.value === 'realizado' ? 0 : i + 1} />
         ))}
         {tickets.length === 0 && (
-          <p className="rounded-xl border border-dashed border-slate-200 px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Drop here to move to “${estado.label}”` : 'No tickets'}</p>
+          <p className="rounded-2xl border border-dashed border-slate-300/80 px-2 py-8 text-center text-xs text-slate-400">{arrastrando ? `Drop here to move to “${estado.label}”` : 'Nothing here'}</p>
         )}
         {restantes > 0 && (
           <button type="button" onClick={() => setLimite((l) => l + LOTE)} className="w-full rounded-xl border border-dashed border-slate-300 bg-white/70 py-2 text-xs font-semibold text-brand-700 hover:bg-white">
@@ -213,6 +255,7 @@ export default function TicketTablero({ tickets, nombre, onAbrir, onMover }) {
             tickets={tickets.filter((t) => t.estado === e.value).sort(e.value === 'realizado' ? masRecientePrimero : ordenarTickets)}
             nombre={nombre}
             onAbrir={onAbrir}
+            onCompletar={onMover}
             arrastrando={Boolean(activo)}
             visibleEnMovil={movil === e.value}
           />

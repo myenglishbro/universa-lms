@@ -27,20 +27,21 @@ export const datosExamen = (anteriores = {}) => ({
 })
 export const NIVELES = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
-// Clasificación del banco: ciclo (1 al 12), módulo dentro del ciclo (1 o 2) y uso. Los tres son opcionales.
-export const CICLOS = Array.from({ length: 12 }, (_, i) => i + 1)
-export const MODULOS = [1, 2]
+// Clasificación del banco (ver lib/curriculo.js): al elegir nivel y unidad se deducen ciclo (0 al 12), módulo (1 al 4) y nivel MCER.
+export const CICLOS = Array.from({ length: 13 }, (_, i) => i)
+export const MODULOS = [1, 2, 3, 4]
 export const UNIDADES = Array.from({ length: 12 }, (_, i) => i + 1)
 export const USOS = [
   { id: 'formative', label: 'Formative' },
   { id: 'assessment', label: 'Assessment' },
 ]
 export const usoLabel = (id) => USOS.find((u) => u.id === id)?.label ?? ''
-// «Cycle 3 · Module 1 · Unit 5 · Formative» (solo lo que esté definido).
-export const clasificacionTexto = (e) => [e.ciclo ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', e.unidad ? `Unit ${e.unidad}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
-// Para guardar: ciclo, módulo, unidad, uso y nivel son obligatorios. Devuelve el mensaje de lo que falta ('' si está completo).
+// «Cycle 3 · Module 1 · Unit 5 · Formative» (solo lo que esté definido; el ciclo 0 es válido).
+const hay = (v) => v !== null && v !== undefined && v !== ''
+export const clasificacionTexto = (e) => [hay(e.ciclo) ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', e.unidad ? `Unit ${e.unidad}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
+// Para guardar: nivel, unidad y uso son obligatorios (de ahí salen ciclo, módulo y MCER). Devuelve el mensaje de lo que falta ('' si está completo).
 export function faltaClasificacion(m) {
-  const faltan = [['ciclo', 'cycle'], ['modulo', 'module'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)'], ['nivel', 'level']].filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
+  const faltan = [['programa', 'level'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)']].filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
   return faltan.length ? `Choose the ${faltan.join(', ')} before saving` : ''
 }
 
@@ -323,10 +324,12 @@ const REGLAS = {
   speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.`,
 }
 
-// «Course position» para que la IA ajuste la dificultad al punto del curso (ciclo, módulo, unidad).
+// Posición en el curso y libro del nivel, para que la IA ajuste la dificultad y el estilo (nivel, ciclo, módulo, unidad).
 const contexto = (p) => {
-  const x = [p.ciclo ? `Cycle ${p.ciclo}` : '', p.modulo ? `Module ${p.modulo}` : '', p.unidad ? `Unit ${p.unidad}` : ''].filter(Boolean)
-  return x.length ? `- Position in the course: ${x.join(', ')} (of a 12-cycle English program). Keep the vocabulary and grammar appropriate for that point.` : ''
+  if (!hay(p.ciclo) && !p.unidad) return ''
+  const x = [p.nivelNombre ? `${p.nivelNombre} level` : '', hay(p.ciclo) ? `Cycle ${p.ciclo}` : '', p.modulo ? `Module ${p.modulo}` : '', p.unidad ? `Unit ${p.unidad}` : ''].filter(Boolean)
+  const libro = p.libro ? ` The class uses the coursebook "${p.libro}"${p.imagen ? ', and the screenshot comes from it' : ''}: match its style, vocabulary and grammar for that unit.` : ''
+  return `- Position in the course: ${x.join(', ')}.${libro} Keep the content appropriate for that point.`
 }
 
 // Con `p.imagen` el prompt se escribe para adjuntar una captura del libro: modo 'adaptar' (ejercicio nuevo con el mismo formato) o 'fiel' (copia).

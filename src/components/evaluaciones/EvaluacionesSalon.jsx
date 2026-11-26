@@ -86,25 +86,26 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
     )
   const modulo = modulos.find((m) => m.id === moduloId) ?? modulos[0]
 
+  const total = datos.estudiantes ?? null
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Modules">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Modules">
           {modulos.map((m) => (
             <button
               key={m.id}
               role="tab"
               aria-selected={modulo.id === m.id}
               onClick={() => setModuloId(m.id)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${modulo.id === m.id ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${modulo.id === m.id ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}
             >
               {m.nombre}
             </button>
           ))}
         </div>
-        <div className="flex gap-1 text-sm" role="group" aria-label="Vista">
+        <div className="flex rounded-xl bg-slate-100 p-0.5 text-sm" role="group" aria-label="View">
           {[['notas', 'Enter grades'], ['resultados', 'Results']].map(([id, texto]) => (
-            <button key={id} aria-pressed={vista === id} onClick={() => setVista(id)} className={`rounded-lg px-3 py-1.5 font-medium ${vista === id ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100'}`}>
+            <button key={id} aria-pressed={vista === id} onClick={() => setVista(id)} className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${vista === id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
               {texto}
             </button>
           ))}
@@ -118,35 +119,42 @@ export default function EvaluacionesSalon({ salonId, servicio = servicioReal }) 
           <p className="text-sm text-slate-500">“{modulo.nombre}” has no assessment template yet. Ask administration to assign one.</p>
         </Card>
       ) : (
-        <Card>
-          <div className="border-b border-slate-200 px-4 py-3">
-            <h2 className="text-base font-semibold text-slate-900">{modulo.nombre}</h2>
-            <p className="text-xs text-slate-500">
-              {modulo.plantilla} · version {modulo.version}
-              {modulo.ciclo != null && ` · cycle ${modulo.ciclo}`}
-            </p>
-          </div>
-          <ul className="divide-y divide-slate-100">
-            {modulo.evaluaciones.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    {e.nombre} <span className="text-xs font-normal text-slate-500">peso {fmtNota(e.peso)}</span>
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {e.publicadas} publicadas
-                    {e.borradores > 0 && ` · ${e.borradores} in draft`}
-                    {e.unidades.length > 0 && ` · ${e.unidades.length} units`}
-                    {e.con_rubrica && ' · with rubric'}
-                  </p>
-                </div>
-                <Button variant={e.publicadas === 0 && e.borradores === 0 ? 'primary' : 'secondary'} className="px-3 py-1.5" onClick={() => setAbierta(e)}>
-                  Enter grades
-                </Button>
-              </li>
-            ))}
+        <div className="space-y-3">
+          <p className="px-1 text-xs text-slate-500">
+            {modulo.plantilla} · version {modulo.version}
+            {modulo.ciclo != null && ` · cycle ${modulo.ciclo}`}
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {modulo.evaluaciones.map((e) => {
+              const sinEmpezar = e.publicadas + e.borradores === 0
+              const pct = total ? Math.min(100, Math.round((e.publicadas / total) * 100)) : 0
+              return (
+                <li key={e.id} className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-base font-semibold text-slate-900">{e.nombre}</h3>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{fmtNota(e.peso)} pts</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {[e.unidades.length > 0 && `${e.unidades.length} units`, e.con_rubrica && 'with rubric'].filter(Boolean).join(' · ') || 'Direct grade'}
+                    </p>
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> {e.publicadas} published{total != null && ` of ${total}`}</span>
+                      {e.borradores > 0 && <span className="inline-flex items-center gap-1.5 text-amber-800"><span className="h-2 w-2 rounded-full bg-amber-400" /> {e.borradores} in draft</span>}
+                      {sinEmpezar && <span className="text-slate-400">Not started</span>}
+                    </p>
+                  </div>
+                  <Button variant={sinEmpezar ? 'primary' : 'secondary'} className="w-full justify-center px-3 py-2" onClick={() => setAbierta(e)}>
+                    {sinEmpezar ? 'Start grading' : e.borradores > 0 ? 'Continue and publish' : 'Review grades'}
+                  </Button>
+                </li>
+              )
+            })}
           </ul>
-        </Card>
+        </div>
       )}
 
       {abierta && (

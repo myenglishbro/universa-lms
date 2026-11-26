@@ -5,17 +5,82 @@ import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
 import EditorEjercicio from './EditorEjercicio'
 import EjercicioJugador from './EjercicioJugador'
-import { CICLOS, MODULOS, NIVELES, TIPOS, UNIDADES, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+import { TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+import { MODULOS_POR_NIVEL, PROGRAMA, cicloTexto, nivelDeCiclo, nivelPrograma, ubicar, unidadesDeModulo } from '../../lib/curriculo'
 
-// Ciclo, módulo, unidad y uso: obligatorios, se eligen al empezar (con IA o a mano) y se pueden cambiar al final.
+// Nivel + unidad + uso: obligatorios, se eligen al empezar (con IA o a mano) y se pueden cambiar al final.
+// Del nivel y la unidad se deducen solos el ciclo, el módulo, el MCER y el libro (lib/curriculo.js).
 function Clasificacion({ meta, setMeta }) {
-  const poner = (k) => (e) => setMeta((m) => ({ ...m, [k]: e.target.value }))
+  const nivel = nivelPrograma(meta.programa)
+  const ubic = ubicar(meta.programa, meta.unidad)
+  const modulos = Array.from({ length: MODULOS_POR_NIVEL }, (_, i) => i + 1)
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
-      <Field label="Cycle" options={[{ value: '', label: 'Choose…' }, ...CICLOS.map((c) => ({ value: String(c), label: `Cycle ${c}` }))]} value={String(meta.ciclo ?? '')} onChange={poner('ciclo')} />
-      <Field label="Module" options={[{ value: '', label: 'Choose…' }, ...MODULOS.map((c) => ({ value: String(c), label: `Module ${c}` }))]} value={String(meta.modulo ?? '')} onChange={poner('modulo')} />
-      <Field label="Unit" options={[{ value: '', label: 'Choose…' }, ...UNIDADES.map((c) => ({ value: String(c), label: `Unit ${c}` }))]} value={String(meta.unidad ?? '')} onChange={poner('unidad')} />
-      <Field label="Use" options={[{ value: '', label: 'Choose…' }, ...USOS.map((u) => ({ value: u.id, label: u.label }))]} value={meta.uso ?? ''} onChange={poner('uso')} />
+    <div className="space-y-4 rounded-2xl border border-brand-100 bg-white p-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field
+          label="Level"
+          options={[{ value: '', label: 'Choose the level…' }, ...PROGRAMA.map((n) => ({ value: n.id, label: `${n.nombre} · ${cicloTexto(n)}` }))]}
+          value={meta.programa ?? ''}
+          onChange={(e) => setMeta((m) => ({ ...m, programa: e.target.value }))}
+         
+        />
+        <div>
+          <span className="mb-1 block text-sm font-medium text-slate-700">Use</span>
+          <div role="radiogroup" aria-label="Use" className="inline-flex gap-0.5 rounded-xl bg-slate-100 p-0.5">
+            {USOS.map((u) => (
+              <button key={u.id} type="button" role="radio" aria-checked={meta.uso === u.id} onClick={() => setMeta((m) => ({ ...m, uso: u.id }))} className={`rounded-lg px-4 py-2 text-sm transition-colors ${meta.uso === u.id ? 'bg-white font-semibold text-brand-700 shadow-sm' : 'text-slate-600'}`}>
+                {u.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Unit</span>
+        <div className="grid gap-2 sm:grid-cols-4">
+          {modulos.map((m) => (
+            <div key={m} className="rounded-xl bg-slate-50 p-2">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Module {m}</p>
+              <div className="flex gap-1.5">
+                {unidadesDeModulo(m).map((u) => {
+                  const on = String(meta.unidad) === String(u)
+                  return (
+                    <button key={u} type="button" aria-pressed={on} onClick={() => setMeta((x) => ({ ...x, unidad: String(u) }))} className={`h-9 flex-1 rounded-lg text-sm font-medium transition ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}>
+                      {u}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {ubic ? (
+        <p className="rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-800">
+          <strong>
+            {ubic.nivel.nombre} · Cycle {ubic.ciclo} · Module {ubic.modulo} · Unit {ubic.unidad}
+          </strong>
+          <span className="text-brand-700"> · CEFR {ubic.mcer}</span>
+        </p>
+      ) : (
+        <p className="text-xs text-slate-500">Choose a level and a unit: the cycle, module and CEFR level are filled in automatically.</p>
+      )}
+
+      {/* El libro del nivel y la ubicación dentro de él: juntos dicen de dónde sale el ejercicio. */}
+      <div className="rounded-xl border border-peach-200 bg-peach-50/60 p-3">
+        <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <Icon name="book" className="h-4 w-4 text-peach-700" />
+          Source book
+          <span className="font-normal text-slate-700">
+            {nivel ? (nivel.libro ?? 'not defined yet for this level') : '· choose the level above to see it'}
+          </span>
+        </p>
+        <div className="mt-2">
+          <Field label="Where in the book?" value={meta.fuente ?? ''} onChange={(e) => setMeta((m) => ({ ...m, fuente: e.target.value }))} placeholder="E.g. Student book p. 52, exercise 3 · Workbook p. 18" hint="Optional. Page and exercise, so anyone can find it in the book." />
+        </div>
+      </div>
     </div>
   )
 }
@@ -42,20 +107,25 @@ function Pasos({ paso }) {
 export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose }) {
   const [paso, setPaso] = useState(ejercicio ? 2 : 0)
   const [tipo, setTipo] = useState(ejercicio?.tipo ?? '')
-  const [params, setParams] = useState({ imagen: true, modo: 'adaptar', tema: '', nivel: 'A2', cantidad: '', extra: '', texto: '', transcripcion: '' })
+  const [params, setParams] = useState({ imagen: true, modo: 'adaptar', tema: '', cantidad: '', extra: '', texto: '', transcripcion: '' })
   const [pegado, setPegado] = useState('')
   const [errorIA, setErrorIA] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [datos, setDatos] = useState(ejercicio?.datos ?? null)
-  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', nivel: ejercicio?.nivel ?? '', tema: ejercicio?.tema ?? '', ciclo: ejercicio?.ciclo ?? '', modulo: ejercicio?.modulo ?? '', unidad: ejercicio?.unidad ?? '', uso: ejercicio?.uso ?? '' })
+  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', tema: ejercicio?.tema ?? '', programa: nivelDeCiclo(ejercicio?.ciclo)?.id ?? '', unidad: ejercicio?.unidad ?? '', uso: ejercicio?.uso ?? '', fuente: ejercicio?.fuente ?? '' })
   const [vista, setVista] = useState('editar')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
   const t = tipoDe(tipo)
-  const prompt = useMemo(() => (tipo ? construirPrompt(tipo, { ...params, ciclo: meta.ciclo, modulo: meta.modulo, unidad: meta.unidad, cantidad: Number(params.cantidad) || (params.imagen ? null : 5) }) : ''), [tipo, params, meta.ciclo, meta.modulo, meta.unidad])
+  const ubic = ubicar(meta.programa, meta.unidad)
+  const prompt = useMemo(() => {
+    if (!tipo) return ''
+    const u = ubicar(meta.programa, meta.unidad)
+    return construirPrompt(tipo, { ...params, nivel: u?.mcer ?? 'A2', nivelNombre: u?.nivel.nombre, ciclo: u?.ciclo, modulo: u?.modulo, unidad: u?.unidad, libro: u?.libro, cantidad: Number(params.cantidad) || (params.imagen ? null : 5) })
+  }, [tipo, params, meta.programa, meta.unidad])
   const setP = (k) => (e) => setParams((p) => ({ ...p, [k]: e.target.value }))
-  const faltaClas = faltaClasificacion({ ...meta, nivel: meta.nivel || params.nivel })
+  const faltaClas = faltaClasificacion(meta)
   const errorValidacion = datos ? validar(tipo, datos) : ''
   const previa = useMemo(() => {
     if (!datos || validar(tipo, datos)) return null
@@ -80,7 +150,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
     try {
       const r = leerRespuestaIA(tipo, pegado)
       setDatos(tipo === 'listening' ? { ...r.datos, audio_url: params.audio_url ?? '' } : r.datos)
-      setMeta((m) => ({ ...m, titulo: m.titulo || r.titulo, nivel: m.nivel || params.nivel, tema: m.tema || params.tema }))
+      setMeta((m) => ({ ...m, titulo: m.titulo || r.titulo, tema: m.tema || params.tema }))
       setPaso(2)
     } catch (e) {
       setErrorIA(e.message)
@@ -88,7 +158,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
   }
   const manual = () => {
     setDatos(datosVacios(tipo))
-    setMeta((m) => ({ ...m, nivel: m.nivel || params.nivel, tema: m.tema || params.tema }))
+    setMeta((m) => ({ ...m, tema: m.tema || params.tema }))
     setPaso(2)
   }
 
@@ -99,7 +169,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
     if (errorValidacion) return setError(errorValidacion)
     setGuardando(true)
     try {
-      await onGuardar(ejercicio?.id ?? null, { ...meta, tipo, datos })
+      await onGuardar(ejercicio?.id ?? null, { ...meta, ciclo: ubic.ciclo, modulo: ubic.modulo, unidad: ubic.unidad, nivel: ubic.mcer, tipo, datos })
     } catch (e) {
       setError(e.message)
       setGuardando(false)
@@ -174,7 +244,6 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
 
           <div className="grid gap-3 sm:grid-cols-3">
             <Field className="sm:col-span-2" label={params.imagen ? 'Topic (optional)' : 'Topic'} value={params.tema} onChange={setP('tema')} placeholder={params.imagen ? 'Leave empty to use the topic of the screenshot' : 'E.g. Daily routines, travel, past simple…'} />
-            <Field label="Level" options={NIVELES} value={params.nivel} onChange={setP('nivel')} />
             {t.auto && tipo !== 'matching' && (
               <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' ? 'Statements' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />
             )}
@@ -226,9 +295,8 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
 
       {paso === 2 && t && datos && (
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field className="sm:col-span-2" label="Exercise title" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`E.g. ${t.label}: daily routines`} autoFocus />
-            <Field label="Level" options={[{ value: '', label: 'Choose…' }, ...NIVELES.map((n) => ({ value: n, label: n }))]} value={meta.nivel} onChange={(e) => setMeta((m) => ({ ...m, nivel: e.target.value }))} />
+          <div>
+            <Field label="Exercise title" value={meta.titulo} onChange={(e) => setMeta((m) => ({ ...m, titulo: e.target.value }))} placeholder={`E.g. ${t.label}: daily routines`} autoFocus />
           </div>
           <Clasificacion meta={meta} setMeta={setMeta} />
           <Field label="Topic (optional)" value={meta.tema} onChange={(e) => setMeta((m) => ({ ...m, tema: e.target.value }))} placeholder="To find it more easily in the bank" />

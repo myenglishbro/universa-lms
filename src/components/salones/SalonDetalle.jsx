@@ -100,6 +100,7 @@ Its schedule and calendar will be deleted and the teacher will be freed up.${hor
             items: [
               { id: 'asistencia', label: 'Classes & attendance', icono: 'check', conteo: p?.porRegistrar || null },
               { id: 'evaluaciones', label: 'Assessments', icono: 'chart' },
+              { id: 'modulos', label: 'Module setup', icono: 'wrench' },
               { id: 'ejercicios', label: 'Exercises', icono: 'pen' },
               { id: 'recursos', label: 'Course resources', icono: 'book' },
             ],
@@ -248,12 +249,9 @@ Its schedule and calendar will be deleted and the teacher will be freed up.${hor
 
         {tab === 'asistencia' && puedeEditar && <SeguimientoSalon key={salon.id} salonId={salon.id} onCambio={onRecargar} />}
 
-        {tab === 'evaluaciones' && puedeEditar && (
-          <div className="space-y-4">
-            <ModulosAdmin key={`m${salon.id}`} salonId={salon.id} cicloDesde={salon.cicloDesde} cicloHasta={salon.cicloHasta} />
-            <EvaluacionesPanel key={`e${salon.id}`} salonId={salon.id} esAdmin />
-          </div>
-        )}
+        {tab === 'evaluaciones' && puedeEditar && <EvaluacionesPanel key={`e${salon.id}`} salonId={salon.id} esAdmin />}
+
+        {tab === 'modulos' && puedeEditar && <ModulosAdmin key={`m${salon.id}`} salonId={salon.id} cicloDesde={salon.cicloDesde} cicloHasta={salon.cicloHasta} />}
       </div>
       </div>
     </>

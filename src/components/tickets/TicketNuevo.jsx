@@ -3,7 +3,7 @@ import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
-import { GUIA_PRIORIDAD, GUIA_TIPO, PLANTILLAS, PRIORIDADES, TIPOS, hoyLima } from '../../lib/tickets'
+import { AREAS, GUIA_PRIORIDAD, GUIA_TIPO, PLANTILLAS, PRIORIDADES, TIPOS, hoyLima } from '../../lib/tickets'
 import { crearTicket } from '../../services/tickets'
 import ResponsablesPicker from './ResponsablesPicker'
 
@@ -55,7 +55,7 @@ function Opcion({ activo, onClick, icono, colorIcono = 'bg-brand-100 text-brand-
 
 // `personal`: usuarios administrativos activos para elegir responsable (opcional).
 export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
-  const [f, setF] = useState({ titulo: '', descripcion: PLANTILLAS.tarea, tipo: 'tarea', prioridad: 'media', responsables: [], fecha_limite: '' })
+  const [f, setF] = useState({ titulo: '', descripcion: PLANTILLAS.tarea, tipo: 'tarea', area: '', prioridad: 'media', responsables: [], fecha_limite: '' })
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const hoy = hoyLima()
@@ -88,8 +88,37 @@ export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
           <Field label="Title" value={f.titulo} onChange={cambiar('titulo')} maxLength={200} required autoFocus placeholder="E.g.: Schedule placement exam" />
         </Seccion>
 
+        <Seccion numero="2" titulo="Which area is it for?">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Area">
+            {AREAS.map((a) => {
+              const on = f.area === a.value
+              return (
+                <button
+                  key={a.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => poner('area', a.value)}
+                  className={`group relative flex flex-col items-start gap-1 rounded-xl border px-3 py-2.5 text-left transition duration-150 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${on ? 'border-brand-500 bg-brand-50/60 ring-1 ring-brand-500' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
+                >
+                  <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6 ${on ? 'scale-110' : ''} ${a.chip}`}>
+                    <Icon name={a.icono} className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-semibold leading-tight text-slate-900">{a.label}</span>
+                  <span className="text-[11px] leading-snug text-slate-500">{a.cuando}</span>
+                  {on && (
+                    <span aria-hidden className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-white">
+                      <Icon name="check" className="h-3 w-3" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </Seccion>
+
         <div className="grid gap-4 lg:grid-cols-2">
-        <Seccion numero="2" titulo="Type of ticket">
+        <Seccion numero="3" titulo="Type of ticket">
           <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Type of ticket">
             {TIPOS.map((t) => (
               <Opcion key={t.value} activo={f.tipo === t.value} onClick={() => cambiarTipo(t.value)} icono={GUIA_TIPO[t.value].icono} titulo={t.label} texto={GUIA_TIPO[t.value].cuando} />
@@ -97,7 +126,7 @@ export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
           </div>
         </Seccion>
 
-        <Seccion numero="3" titulo="How urgent is it?">
+        <Seccion numero="4" titulo="How urgent is it?">
           <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Priority">
             {PRIORIDADES.slice()
               .reverse()
@@ -108,11 +137,11 @@ export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
         </Seccion>
         </div>
 
-        <Seccion numero="4" titulo="Details">
+        <Seccion numero="5" titulo="Details">
           <Field as="textarea" rows={5} label="Description" value={f.descripcion} onChange={cambiar('descripcion')} maxLength={5000} hint="A template is suggested: fill it in or edit it." />
         </Seccion>
 
-        <Seccion numero="5" titulo="Who and when">
+        <Seccion numero="6" titulo="Who and when">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Field type="date" label="Due date (optional)" value={f.fecha_limite} onChange={cambiar('fecha_limite')} />
@@ -139,11 +168,12 @@ export default function TicketNuevo({ personal, miId, onCerrar, onCreado }) {
         </Seccion>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+          {!f.area && <span className="mr-auto text-xs text-peach-700">Choose the area this ticket is for.</span>}
           <Button type="button" variant="ghost" onClick={onCerrar}>
             Cancel
           </Button>
-          <Button type="submit" disabled={guardando || !f.titulo.trim()}>
+          <Button type="submit" disabled={guardando || !f.titulo.trim() || !f.area}>
             {guardando ? 'Creating…' : 'Create ticket'}
           </Button>
         </div>

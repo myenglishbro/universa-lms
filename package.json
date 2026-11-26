@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node --test src/lib/evaluaciones.test.js src/lib/seguimiento.test.js src/lib/informeNotas.test.js src/lib/borradorReporte.test.js src/lib/comentariosInforme.test.js src/lib/progresoHabilidades.test.js src/lib/perfilDocente.test.js src/lib/coloresNivel.test.js src/lib/cacheSesion.test.js src/lib/respaldoSalones.test.js src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js src/lib/cambioLibro.test.js src/lib/rutaAprendizaje.test.js src/lib/encuestas.test.js src/lib/tiempos.test.js src/lib/presencia.test.js",
+    "test": "node --test src/lib/evaluaciones.test.js src/lib/seguimiento.test.js src/lib/informeNotas.test.js src/lib/borradorReporte.test.js src/lib/comentariosInforme.test.js src/lib/progresoHabilidades.test.js src/lib/perfilDocente.test.js src/lib/coloresNivel.test.js src/lib/cacheSesion.test.js src/lib/respaldoSalones.test.js src/lib/formativeBanco.test.js src/lib/tickets.test.js src/lib/importarEstudiantes.test.js src/lib/importarSalones.test.js src/lib/cambioLibro.test.js src/lib/rutaAprendizaje.test.js src/lib/curriculo.test.js src/lib/encuestas.test.js src/lib/tiempos.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,7 +17,6 @@
     "exceljs": "^4.4.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-nice-avatar": "^1.5.0",
     "react-router-dom": "^7.18.5",
     "tailwindcss": "^4.3.4"
   },

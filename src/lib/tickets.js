@@ -30,6 +30,18 @@ export const GUIA_TIPO = {
   incidencia: { icono: 'wrench', cuando: 'A problem that needs fixing' },
   informe: { icono: 'doc', cuando: 'Just to inform or report' },
 }
+// Áreas a las que puede ir dirigido un ticket: icono, color y para qué sirve (siempre visibles al elegir).
+export const AREAS = [
+  { value: 'academica', label: 'Academic', icono: 'book', cuando: 'Teachers, classes, levels, grades', chip: 'bg-brand-50 text-brand-700 ring-brand-100', punto: 'bg-brand-500' },
+  { value: 'administracion', label: 'Administration', icono: 'building', cuando: 'Enrollments, documents, schedules', chip: 'bg-slate-100 text-slate-700 ring-slate-200', punto: 'bg-slate-500' },
+  { value: 'finanzas', label: 'Finance', icono: 'chart', cuando: 'Payments, invoices, refunds', chip: 'bg-emerald-50 text-emerald-700 ring-emerald-100', punto: 'bg-emerald-500' },
+  { value: 'admisiones', label: 'Admissions & sales', icono: 'userplus', cuando: 'New students, leads, promotions', chip: 'bg-peach-100 text-peach-700 ring-peach-200', punto: 'bg-peach-500' },
+  { value: 'soporte', label: 'Student support', icono: 'users', cuando: 'Questions and complaints from students', chip: 'bg-sky-50 text-sky-700 ring-sky-100', punto: 'bg-sky-500' },
+  { value: 'tecnologia', label: 'Technology', icono: 'wrench', cuando: 'Platform, accounts, tools', chip: 'bg-indigo-50 text-indigo-700 ring-indigo-100', punto: 'bg-indigo-500' },
+  { value: 'direccion', label: 'Management', icono: 'flag', cuando: 'Decisions, approvals, strategy', chip: 'bg-rose-50 text-rose-700 ring-rose-100', punto: 'bg-rose-500' },
+]
+export const areaDe = (v) => AREAS.find((a) => a.value === v) ?? null
+
 export const COLOR_PRIORIDAD = { baja: 'slate', media: 'brand', alta: 'peach', urgente: 'rose' }
 
 // Aspecto de cada prioridad: franja lateral, etiqueta con icono y fondo de la tarjeta. Urgente y alta saltan a la vista.
@@ -54,6 +66,7 @@ const etiqueta = (lista) => (v) => lista.find((x) => x.value === v)?.label ?? v
 export const etiquetaEstado = etiqueta(ESTADOS)
 export const etiquetaPrioridad = etiqueta(PRIORIDADES)
 export const etiquetaTipo = etiqueta(TIPOS)
+export const etiquetaArea = (v) => areaDe(v)?.label ?? 'No area'
 
 // Fecha de hoy en Lima (AAAA-MM-DD), como el resto del sistema.
 export const hoyLima = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
@@ -67,7 +80,7 @@ export const vencido = (t, hoy = hoyLima()) => Boolean(t.fecha_limite) && t.esta
 const sinTildes = (s) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 // vista: todos | mios | creados | urgentes | vencidos | estancados | archivados. Los archivados solo se ven en su vista.
-export function filtrarTickets(tickets, { vista = 'todos', estado = '', prioridad = '', tipo = '', responsable = '', texto = '' }, uid, hoy = hoyLima(), ahora = Date.now()) {
+export function filtrarTickets(tickets, { vista = 'todos', estado = '', prioridad = '', tipo = '', area = '', responsable = '', texto = '' }, uid, hoy = hoyLima(), ahora = Date.now()) {
   const q = sinTildes(texto.trim())
   return tickets.filter((t) => {
     if (vista === 'archivados' ? !t.archivado : t.archivado) return false
@@ -79,6 +92,7 @@ export function filtrarTickets(tickets, { vista = 'todos', estado = '', priorida
     if (estado && t.estado !== estado) return false
     if (prioridad && t.prioridad !== prioridad) return false
     if (tipo && t.tipo !== tipo) return false
+    if (area === 'sin' ? Boolean(t.area) : area && t.area !== area) return false
     if (responsable === 'sin' ? responsablesDe(t).length > 0 : responsable && !responsablesDe(t).includes(responsable)) return false
     if (q && !sinTildes(t.titulo).includes(q) && !sinTildes(t.codigo).includes(q)) return false
     return true
@@ -100,8 +114,8 @@ export function textoHistorial(h, nombre) {
   const quien = nombre(h.usuario_id)
   if (h.accion === 'cambió') {
     const lista = (v) => (v ? v.split(',').map((id) => nombreCorto(nombre(id), 'someone')).join(', ') : 'nobody')
-    const valor = (v) => (h.campo === 'responsables' ? lista(v) : h.campo === 'responsable' ? nombre(v, 'nobody') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : v || '—')
-    const campo = { titulo: 'the title', descripcion: 'the description', tipo: 'the type', prioridad: 'the priority', estado: 'the status', responsable: 'the assignee', responsables: 'the assignees', fecha_limite: 'the due date', checklist: 'the checklist' }[h.campo] ?? h.campo
+    const valor = (v) => (h.campo === 'responsables' ? lista(v) : h.campo === 'responsable' ? nombre(v, 'nobody') : h.campo === 'estado' ? etiquetaEstado(v) : h.campo === 'prioridad' ? etiquetaPrioridad(v) : h.campo === 'tipo' ? etiquetaTipo(v) : h.campo === 'area' ? (v ? etiquetaArea(v) : 'no area') : v || '—')
+    const campo = { titulo: 'the title', descripcion: 'the description', tipo: 'the type', area: 'the area', prioridad: 'the priority', estado: 'the status', responsable: 'the assignee', responsables: 'the assignees', fecha_limite: 'the due date', checklist: 'the checklist' }[h.campo] ?? h.campo
     if (h.campo === 'descripcion') return `${quien} edited the description`
     return `${quien} changed ${campo}: ${valor(h.valor_anterior)} → ${valor(h.valor_nuevo)}`
   }

@@ -10,6 +10,7 @@ import EjercicioJugador from './EjercicioJugador'
 import useCarga from '../../hooks/useCarga'
 import { CICLOS, MODULOS, TIPOS, TONOS, UNIDADES, USOS, cantidadItems, clasificacionTexto, compilar, tipoDe } from '../../lib/ejercicios'
 import { supabase } from '../../lib/supabase'
+import { fuenteTexto } from '../../lib/curriculo'
 import * as servicioReal from '../../services/ejercicios'
 
 // Filtro compacto (el inputClass es w-full y no se deja encoger).
@@ -35,6 +36,11 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
               {n != null && ` · ${n} ${n === 1 ? 'item' : 'items'}`}
               {!t.auto && ' · you grade it'}
             </span>
+            {fuenteTexto(e) && (
+              <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
+                <Icon name="book" className="h-3.5 w-3.5" /> {fuenteTexto(e)}
+              </span>
+            )}
             <span className="mt-2 flex flex-wrap gap-1.5">
               {clasificacionTexto(e) && <Badge color="brand">{clasificacionTexto(e)}</Badge>}
               {e.nivel && <Badge color="slate">{e.nivel}</Badge>}
@@ -69,7 +75,12 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
         <Badge color={e.publico ? 'brand' : 'peach'}>{e.publico ? 'Bank' : 'Mine'}</Badge>
         {!t.auto && <Badge color="peach">Needs review</Badge>}
       </div>
-      <p className="mt-2 text-xs text-slate-400">Created by {e.autor_nombre}</p>
+      {fuenteTexto(e) && (
+        <p className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500">
+          <Icon name="book" className="h-3.5 w-3.5" /> {fuenteTexto(e)}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-slate-400">Created by {e.autor_nombre}</p>
       <div className="mt-auto flex flex-wrap items-center gap-1 pt-3">
         {onElegir ? (
           <Button type="button" className="flex-1" onClick={() => onElegir(e)}>

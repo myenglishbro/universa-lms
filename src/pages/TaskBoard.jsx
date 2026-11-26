@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import ErrorBoundary from '../components/ui/ErrorBoundary'
-import EquipoCarga from '../components/tickets/EquipoCarga'
 import TicketDetalle from '../components/tickets/TicketDetalle'
 import TicketCalendario from '../components/tickets/TicketCalendario'
 import TicketNuevo from '../components/tickets/TicketNuevo'
@@ -12,7 +10,7 @@ import Field, { inputClass } from '../components/ui/Field'
 import Icon from '../components/ui/Icon'
 import PageHeader from '../components/ui/PageHeader'
 import useCarga from '../hooks/useCarga'
-import { ESTADOS, PRIORIDADES, TIPOS, filtrarTickets, nombreCorto } from '../lib/tickets'
+import { AREAS, ESTADOS, PRIORIDADES, TIPOS, etiquetaArea, filtrarTickets, nombreCorto } from '../lib/tickets'
 import { actualizarTicket, listarTickets, personalTickets, suscribirTickets } from '../services/tickets'
 
 const VISTAS = [
@@ -24,7 +22,7 @@ const VISTAS = [
   { id: 'estancados', label: 'Stalled' },
   { id: 'archivados', label: 'Archived' },
 ]
-const SIN_FILTROS = { estado: '', prioridad: '', tipo: '', responsable: '', texto: '' }
+const SIN_FILTROS = { estado: '', prioridad: '', tipo: '', area: '', responsable: '', texto: '' }
 
 // Task Board: tablero Kanban compartido por el personal administrativo. `notif` viene del panel (contador del menú).
 export default function TaskBoard({ miId, notif }) {
@@ -96,6 +94,7 @@ export default function TaskBoard({ miId, notif }) {
     estado: (v) => ESTADOS.find((o) => o.value === v)?.label,
     prioridad: (v) => `${PRIORIDADES.find((o) => o.value === v)?.label} priority`,
     tipo: (v) => TIPOS.find((o) => o.value === v)?.label,
+    area: (v) => (v === 'sin' ? 'No area' : etiquetaArea(v)),
     responsable: (v) => (v === 'sin' ? 'Unassigned' : nombreCorto(nombre(v), 'Someone')),
     texto: (v) => `“${v}”`,
   }
@@ -148,10 +147,6 @@ export default function TaskBoard({ miId, notif }) {
         }
       />
 
-      <ErrorBoundary nombre="Team office" mensaje="The team office could not be shown, but the board works normally.">
-        <EquipoCarga tickets={tickets} personal={personal} miId={miId} elegido={filtros.responsable} onElegir={(id) => setFiltros((p) => ({ ...p, responsable: id }))} />
-      </ErrorBoundary>
-
       {/* Fila 1: modo, búsqueda y filtros. Fila 2: vistas. Los filtros se abren solo cuando se necesitan. */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="flex rounded-lg bg-slate-100 p-0.5" role="tablist" aria-label="Layout">
@@ -171,10 +166,11 @@ export default function TaskBoard({ miId, notif }) {
         </button>
       </div>
       {verFiltros && (
-        <div className="mb-3 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-3 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Status" options={[{ value: '', label: 'All statuses' }, ...ESTADOS]} value={filtros.estado} onChange={setF('estado')} />
           <Field label="Priority" options={[{ value: '', label: 'Any priority' }, ...PRIORIDADES]} value={filtros.prioridad} onChange={setF('prioridad')} />
           <Field label="Type" options={[{ value: '', label: 'All types' }, ...TIPOS]} value={filtros.tipo} onChange={setF('tipo')} />
+          <Field label="Area" options={[{ value: '', label: 'All areas' }, ...AREAS.map((a) => ({ value: a.value, label: a.label })), { value: 'sin', label: 'No area' }]} value={filtros.area} onChange={setF('area')} />
           <Field
             label="Assignee"
             options={[{ value: '', label: 'All assignees' }, { value: 'sin', label: 'Unassigned' }, ...personal.map((p) => ({ value: p.user_id, label: `${nombreCorto(p.correo)}${p.activo ? '' : ' (inactive)'}` }))]}

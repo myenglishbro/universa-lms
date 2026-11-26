@@ -31,7 +31,7 @@ const UI_ESTADO = {
   listo: { caja: 'bg-amber-50 text-amber-900 hover:bg-amber-100', punto: 'bg-amber-400' },
   parcial: { caja: 'bg-sky-50 text-sky-900 hover:bg-sky-100', punto: 'bg-sky-400' },
   en_curso: { caja: 'bg-sky-50 text-sky-900 hover:bg-sky-100', punto: 'bg-sky-400' },
-  sin_nota: { caja: 'border border-dashed border-slate-200 bg-white text-slate-300 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600', punto: '' },
+  sin_nota: { caja: 'bg-slate-50/70 text-slate-300 hover:bg-brand-50 hover:text-brand-600', punto: '' },
   sin_clases: { caja: 'bg-slate-50 text-slate-300 hover:bg-slate-100', punto: '' },
 }
 const uiEstado = (celda) => UI_ESTADO[celda?.estado ?? 'sin_nota'] ?? UI_ESTADO.sin_nota
@@ -66,6 +66,8 @@ function BotonCelda({ celda, evaluacion, alumno, onAbrir }) {
           ? `${celda.unidades_registradas}/${celda.unidades_total} units`
           : ''
   const aporte = celda?.aporte != null ? `aporta ${fmtNota(celda.aporte)}` : ''
+  // Nota publicada por debajo del mínimo: se ve en rojo sin abrir la ficha.
+  const baja = celda?.estado === 'publicada' && celda.puntaje != null && notaBaja(celda.puntaje)
   return (
     <button
       type="button"
@@ -82,7 +84,7 @@ function BotonCelda({ celda, evaluacion, alumno, onAbrir }) {
         </>
       ) : (
         <>
-          <span className="text-base font-semibold leading-tight">{textoCelda(celda)}</span>
+          <span className={`text-base font-semibold leading-tight ${baja ? 'text-rose-700' : ''}`}>{textoCelda(celda)}</span>
           {(detalle || aporte) && <span className="text-[10px] font-normal leading-tight opacity-70">{[detalle, aporte].filter(Boolean).join(' · ')}</span>}
         </>
       )}
@@ -134,24 +136,90 @@ function SubtotalAgregado({ r }) {
   )
 }
 
-function Leyenda() {
+// Cuenta las celdas por estado (sin_clases no cuenta: no aplica).
+function contar(modulos, alumnos) {
+  const n = { publicada: 0, borrador: 0, progreso: 0, sin: 0 }
+  for (const m of modulos)
+    for (const ev of m.evaluaciones)
+      for (const a of alumnos) {
+        const e = a.celdas[ev.id]?.estado ?? 'sin_nota'
+        if (e === 'sin_clases') continue
+        if (e === 'publicada') n.publicada++
+        else if (e === 'borrador' || e === 'listo') n.borrador++
+        else if (e === 'parcial' || e === 'en_curso') n.progreso++
+        else n.sin++
+      }
+  return n
+}
+
+// Resumen del módulo elegido: cuántas notas hay en cada estado. Sirve también de leyenda de colores.
+function Resumen({ n }) {
   const items = [
-    ['bg-emerald-500', 'Published'],
-    ['bg-amber-400', 'Draft / ready to publish'],
-    ['bg-sky-400', 'In progress (incomplete)'],
+    ['bg-emerald-500', n.publicada, 'published'],
+    ['bg-amber-400', n.borrador, 'ready to publish'],
+    ['bg-sky-400', n.progreso, 'in progress'],
+    ['bg-slate-300', n.sin, 'not recorded'],
   ]
   return (
-    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-      {items.map(([c, t]) => (
-        <span key={t} className="inline-flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${c}`} /> {t}
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      {items.map(([c, cant, t]) => (
+        <span key={t} className={`inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 ring-1 ring-slate-200 ${cant === 0 ? 'opacity-50' : ''}`}>
+          <span className={`h-2 w-2 rounded-full ${c}`} />
+          <strong className="text-slate-900">{cant}</strong>
+          <span className="text-slate-500">{t}</span>
         </span>
       ))}
-      <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-4 rounded border border-dashed border-slate-300" /> Not recorded
-      </span>
-      <span>Subtotals count published grades only.</span>
-    </p>
+      <span className="text-slate-400">Subtotals count published grades only.</span>
+    </div>
+  )
+}
+
+// Un módulo a la vez (el que toca por defecto) con su avance; «All modules» devuelve la vista completa.
+function SelectorModulo({ modulos, alumnos, valor, onCambio }) {
+  const avance = (m) => {
+    let pub = 0
+    let total = 0
+    let borr = 0
+    for (const ev of m.evaluaciones)
+      for (const a of alumnos) {
+        const e = a.celdas[ev.id]?.estado
+        if (e === 'sin_clases') continue
+        total++
+        if (e === 'publicada') pub++
+        else if (e === 'borrador' || e === 'listo') borr++
+      }
+    return { pub, total, borr }
+  }
+  const lista = [...modulos].sort((x, y) => x.orden - y.orden)
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Module">
+      {lista.map((m) => {
+        const v = avance(m)
+        const on = valor === m.id
+        return (
+          <button
+            key={m.id}
+            role="tab"
+            aria-selected={on}
+            onClick={() => onCambio(m.id)}
+            className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}
+          >
+            {m.nombre}
+            {m.version_id ? (
+              <span className={`text-[11px] tabular-nums ${on ? 'text-white/80' : 'text-slate-400'}`}>
+                {v.pub}/{v.total}
+              </span>
+            ) : (
+              <span className={`text-[11px] ${on ? 'text-white/80' : 'text-amber-600'}`}>no template</span>
+            )}
+            {v.borr > 0 && <span title={`${v.borr} ready to publish`} className="h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white/70" />}
+          </button>
+        )
+      })}
+      <button role="tab" aria-selected={valor === 'todos'} onClick={() => onCambio('todos')} className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${valor === 'todos' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+        All modules
+      </button>
+    </div>
   )
 }
 
@@ -166,9 +234,9 @@ function Seccion({ columnas, className, children }) {
   )
 }
 
-function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimiento }) {
+function Tabla({ datos, alumnos, soloPendientes, modulosVista, enTodos, onAbrir, onInforme, onSeguimiento }) {
   const { modulos, salon, consolidacion } = datos
-  const grupos = useMemo(() => agruparPorCiclo(modulos), [modulos])
+  const grupos = useMemo(() => agruparPorCiclo(modulosVista), [modulosVista])
   const resumen = (a, id) => a.resumen.modulos.find((x) => x.modulo_id === id)
   const resumenCiclo = (a, ciclo) => a.resumen.ciclos.find((c) => (c.ciclo ?? null) === ciclo)
   const columnas = 2 + alumnos.length
@@ -194,12 +262,14 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimien
                 <span className="mt-1 block max-w-32 truncate text-xs font-semibold text-slate-800" title={a.nombre}>
                   {nombreCorto(a.nombre)}
                 </span>
-                <button type="button" aria-label={`Report for ${a.nombre}`} onClick={() => onInforme(a)} className="text-[10px] text-brand-700 hover:underline">
-                  PDF report
-                </button>
-                <button type="button" aria-label={`Progress of ${a.nombre}`} onClick={() => onSeguimiento(a)} className="block w-full text-[10px] text-brand-700 hover:underline">
-                  Progress
-                </button>
+                <span className="mt-1 inline-flex gap-1">
+                  <button type="button" aria-label={`Report for ${a.nombre}`} title="Download the PDF report" onClick={() => onInforme(a)} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 transition-colors hover:bg-brand-100 hover:text-brand-700">
+                    <Icon name="doc" className="h-3 w-3" /> PDF
+                  </button>
+                  <button type="button" aria-label={`Progress of ${a.nombre}`} title="See the student's progress" onClick={() => onSeguimiento(a)} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 transition-colors hover:bg-brand-100 hover:text-brand-700">
+                    <Icon name="chart" className="h-3 w-3" /> Progress
+                  </button>
+                </span>
               </th>
             ))}
           </tr>
@@ -207,19 +277,29 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimien
         <tbody>
           {grupos.map((g) => (
             <Fragment key={g.ciclo ?? 'sin'}>
-              <Seccion columnas={columnas} className="bg-brand-600 text-white">
-                <span className="text-xs font-semibold uppercase tracking-wider">{g.ciclo != null ? `Cycle ${g.ciclo}` : 'No cycle'}</span>
-              </Seccion>
+              {enTodos && (
+                <Seccion columnas={columnas} className="bg-brand-600 text-white">
+                  <span className="text-xs font-semibold uppercase tracking-wider">{g.ciclo != null ? `Cycle ${g.ciclo}` : 'No cycle'}</span>
+                </Seccion>
+              )}
               {g.modulos.map((m) => {
                 const evals = m.evaluaciones.filter(verEval)
                 if (soloPendientes && evals.length === 0) return null
                 return (
                   <Fragment key={m.id}>
-                    <Seccion columnas={columnas} className="bg-slate-50">
-                      <span className="text-sm font-semibold text-slate-800">{m.nombre}</span>
-                      {m.plantilla && <span className="ml-2 text-xs font-normal text-slate-400">{m.plantilla}</span>}
-                      {!m.version_id && <span className="ml-2 text-xs font-normal text-amber-600">No template assigned</span>}
-                    </Seccion>
+                    {enTodos ? (
+                      <Seccion columnas={columnas} className="bg-slate-50">
+                        <span className="text-sm font-semibold text-slate-800">{m.nombre}</span>
+                        {m.plantilla && <span className="ml-2 text-xs font-normal text-slate-400">{m.plantilla}</span>}
+                        {!m.version_id && <span className="ml-2 text-xs font-normal text-amber-600">No template assigned</span>}
+                      </Seccion>
+                    ) : (
+                      !m.version_id && (
+                        <Seccion columnas={columnas} className="bg-amber-50">
+                          <span className="text-xs font-medium text-amber-700">No assessment template assigned to {m.nombre} yet. Ask administration to assign one.</span>
+                        </Seccion>
+                      )
+                    )}
                     {evals.map((ev) => (
                       <tr key={ev.id}>
                         <td {...fija('comp', 'bg-white', 'text-slate-800')}>
@@ -249,15 +329,17 @@ function Tabla({ datos, alumnos, soloPendientes, onAbrir, onInforme, onSeguimien
                   </Fragment>
                 )
               })}
-              <tr>
-                <td {...fija('comp', 'bg-brand-50', 'text-xs font-semibold text-brand-800')}>Subtotal {g.ciclo != null ? `cycle ${g.ciclo}` : 'no cycle'}</td>
-                <td {...fija('peso', 'bg-brand-50', 'text-right text-xs text-brand-700')}>{pesoTxt(g.modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
-                {alumnos.map((a) => (
-                  <td key={a.alumno_id} className="border-b border-brand-100 bg-brand-50 px-2 py-1.5 text-center text-sm text-brand-900">
-                    <SubtotalAgregado r={resumenCiclo(a, g.ciclo)} />
-                  </td>
-                ))}
-              </tr>
+              {enTodos && (
+                <tr>
+                  <td {...fija('comp', 'bg-brand-50', 'text-xs font-semibold text-brand-800')}>Subtotal {g.ciclo != null ? `cycle ${g.ciclo}` : 'no cycle'}</td>
+                  <td {...fija('peso', 'bg-brand-50', 'text-right text-xs text-brand-700')}>{pesoTxt(g.modulos.reduce((s, m) => s + (m.escala ?? 0), 0))}</td>
+                  {alumnos.map((a) => (
+                    <td key={a.alumno_id} className="border-b border-brand-100 bg-brand-50 px-2 py-1.5 text-center text-sm text-brand-900">
+                      <SubtotalAgregado r={resumenCiclo(a, g.ciclo)} />
+                    </td>
+                  ))}
+                </tr>
+              )}
             </Fragment>
           ))}
           <tr>
@@ -405,6 +487,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
   const [fallo, setFallo] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [soloPendientes, setSoloPendientes] = useState(false)
+  const [moduloSel, setModuloSel] = useState(null) // null = el módulo que toca; 'todos' = vista completa
   const ancha = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 1024px)').matches : true
   const [vista, setVista] = useState(vistaInicial ?? (ancha ? 'tabla' : 'alumno'))
 
@@ -425,6 +508,12 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
 
   const q = busqueda.trim().toLowerCase()
   const alumnosVisibles = q ? datos.alumnos.filter((x) => x.nombre.toLowerCase().includes(q)) : datos.alumnos
+  // Módulo que toca por defecto: el primero que aún tiene algo sin publicar.
+  const ordenados = [...datos.modulos].sort((x, y) => x.orden - y.orden)
+  const porDefecto = ordenados.find((m) => m.evaluaciones.some((ev) => alumnosVisibles.some((a) => pendiente(a.celdas[ev.id])))) ?? ordenados[0]
+  const seleccion = moduloSel === 'todos' ? 'todos' : (ordenados.find((m) => m.id === moduloSel) ?? porDefecto).id
+  const enTodos = seleccion === 'todos' || ordenados.length === 1
+  const modulosVista = enTodos ? datos.modulos : datos.modulos.filter((m) => m.id === seleccion)
   const abrir = (evaluacion, alumno) => setEditor({ evaluacion, alumno })
   const informe = async (a) => {
     setFallo('')
@@ -480,6 +569,7 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           }}
         />
       )}
+      {vista === 'tabla' && ordenados.length > 1 && <SelectorModulo modulos={datos.modulos} alumnos={alumnosVisibles} valor={seleccion} onCambio={setModuloSel} />}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
         {vista === 'tabla' && (
           <>
@@ -520,11 +610,11 @@ export default function MatrizNotas({ salonId, servicio = servicioReal, vistaIni
           </Button>
         </div>
       </div>
-      {vista === 'tabla' && <Leyenda />}
+      {vista === 'tabla' && <Resumen n={contar(modulosVista, alumnosVisibles)} />}
       {fallo && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{fallo}</p>}
       {vista === 'tabla' ? (
         alumnosVisibles.length ? (
-          <Tabla datos={datos} alumnos={alumnosVisibles} soloPendientes={soloPendientes} onAbrir={abrir} onInforme={informe} onSeguimiento={verSeguimiento} />
+          <Tabla datos={datos} alumnos={alumnosVisibles} soloPendientes={soloPendientes} modulosVista={modulosVista} enTodos={enTodos} onAbrir={abrir} onInforme={informe} onSeguimiento={verSeguimiento} />
         ) : (
           <Card className="p-6 text-center">
             <p className="text-sm text-slate-500">No student matches “{busqueda}”.</p>

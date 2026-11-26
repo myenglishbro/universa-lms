@@ -71,6 +71,22 @@ export function incrustarDe({ url, proveedor }) {
   return null
 }
 
+// Qué es un enlace pegado: documento (PDF, Docs o Slides de Drive: se lee dentro), video (YouTube, Vimeo) o enlace externo (se abre aparte).
+// Sirve para elegir el tipo solo y para mostrar el icono y el botón correctos.
+export function claseDeEnlace(url) {
+  const t = (url ?? '').trim()
+  const prov = proveedorDe(t)
+  if (!prov) return null
+  const dentro = Boolean(incrustarDe({ url: t, proveedor: prov }))
+  if (prov === 'youtube' || prov === 'vimeo') return { tipo: 'video', etiqueta: 'Video', icono: 'play', accion: 'Watch', dentro }
+  if (prov === 'drive') {
+    const oficina = /docs\.google\.com/.test(t)
+    return { tipo: 'documento', etiqueta: oficina ? 'Document' : 'PDF / file', icono: 'doc', accion: 'Read', dentro }
+  }
+  const host = (t.match(/^https:\/\/([A-Za-z0-9.-]+)/)?.[1] ?? '').replace(/^www\./, '')
+  return { tipo: 'enlace', etiqueta: host || 'Link', icono: 'link', accion: 'Open link', dentro: false }
+}
+
 // Filas planas de portal_contenido → secciones con sus lecciones (las secciones sin lecciones se conservan).
 export function agruparContenido(filas) {
   const mapa = new Map()

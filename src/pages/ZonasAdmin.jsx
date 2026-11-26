@@ -8,7 +8,7 @@ import Icon from '../components/ui/Icon'
 import Modal from '../components/ui/Modal'
 import PageHeader from '../components/ui/PageHeader'
 import useCarga from '../hooks/useCarga'
-import { validarEnlace } from '../lib/recursos'
+import { claseDeEnlace, validarEnlace } from '../lib/recursos'
 import * as servicioReal from '../services/zonas'
 
 const ZONAS = [
@@ -51,16 +51,21 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
           </datalist>
         </div>
         <Field
-          label="Document link"
+          label="Link"
           name="url"
           type="url"
           inputMode="url"
           value={v.url}
           onChange={cambiar}
-          placeholder="https://drive.google.com/file/d/…"
+          placeholder="Paste the link: a PDF on Drive or any website"
           hint="In Drive: right-click the PDF → Share → “Anyone with the link” → Copy link."
           required
         />
+        {claseDeEnlace(v.url) && (
+          <p className={`rounded-lg px-3 py-2 text-xs ${claseDeEnlace(v.url).dentro ? 'bg-brand-50 text-brand-700' : 'bg-peach-50 text-peach-700'}`}>
+            {claseDeEnlace(v.url).dentro ? `✓ ${claseDeEnlace(v.url).etiqueta}: it will be read inside the platform.` : 'This is a link: it will open in a new tab when someone clicks it.'}
+          </p>
+        )}
         <Field label="Description (optional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={v.oculto} onChange={(e) => setV({ ...v, oculto: e.target.checked })} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
@@ -243,11 +248,12 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
                     {docs.map((d) => (
                       <li key={d.id} className={`flex flex-wrap items-center gap-3 px-4 py-3 transition hover:bg-brand-50/40 ${d.oculto ? 'bg-slate-50/70' : ''}`}>
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${d.oculto ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600'}`}>
-                          <Icon name="doc" className="h-5 w-5" />
+                          <Icon name={claseDeEnlace(d.url)?.icono ?? 'link'} className="h-5 w-5" />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className={`flex flex-wrap items-center gap-2 font-medium ${d.oculto ? 'text-slate-500' : 'text-slate-900'}`}>
                             {d.titulo}
+                            <Badge color="slate">{claseDeEnlace(d.url)?.etiqueta ?? 'Link'}</Badge>
                             {d.oculto && <Badge color="peach">Hidden</Badge>}
                           </p>
                           {d.descripcion && <p className="truncate text-sm text-slate-500">{d.descripcion}</p>}
