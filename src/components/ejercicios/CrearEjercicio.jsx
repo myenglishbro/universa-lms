@@ -5,7 +5,7 @@ import Icon from '../ui/Icon'
 import Modal from '../ui/Modal'
 import EditorEjercicio from './EditorEjercicio'
 import EjercicioJugador from './EjercicioJugador'
-import { TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
+import { FORMAS_LECTURA, TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, tipoDe, validar } from '../../lib/ejercicios'
 import { MODULOS_POR_NIVEL, PROGRAMA, cicloTexto, nivelDeCiclo, nivelPrograma, ubicar, unidadesDeModulo } from '../../lib/curriculo'
 
 // Nivel + unidad + uso: obligatorios, se eligen al empezar (con IA o a mano) y se pueden cambiar al final.
@@ -107,7 +107,7 @@ function Pasos({ paso }) {
 export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose }) {
   const [paso, setPaso] = useState(ejercicio ? 2 : 0)
   const [tipo, setTipo] = useState(ejercicio?.tipo ?? '')
-  const [params, setParams] = useState({ imagen: true, modo: 'adaptar', tema: '', cantidad: '', extra: '', texto: '', transcripcion: '' })
+  const [params, setParams] = useState({ imagen: true, modo: 'adaptar', tema: '', cantidad: '', extra: '', texto: '', transcripcion: '', formas: ['tf', 'choice', 'gap'], formasAuto: true })
   const [pegado, setPegado] = useState('')
   const [errorIA, setErrorIA] = useState('')
   const [copiado, setCopiado] = useState(false)
@@ -245,10 +245,46 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
           <div className="grid gap-3 sm:grid-cols-3">
             <Field className="sm:col-span-2" label={params.imagen ? 'Topic (optional)' : 'Topic'} value={params.tema} onChange={setP('tema')} placeholder={params.imagen ? 'Leave empty to use the topic of the screenshot' : 'E.g. Daily routines, travel, past simple…'} />
             {t.auto && tipo !== 'matching' && (
-              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' ? 'Statements' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />
+              <Field label={tipo === 'fill_gap' || tipo === 'order_sentences' ? 'Number of sentences' : tipo === 'reading' || tipo === 'listening' ? 'Items (statements, questions, gaps)' : 'Number of questions'} type="number" min="1" max="20" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />
             )}
             {tipo === 'matching' && <Field label="Number of pairs" type="number" min="2" max="12" value={params.cantidad} onChange={setP('cantidad')} placeholder={params.imagen ? 'As in the image' : '5'} />}
           </div>
+          {(tipo === 'reading' || tipo === 'listening') && (
+            <fieldset>
+              <legend className="mb-1 text-sm font-medium text-slate-700">What kind of items should the AI create?</legend>
+              <div className="flex flex-wrap gap-2">
+                {params.imagen && (
+                  <button
+                    type="button"
+                    aria-pressed={params.formasAuto}
+                    onClick={() => setParams((p) => ({ ...p, formasAuto: !p.formasAuto }))}
+                    className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${params.formasAuto ? 'border-brand-500 bg-brand-600 text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                  >
+                    {params.formasAuto ? '✓ ' : ''}As in the screenshot
+                  </button>
+                )}
+                {FORMAS_LECTURA.map((f) => {
+                  const auto = params.imagen && params.formasAuto
+                  const on = !auto && params.formas.includes(f.id)
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setParams((p) => ({ ...p, formasAuto: false, formas: p.formasAuto ? [f.id] : p.formas.includes(f.id) ? (p.formas.length > 1 ? p.formas.filter((x) => x !== f.id) : p.formas) : [...p.formas, f.id] }))}
+                      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${on ? 'border-brand-500 bg-brand-50 text-brand-800 ring-2 ring-brand-500/20' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                    >
+                      {on ? '✓ ' : ''}
+                      {f.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {params.imagen && params.formasAuto ? 'The AI will use the kinds of items that the screenshot shows (true / false, questions, gaps).' : 'Pick one or more. The AI mixes them in similar amounts.'}
+              </p>
+            </fieldset>
+          )}
           {tipo === 'reading' && <Field as="textarea" rows={4} label="Your own text (optional)" value={params.texto} onChange={setP('texto')} hint={params.imagen ? 'If you leave it empty, the AI will take the text from the screenshot.' : 'If you leave it empty, the AI will write an original text.'} />}
           {tipo === 'listening' && (
             <>

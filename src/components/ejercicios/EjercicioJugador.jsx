@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import Icon from '../ui/Icon'
+import TextoFormateado from './TextoFormateado'
 import useSinCopiar from '../../hooks/useSinCopiar'
 import { audioDriveEmbed, fmtPuntaje, palabras } from '../../lib/ejercicios'
 import { subirAudio, urlAudio } from '../../services/ejercicios'
@@ -13,10 +14,11 @@ const MAL = 'border-rose-300 bg-rose-50 text-rose-800'
 function totalItems(tipo, c) {
   switch (tipo) {
     case 'multiple_choice':
-    case 'listening':
       return c.preguntas.length
+    case 'listening':
+      return c.preguntas.reduce((n, a) => n + (a.forma === 'gap' ? a.partes.length - 1 : 1), 0)
     case 'reading':
-      return c.afirmaciones.length
+      return c.afirmaciones.reduce((n, a) => n + (a.forma === 'gap' ? a.partes.length - 1 : 1), 0)
     case 'fill_gap':
       return c.oraciones.reduce((n, o) => n + o.partes.length - 1, 0)
     case 'matching':
@@ -364,7 +366,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
   const irAlPendiente = () => {
     const i = resp.findIndex((x) => x === '')
     if (i < 0) return
-    const el = document.getElementById(tipo === 'fill_gap' ? `hueco-${i}` : `pregunta-${i}`)
+    const el = (tipo === 'fill_gap' || tipo === 'reading' || tipo === 'listening') && document.getElementById(`hueco-${i}`) ? document.getElementById(`hueco-${i}`) : document.getElementById(tipo === 'fill_gap' ? `hueco-${i}` : `pregunta-${i}`)
     if (!el) return
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     if (el.tagName === 'INPUT') el.focus({ preventScroll: true })
@@ -374,6 +376,76 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
     if (e.key !== 'Enter') return
     e.preventDefault()
     document.getElementById(`hueco-${idx + 1}`)?.focus()
+  }
+
+  // Ítems mixtos (True / False, pregunta con opciones, completar). Reading y Listening los comparten.
+  const renderMixtos = (lista, def) => {
+  let k = 0
+  return lista.map((a, i) => {
+                const forma = a.forma ?? def
+                const ini = k
+                k += forma === 'gap' ? a.partes.length - 1 : 1
+                if (forma === 'gap') {
+                  const idxs = Array.from({ length: a.partes.length - 1 }, (_, g) => ini + g)
+                  const okItem = d(idxs[0]) ? idxs.every((x) => d(x)?.ok) : undefined
+                  return (
+                    <Pregunta key={i} id={`pregunta-${ini}`} n={i + 1} respondida={idxs.every((x) => (resp[x] ?? '') !== '')} ok={okItem}>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Complete the sentence</p>
+                      <p className="text-base leading-[2.6rem] text-slate-900">
+                        {a.partes.map((parte, g) => {
+                          const idx = g < a.partes.length - 1 ? ini + g : -1
+                          return (
+                            <span key={g}>
+                              {parte}
+                              {idx >= 0 && (
+                                <span className="mx-1 inline-block align-middle">
+                                  <input
+                                    id={`hueco-${idx}`}
+                                    value={resp[idx] ?? ''}
+                                    disabled={bloqueado}
+                                    onChange={(e) => poner(idx, e.target.value)}
+                                    onKeyDown={alEnter(idx)}
+                                    aria-label={`Gap ${idx + 1}`}
+                                    autoComplete="off"
+                                    autoCapitalize="off"
+                                    spellCheck={false}
+                                    className={`w-36 rounded-lg border-0 border-b-2 bg-brand-50/60 px-2 py-1 text-center text-sm font-medium focus:outline-none focus:ring-0 ${
+                                      d(idx) ? (d(idx).ok ? 'border-emerald-400 text-emerald-800' : 'border-rose-400 text-rose-800') : 'border-brand-300 text-brand-800 focus:border-brand-600 focus:bg-brand-50'
+                                    }`}
+                                  />
+                                  {d(idx) && !d(idx).ok && <span className="ml-1 text-xs font-medium text-rose-700">→ {d(idx).correcta}</span>}
+                                </span>
+                              )}
+                            </span>
+                          )
+                        })}
+                      </p>
+                    </Pregunta>
+                  )
+                }
+                if (forma === 'choice') {
+                  return (
+                    <Pregunta key={i} id={`pregunta-${ini}`} n={i + 1} titulo={a.enunciado} respondida={resp[ini] !== ''} ok={d(ini)?.ok}>
+                      <Opciones opciones={a.opciones} valor={resp[ini]} onElegir={(v) => poner(ini, v)} bloqueado={bloqueado} detalle={d(ini)} />
+                      {d(ini) && !d(ini).ok && (
+                        <div className="mt-2">
+                          <Marca correcta={a.opciones[Number(d(ini).correcta)]} />
+                        </div>
+                      )}
+                    </Pregunta>
+                  )
+                }
+                return (
+                  <Pregunta key={i} id={`pregunta-${ini}`} n={i + 1} titulo={a.enunciado} respondida={resp[ini] !== ''} ok={d(ini)?.ok}>
+                    <VerdaderoFalso valor={resp[ini]} onElegir={(v) => poner(ini, v)} bloqueado={bloqueado} detalle={d(ini)} />
+                    {d(ini) && !d(ini).ok && (
+                      <div className="mt-2">
+                        <Marca correcta={d(ini).correcta === 'true' ? 'True' : 'False'} />
+                      </div>
+                    )}
+                  </Pregunta>
+                )
+              })
   }
 
   return (
@@ -423,7 +495,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
               <iframe title="Exercise audio" src={audioDriveEmbed(c.audio_url)} allow="autoplay" className="h-28 w-full rounded-lg border-0 bg-slate-50" />
             </div>
           )}
-          {c.preguntas.map((p, i) => (
+          {tipo === 'listening' ? renderMixtos(c.preguntas, 'choice') : c.preguntas.map((p, i) => (
             <Pregunta key={i} id={`pregunta-${i}`} n={i + 1} titulo={p.enunciado} respondida={resp[i] !== ''} ok={d(i)?.ok}>
               <Opciones opciones={p.opciones} valor={resp[i]} onElegir={(v) => poner(i, v)} bloqueado={bloqueado} detalle={d(i)} />
               {d(i) && !d(i).ok && (
@@ -438,27 +510,14 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
 
       {tipo === 'reading' && (
         <div className="grid items-start gap-5 lg:grid-cols-2">
-          <article className="rounded-2xl border border-brand-100 bg-white p-5 text-[15px] leading-7 text-slate-800 shadow-sm sm:p-6 lg:sticky lg:top-2 lg:max-h-[80vh] lg:overflow-auto">
-            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700">
+          <article className="rounded-2xl border border-brand-100 bg-white p-5 text-[15px] leading-7 text-slate-800 shadow-sm sm:p-7 lg:sticky lg:top-2 lg:max-h-[80vh] lg:overflow-auto">
+            <p className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700">
               <Icon name="book" className="h-4 w-4" /> Read the text
             </p>
-            {c.texto.split(/\n+/).map((par, i) => (
-              <p key={i} className="mb-3 last:mb-0">
-                {par}
-              </p>
-            ))}
+            <TextoFormateado texto={c.texto} />
           </article>
           <div className="space-y-4">
-            {c.afirmaciones.map((a, i) => (
-              <Pregunta key={i} id={`pregunta-${i}`} n={i + 1} titulo={a.enunciado} respondida={resp[i] !== ''} ok={d(i)?.ok}>
-                <VerdaderoFalso valor={resp[i]} onElegir={(v) => poner(i, v)} bloqueado={bloqueado} detalle={d(i)} />
-                {d(i) && !d(i).ok && (
-                  <div className="mt-2">
-                    <Marca correcta={d(i).correcta === 'true' ? 'True' : 'False'} />
-                  </div>
-                )}
-              </Pregunta>
-            ))}
+            {renderMixtos(c.afirmaciones, 'tf')}
           </div>
         </div>
       )}
@@ -549,7 +608,7 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
           </p>
           {c.tareas.map((t, i) => (
             <Pregunta key={i} id={`tarea-${i}`} n={i + 1} titulo={`Task ${i + 1}${t.genero ? ` · ${t.genero}` : ''}`}>
-              <p className="whitespace-pre-wrap rounded-xl bg-brand-50/50 p-4 text-[15px] leading-7 text-slate-900">{t.consigna}</p>
+              <TextoFormateado texto={t.consigna} className="rounded-xl bg-brand-50/50 p-4 text-[15px] leading-7 text-slate-900" />
               {t.min_palabras ? <p className="mt-2 text-xs text-slate-500">Suggested minimum: {t.min_palabras} words</p> : null}
               <textarea disabled rows={5} placeholder="The student writes here…" className="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm" />
             </Pregunta>
@@ -559,9 +618,9 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
 
       {tipo === 'writing' && !c.tareas && (
         <div className="space-y-3">
-          <p {...(vistaPrevia ? {} : sinCopiar.props)} className={`rounded-2xl border border-brand-100 bg-white p-5 text-base leading-7 text-slate-900 shadow-sm ${vistaPrevia ? '' : 'select-none'}`}>
-            {c.consigna}
-          </p>
+          <div {...(vistaPrevia ? {} : sinCopiar.props)} className={`rounded-2xl border border-brand-100 bg-white p-5 text-base leading-7 text-slate-900 shadow-sm sm:p-6 ${vistaPrevia ? '' : 'select-none'}`}>
+            <TextoFormateado texto={c.consigna} />
+          </div>
           <textarea
             {...(vistaPrevia ? {} : sinCopiar.props)}
             value={texto}
@@ -596,7 +655,9 @@ export default function EjercicioJugador({ ejercicio, entrega = null, vistaPrevi
 
       {tipo === 'speaking' && (
         <div className="space-y-3">
-          <p className="rounded-2xl border border-brand-100 bg-white p-5 text-base leading-7 text-slate-900 shadow-sm">{c.consigna}</p>
+          <div className="rounded-2xl border border-brand-100 bg-white p-5 text-base leading-7 text-slate-900 shadow-sm sm:p-6">
+            <TextoFormateado texto={c.consigna} />
+          </div>
           {hecho ? hecho.audio_path && <AudioGuardado ruta={hecho.audio_path} /> : <Grabadora segundosMax={c.segundos_max || 90} onAudio={setAudio} bloqueado={bloqueado} />}
         </div>
       )}

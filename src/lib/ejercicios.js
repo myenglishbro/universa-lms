@@ -6,7 +6,7 @@ export const TIPOS = [
   { id: 'fill_gap', label: 'Fill in the gap', desc: 'Sentences with gaps to fill in', icono: 'pen', tono: 'peach', auto: true },
   { id: 'matching', label: 'Matching', desc: 'Match each item with its pair', icono: 'link', tono: 'brand', auto: true },
   { id: 'order_sentences', label: 'Order sentences', desc: 'Put the words in order to form the sentence', icono: 'switch', tono: 'peach', auto: true },
-  { id: 'reading', label: 'Reading', desc: 'A text with true / false statements', icono: 'book', tono: 'brand', auto: true },
+  { id: 'reading', label: 'Reading', desc: 'A text with true / false, questions and gap-fill', icono: 'book', tono: 'brand', auto: true },
   { id: 'listening', label: 'Listening', desc: 'A Drive audio with multiple-choice questions', icono: 'headphones', tono: 'peach', auto: true },
   { id: 'writing', label: 'Writing', desc: 'Free written answer, reviewed by the teacher', icono: 'pencil', tono: 'brand', auto: false },
   { id: 'speaking', label: 'Speaking', desc: 'The student records their voice, reviewed by the teacher', icono: 'mic', tono: 'peach', auto: false },
@@ -56,6 +56,17 @@ const texto = (v) => String(v ?? '').trim()
 // ------------------------------------------------------------
 // Datos de partida para el editor
 // ------------------------------------------------------------
+// Reading: cada ítem tiene una forma: 'tf' (true / false), 'choice' (pregunta con opciones) o 'gap' (completar con [[ ]] según el texto).
+export const FORMAS_LECTURA = [
+  { id: 'tf', label: 'True / False' },
+  { id: 'choice', label: 'Question' },
+  { id: 'gap', label: 'Fill in the gap' },
+]
+export const formaDe = (a, def = 'tf') => a?.forma ?? def
+// Reading y Listening comparten los ítems mixtos. Listening heredó preguntas sin `forma`, que son de opción múltiple.
+export const formaPorDefecto = (tipo) => (tipo === 'listening' ? 'choice' : 'tf')
+export const itemLectura = (forma) =>
+  forma === 'choice' ? { forma, enunciado: '', opciones: ['', '', '', ''], correcta: 0 } : forma === 'gap' ? { forma, texto: '' } : { forma: 'tf', enunciado: '', verdadero: true }
 const preguntaVacia = () => ({ enunciado: '', opciones: ['', '', '', ''], correcta: 0 })
 export function datosVacios(tipo) {
   switch (tipo) {
@@ -70,7 +81,7 @@ export function datosVacios(tipo) {
     case 'order_sentences':
       return { instrucciones: 'Put the words in the correct order.', oraciones: [''] }
     case 'reading':
-      return { instrucciones: 'Read the text and mark each statement as true or false.', texto: '', afirmaciones: [{ enunciado: '', verdadero: true }] }
+      return { instrucciones: 'Read the text and answer the questions.', texto: '', afirmaciones: [itemLectura('tf')] }
     case 'writing':
       return { instrucciones: '', consigna: '', min_palabras: 80 }
     case 'speaking':
@@ -86,7 +97,7 @@ export const itemVacio = (tipo) =>
     fill_gap: { texto: '' },
     matching: { izq: '', der: '' },
     order_sentences: '',
-    reading: { enunciado: '', verdadero: true },
+    reading: itemLectura('tf'),
   })[tipo]
 // Nombre de la lista de elementos dentro de `datos` (null si el tipo no tiene lista).
 export const claveLista = (tipo) =>
@@ -103,13 +114,28 @@ export function audioDriveEmbed(url) {
 // ------------------------------------------------------------
 // Validación de lo que se edita
 // ------------------------------------------------------------
+function validarMixtos(lista, def) {
+  for (const [i, a] of lista.entries()) {
+    const f = formaDe(a, def)
+    if (f === 'gap') {
+      if (!/\[\[[^\]]+\]\]/.test(a.texto ?? '')) return `Item ${i + 1} needs a gap: write the answer between [[ ]]`
+    } else if (!texto(a.enunciado)) return `Item ${i + 1} is empty`
+    else if (f === 'choice') {
+      if (a.opciones.filter((o) => texto(o)).length < 2) return `Item ${i + 1} needs at least 2 options`
+      if (!texto(a.opciones[a.correcta])) return `Mark an option that has text as correct in item ${i + 1}`
+    }
+  }
+  return ''
+}
+
 export function validar(tipo, d) {
   const lista = claveLista(tipo)
   if (lista && (!Array.isArray(d[lista]) || d[lista].length === 0)) return 'Add at least one item'
   switch (tipo) {
-    case 'multiple_choice':
-    case 'listening': {
-      if (tipo === 'listening' && !audioDriveEmbed(d.audio_url)) return 'Paste a Google Drive link pointing to the audio (shared with anyone who has the link)'
+    case 'listening':
+      if (!audioDriveEmbed(d.audio_url)) return 'Paste a Google Drive link pointing to the audio (shared with anyone who has the link)'
+      return validarMixtos(d.preguntas, 'choice')
+    case 'multiple_choice': {
       for (const [i, p] of d.preguntas.entries()) {
         if (!texto(p.enunciado)) return `Question ${i + 1} has no text`
         const llenas = p.opciones.filter((o) => texto(o))
@@ -130,8 +156,7 @@ export function validar(tipo, d) {
       return ''
     case 'reading':
       if (!texto(d.texto)) return 'The reading text is missing'
-      for (const [i, a] of d.afirmaciones.entries()) if (!texto(a.enunciado)) return `Statement ${i + 1} is empty`
-      return ''
+      return validarMixtos(d.afirmaciones, 'tf')
     case 'writing':
       if (esExamen(d)) {
         const m = Number(d.minutos)
@@ -170,18 +195,42 @@ function mezclar(lista, clave) {
   return [...lista.slice(1), lista[0]]
 }
 
+// Ítems mixtos (true/false, pregunta con opciones, completar) → contenido sin respuestas + clave plana (un elemento por respuesta).
+function compilarMixtos(lista, def) {
+  const items = []
+  const contenido = lista.map((a) => {
+    const f = formaDe(a, def)
+    if (f === 'gap') {
+      const g = compilar('fill_gap', { instrucciones: '', oraciones: [{ texto: a.texto }] })
+      items.push(...g.clave.items)
+      return { forma: 'gap', partes: g.contenido.oraciones[0].partes }
+    }
+    if (f === 'choice') {
+      const c = compilar('multiple_choice', { instrucciones: '', preguntas: [a] })
+      items.push(...c.clave.items)
+      return { forma: 'choice', ...c.contenido.preguntas[0] }
+    }
+    items.push([a.verdadero ? 'true' : 'false'])
+    return { forma: 'tf', enunciado: texto(a.enunciado) }
+  })
+  return { contenido, items }
+}
+
 export function compilar(tipo, d) {
   const instrucciones = texto(d.instrucciones)
   switch (tipo) {
-    case 'multiple_choice':
     case 'listening': {
+      const m = compilarMixtos(d.preguntas, 'choice')
+      return { contenido: { instrucciones, preguntas: m.contenido, audio_url: texto(d.audio_url) }, clave: { items: m.items } }
+    }
+    case 'multiple_choice': {
       const ps = d.preguntas.map((p) => {
         const opciones = p.opciones.map((o, i) => ({ o: texto(o), i })).filter((x) => x.o)
         return { enunciado: texto(p.enunciado), opciones: opciones.map((x) => x.o), correcta: opciones.findIndex((x) => x.i === p.correcta) }
       })
       const base = { instrucciones, preguntas: ps.map((p) => ({ enunciado: p.enunciado, opciones: p.opciones })) }
       return {
-        contenido: tipo === 'listening' ? { ...base, audio_url: texto(d.audio_url) } : base,
+        contenido: base,
         clave: { items: ps.map((p) => [String(p.correcta)]) },
       }
     }
@@ -215,11 +264,10 @@ export function compilar(tipo, d) {
         clave: { items: frases.map((f) => [f]) },
       }
     }
-    case 'reading':
-      return {
-        contenido: { instrucciones, texto: texto(d.texto), afirmaciones: d.afirmaciones.map((a) => ({ enunciado: texto(a.enunciado) })) },
-        clave: { items: d.afirmaciones.map((a) => [a.verdadero ? 'true' : 'false']) },
-      }
+    case 'reading': {
+      const m = compilarMixtos(d.afirmaciones, 'tf')
+      return { contenido: { instrucciones, texto: String(d.texto ?? '').replace(/\r/g, '').trim(), afirmaciones: m.contenido }, clave: { items: m.items } }
+    }
     case 'writing':
       if (esExamen(d)) {
         return {
@@ -245,6 +293,7 @@ export function cantidadItems(tipo, d) {
   const l = claveLista(tipo)
   if (!l) return null
   if (tipo === 'fill_gap') return d.oraciones.reduce((n, o) => n + (String(o.texto).match(/\[\[/g)?.length ?? 0), 0)
+  if (tipo === 'reading' || tipo === 'listening') return d[l].reduce((n, a) => n + (formaDe(a, formaPorDefecto(tipo)) === 'gap' ? String(a.texto ?? '').match(/\[\[/g)?.length ?? 0 : 1), 0)
   return d[l]?.length ?? 0
 }
 
@@ -263,7 +312,9 @@ const ESQUEMAS = {
   "titulo": "…",
   "instrucciones": "…",
   "preguntas": [
-    { "enunciado": "…", "opciones": ["…", "…", "…", "…"], "correcta": 0 }
+    { "forma": "choice", "enunciado": "…?", "opciones": ["…", "…", "…", "…"], "correcta": 0 },
+    { "forma": "tf", "enunciado": "…", "verdadero": true },
+    { "forma": "gap", "texto": "The speaker [[travelled]] to Spain last summer." }
   ]
 }`,
   fill_gap: `{
@@ -289,9 +340,11 @@ const ESQUEMAS = {
   reading: `{
   "titulo": "…",
   "instrucciones": "…",
-  "texto": "…",
+  "texto": "Title of the text\n\nFirst paragraph…\n\nSecond paragraph…\n\nThird paragraph…",
   "afirmaciones": [
-    { "enunciado": "…", "verdadero": true }
+    { "forma": "tf", "enunciado": "…", "verdadero": true },
+    { "forma": "choice", "enunciado": "…?", "opciones": ["…", "…", "…", "…"], "correcta": 0 },
+    { "forma": "gap", "texto": "The writer [[travelled]] to Spain last summer." }
   ]
 }`,
   writing: `{
@@ -311,17 +364,30 @@ const ESQUEMAS = {
 // «exactly 5» o, si no se indicó cantidad (captura de referencia), «as many as the screenshot shows».
 const cuantas = (p, cosa) => (p.cantidad ? `exactly ${p.cantidad} ${cosa}` : `the same number of ${cosa} as the screenshot shows`)
 
+const FORMA_PROMPT = {
+  tf: '"tf" (a statement to mark true or false; "verdadero" is true or false)',
+  choice: '"choice" (a comprehension question with 4 options and ONE correct one; "correcta" is the index starting at 0)',
+  gap: '"gap" (a sentence that summarises the text with the missing word or phrase between double square brackets: [[answer]]; separate valid alternatives with |)',
+}
+const formasLectura = (p) => {
+  if (p.imagen && p.formasAuto !== false) {
+    return `Follow the screenshot: for each item use the form that matches what the exercise in the screenshot shows (${Object.values(FORMA_PROMPT).join('; ')}). If the screenshot has several kinds of tasks, include each one; if it has only one kind, use only that kind. Set "forma" in each item.`
+  }
+  const f = (p.formas?.length ? p.formas : ['tf', 'choice', 'gap']).filter((x) => FORMA_PROMPT[x])
+  return f.length === 1 ? `Use ONLY the form ${FORMA_PROMPT[f[0]]}; set "forma" to "${f[0]}" in every item.` : `Use ONLY these forms, in similar amounts: ${f.map((x) => FORMA_PROMPT[x]).join(', ')}. Set "forma" in each item.`
+}
+
 const REGLAS = {
   multiple_choice: (p) => `- Create ${cuantas(p, 'multiple-choice questions')} with 4 options each and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0 (0 = first option).\n- Vary the position of the correct answer and avoid "all of the above".`,
   listening: (p) =>
-    `- The student will listen to an audio (you cannot hear it). Base the answers ONLY on this transcript${p.imagen && !p.transcripcion ? ' (if the screenshot shows the audioscript or the answer key, use that)' : ''}:\n"""\n${p.transcripcion || (p.imagen ? '[NO TRANSCRIPT PROVIDED: use the audioscript or answer key in the screenshot if there is one]' : '[PASTE THE AUDIO TRANSCRIPT HERE]')}\n"""\n- Create ${cuantas(p, 'multiple-choice questions')} with 4 options and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0.`,
+    `- The student will listen to an audio (you cannot hear it). Base the answers ONLY on this transcript${p.imagen && !p.transcripcion ? ' (if the screenshot shows the audioscript or the answer key, use that)' : ''}:\n"""\n${p.transcripcion || (p.imagen ? '[NO TRANSCRIPT PROVIDED: use the audioscript or answer key in the screenshot if there is one]' : '[PASTE THE AUDIO TRANSCRIPT HERE]')}\n"""\n- Create ${cuantas(p, 'items')} about the audio. ${formasLectura(p)} Gap answers must be words that are said in the transcript.`,
   fill_gap: (p) => `- Create ${cuantas(p, 'sentences')}. In each one, mark the word or phrase the student must fill in between double square brackets: [[answer]].\n- If more than one answer is valid, separate them with | inside the brackets: [[are|'re]].\n- Each sentence can have 1 or 2 gaps. The answer must be unambiguous from the context.`,
   matching: (p) => `- Create ${cuantas(p, 'pairs')}. Each "izq" item matches ONE "der" item (for example word ↔ definition, or question ↔ answer).\n- All "der" items must be different from each other and unambiguous.`,
   order_sentences: (p) => `- Create ${cuantas(p, 'complete, correct sentences')} (6 to 12 words each unless the screenshot shows otherwise). The student will receive the words shuffled and must put them in order.\n- Each sentence must have only one natural word order.`,
   reading: (p) =>
-    `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : p.imagen ? 'Use the reading text that appears in the screenshot.' : 'Write an original reading text of 120 to 200 words.'}\n- Create ${cuantas(p, 'statements')} about the text to mark as true or false. "verdadero" is true or false.\n- Mix true and false statements; none may depend on outside knowledge.`,
-  writing: () => `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" appropriate for the level.`,
-  speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.`,
+    `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : p.imagen ? 'Use the reading text that appears in the screenshot.' : 'Write an original reading text of 120 to 200 words.'}\n- Format the text as a short title on its own line followed by 3 to 5 paragraphs separated by a blank line (use \n\n inside the JSON string).\n- Create ${cuantas(p, 'items')} about the text. ${formasLectura(p)} Gap answers must be words that appear in the text. No item may depend on outside knowledge.`,
+  writing: () => `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" appropriate for the level.\n- Format the "consigna" with line breaks (use \n inside the JSON string), never as one block: a short opening line (end it with a colon if a list follows), then the tasks as a numbered list ("1. …", one per line) or bullets ("- …", one per line), then, if useful, a line starting with "Example: " and a line such as "Useful expressions:" followed by bullets. Put every list item on its own line.`,
+  speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.\n- Format the "consigna" with line breaks (use \n inside the JSON string), never as one block: a short opening line (end it with a colon if a list follows), then the tasks as a numbered list ("1. …", one per line) or bullets ("- …", one per line), then, if useful, a line starting with "Example: " and a line such as "Useful expressions:" followed by bullets. Put every list item on its own line.`,
 }
 
 // Posición en el curso y libro del nivel, para que la IA ajuste la dificultad y el estilo (nivel, ciclo, módulo, unidad).
@@ -381,6 +447,13 @@ function pregunta(p) {
   return { enunciado: texto(p.enunciado), opciones: opciones.slice(0, 6), correcta: indiceCorrecta(p.correcta, opciones) }
 }
 
+function leerMixto(x, def) {
+  const f = x.forma === 'choice' || x.forma === 'gap' || x.forma === 'tf' ? x.forma : Array.isArray(x.opciones) ? 'choice' : /\[\[/.test(x.texto ?? '') ? 'gap' : def
+  if (f === 'gap') return { forma: 'gap', texto: texto(x.texto) }
+  if (f === 'choice') return { forma: 'choice', ...pregunta(x) }
+  return { forma: 'tf', enunciado: texto(x.enunciado), verdadero: x.verdadero === true || texto(x.verdadero).toLowerCase() === 'true' }
+}
+
 // Devuelve { titulo, datos } o lanza un Error con un mensaje claro para el usuario.
 export function leerRespuestaIA(tipo, bruto) {
   let s = String(bruto ?? '').trim()
@@ -402,7 +475,7 @@ export function leerRespuestaIA(tipo, bruto) {
       datos = { ...base, preguntas: (j.preguntas ?? []).map(pregunta) }
       break
     case 'listening':
-      datos = { ...base, audio_url: '', preguntas: (j.preguntas ?? []).map(pregunta) }
+      datos = { ...base, audio_url: '', preguntas: (j.preguntas ?? []).map((x) => leerMixto(x, 'choice')) }
       break
     case 'fill_gap':
       datos = { ...base, oraciones: (j.oraciones ?? []).map((o) => ({ texto: texto(typeof o === 'string' ? o : o.texto) })) }
@@ -414,7 +487,11 @@ export function leerRespuestaIA(tipo, bruto) {
       datos = { ...base, oraciones: (j.oraciones ?? []).map((o) => texto(typeof o === 'string' ? o : o.texto)) }
       break
     case 'reading':
-      datos = { ...base, texto: texto(j.texto), afirmaciones: (j.afirmaciones ?? []).map((x) => ({ enunciado: texto(x.enunciado), verdadero: x.verdadero === true || texto(x.verdadero).toLowerCase() === 'true' })) }
+      datos = {
+        ...base,
+        texto: String(j.texto ?? '').replace(/\r/g, '').trim(),
+        afirmaciones: (j.afirmaciones ?? []).map((x) => leerMixto(x, 'tf')),
+      }
       break
     case 'writing':
       datos = { ...base, consigna: texto(j.consigna), min_palabras: Number(j.min_palabras) || 80 }

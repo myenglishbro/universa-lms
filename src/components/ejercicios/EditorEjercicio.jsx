@@ -1,7 +1,7 @@
 import Button from '../ui/Button'
 import Field from '../ui/Field'
 import Icon from '../ui/Icon'
-import { audioDriveEmbed, claveLista, datosExamen, esExamen, itemVacio } from '../../lib/ejercicios'
+import { FORMAS_LECTURA, audioDriveEmbed, claveLista, datosExamen, esExamen, formaDe, formaPorDefecto, itemLectura, itemVacio } from '../../lib/ejercicios'
 
 const LETRAS = 'ABCDEFGH'
 
@@ -24,12 +24,14 @@ function Fila({ n, onQuitar, puedeQuitar, children }) {
 // Editor visual del contenido de un ejercicio. Trabaja sobre el formato de autoría (con respuestas).
 export default function EditorEjercicio({ tipo, datos, onChange }) {
   const lista = claveLista(tipo)
+  const mixto = tipo === 'reading' || tipo === 'listening' // ítems de varias formas
+  const def = formaPorDefecto(tipo)
   const poner = (campo, valor) => onChange({ ...datos, [campo]: valor })
   const ponerItem = (i, nuevo) => poner(lista, datos[lista].map((x, j) => (j === i ? nuevo : x)))
   const agregar = () => poner(lista, [...datos[lista], itemVacio(tipo)])
   const quitar = (i) => poner(lista, datos[lista].filter((_, j) => j !== i))
 
-  const etiquetaAgregar = { multiple_choice: 'Add question', listening: 'Add question', fill_gap: 'Add sentence', matching: 'Add pair', order_sentences: 'Add sentence', reading: 'Add statement' }[tipo]
+  const etiquetaAgregar = { multiple_choice: 'Add question', listening: 'Add question', fill_gap: 'Add sentence', matching: 'Add pair', order_sentences: 'Add sentence' }[tipo]
 
   return (
     <div className="space-y-4">
@@ -51,7 +53,15 @@ export default function EditorEjercicio({ tipo, datos, onChange }) {
       )}
 
       {tipo === 'reading' && (
-        <Field as="textarea" rows={7} label="Reading text" value={datos.texto ?? ''} onChange={(e) => poner('texto', e.target.value)} placeholder="Paste or write the text the student will read." />
+        <Field
+          as="textarea"
+          rows={10}
+          label="Reading text"
+          value={datos.texto ?? ''}
+          onChange={(e) => poner('texto', e.target.value)}
+          placeholder={'Title of the text\n\nFirst paragraph…\n\nSecond paragraph…'}
+          hint="First short line = title. Leave a blank line between paragraphs. Start a line with - for a list."
+        />
       )}
 
       {tipo === 'writing' && (
@@ -100,7 +110,7 @@ export default function EditorEjercicio({ tipo, datos, onChange }) {
         <ul className="space-y-3">
           {datos[lista].map((it, i) => (
             <Fila key={i} n={i + 1} puedeQuitar={datos[lista].length > 1} onQuitar={() => quitar(i)}>
-              {(tipo === 'multiple_choice' || tipo === 'listening') && (
+              {tipo === 'multiple_choice' && (
                 <div className="space-y-2">
                   <Field label="Question" value={it.enunciado} onChange={(e) => ponerItem(i, { ...it, enunciado: e.target.value })} />
                   <fieldset>
@@ -145,32 +155,89 @@ export default function EditorEjercicio({ tipo, datos, onChange }) {
                 <Field label="Correct sentence" value={it} onChange={(e) => ponerItem(i, e.target.value)} placeholder="She goes to school every day." hint="Students will receive its words shuffled." />
               )}
 
-              {tipo === 'reading' && (
-                <div className="space-y-2">
-                  <Field label="Statement" value={it.enunciado} onChange={(e) => ponerItem(i, { ...it, enunciado: e.target.value })} />
-                  <div className="flex gap-2" role="group" aria-label="Is it true or false?">
-                    {[
-                      [true, 'Verdadera'],
-                      [false, 'Falsa'],
-                    ].map(([v, t]) => (
+              {mixto && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Type of item">
+                    {FORMAS_LECTURA.map((f) => (
                       <button
-                        key={t}
+                        key={f.id}
                         type="button"
-                        aria-pressed={it.verdadero === v}
-                        onClick={() => ponerItem(i, { ...it, verdadero: v })}
-                        className={`rounded-full border px-4 py-1.5 text-sm font-medium ${it.verdadero === v ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                        aria-pressed={formaDe(it, def) === f.id}
+                        onClick={() => formaDe(it, def) !== f.id && ponerItem(i, { ...itemLectura(f.id), enunciado: it.enunciado ?? '', ...(f.id === 'gap' ? { texto: it.texto ?? '' } : {}) })}
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold ${formaDe(it, def) === f.id ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                       >
-                        {t}
+                        {f.label}
                       </button>
                     ))}
                   </div>
+
+                  {formaDe(it, def) === 'gap' ? (
+                    <Field
+                      label="Sentence based on the text"
+                      value={it.texto ?? ''}
+                      onChange={(e) => ponerItem(i, { ...it, texto: e.target.value })}
+                      placeholder="The writer [[travelled]] to Spain last summer."
+                      hint="Put the answer between [[ ]]. Several valid answers: [[are|'re]]."
+                      error={it.texto && !/\[\[[^\]]+\]\]/.test(it.texto) ? 'Missing gap: write the answer between [[ ]]' : undefined}
+                    />
+                  ) : (
+                    <Field label={formaDe(it, def) === 'choice' ? 'Question' : 'Statement'} value={it.enunciado} onChange={(e) => ponerItem(i, { ...it, enunciado: e.target.value })} />
+                  )}
+
+                  {formaDe(it, def) === 'tf' && (
+                    <div className="flex gap-2" role="group" aria-label="Is it true or false?">
+                      {[
+                        [true, 'True'],
+                        [false, 'False'],
+                      ].map(([v, t]) => (
+                        <button
+                          key={t}
+                          type="button"
+                          aria-pressed={it.verdadero === v}
+                          onClick={() => ponerItem(i, { ...it, verdadero: v })}
+                          className={`rounded-full border px-4 py-1.5 text-sm font-medium ${it.verdadero === v ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {formaDe(it, def) === 'choice' && (
+                    <fieldset>
+                      <legend className="mb-1 text-sm font-medium text-slate-700">Options (mark the correct one)</legend>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {it.opciones.map((o, k) => (
+                          <label key={k} className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${it.correcta === k ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
+                            <input type="radio" name={`correcta-${i}`} checked={it.correcta === k} onChange={() => ponerItem(i, { ...it, correcta: k })} aria-label={`Option ${LETRAS[k]} is the correct one`} />
+                            <span className="text-xs font-semibold text-slate-500">{LETRAS[k]}</span>
+                            <input
+                              value={o}
+                              onChange={(e) => ponerItem(i, { ...it, opciones: it.opciones.map((x, j) => (j === k ? e.target.value : x)) })}
+                              className="w-full min-w-0 border-0 bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
+                              placeholder={`Option ${LETRAS[k]}`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
                 </div>
               )}
             </Fila>
           ))}
         </ul>
       )}
-      {lista && (
+      {lista && mixto && (
+        <div className="flex flex-wrap gap-2">
+          {FORMAS_LECTURA.map((f) => (
+            <Button key={f.id} type="button" variant="secondary" onClick={() => poner(lista, [...datos[lista], itemLectura(f.id)])}>
+              <Icon name="plus" className="h-4 w-4" /> {f.label}
+            </Button>
+          ))}
+        </div>
+      )}
+      {lista && !mixto && (
         <Button type="button" variant="secondary" onClick={agregar}>
           <Icon name="plus" className="h-4 w-4" /> {etiquetaAgregar}
         </Button>
