@@ -127,7 +127,7 @@ export function moverId(ids, id, delta) {
   return copia
 }
 
-const DIAS = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+export const DIAS = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 export const horariosTexto = (horarios) =>
   (horarios ?? []).map((h) => `${DIAS[h.dia]} ${h.hora_inicio.slice(0, 5)}–${h.hora_fin.slice(0, 5)}`).join(' · ') || 'Schedule to be defined'
 
