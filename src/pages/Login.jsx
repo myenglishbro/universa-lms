@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import CampoIcono from '../components/auth/CampoIcono'
+import Icon from '../components/ui/Icon'
 import PanelMarca from '../components/ui/PanelMarca'
 import { registrarProfesor } from '../services/registros'
 
 const boton =
-  'inline-flex h-12 w-full items-center justify-center rounded-full bg-brand-600 text-base font-semibold text-white transition duration-200 hover:-translate-y-px hover:bg-brand-700 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
+  'inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/30 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0'
 
 function Aviso({ children }) {
   return (
-    <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
-      {children}
+    <p role="alert" className="flex items-start gap-2.5 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{children}</span>
     </p>
   )
 }
@@ -39,8 +41,11 @@ function FormIngresar({ onSignIn }) {
       {error && <Aviso>{error}</Aviso>}
       <button type="submit" disabled={enviando} className={boton}>
         {enviando ? 'Signing in…' : 'Sign in'}
+        {!enviando && <span aria-hidden="true">→</span>}
       </button>
-      <p className="text-center text-sm text-slate-500">Forgot your password? Ask administration for it.</p>
+      <p className="flex items-center justify-center gap-2 rounded-2xl bg-brand-50/70 px-4 py-3 text-center text-sm text-slate-600">
+        <Icon name="info" className="h-4 w-4 shrink-0 text-brand-600" /> Forgot your password? Ask administration for it.
+      </p>
     </form>
   )
 }
@@ -79,6 +84,7 @@ function FormRegistro({ onSignIn }) {
       {error && <Aviso>{error}</Aviso>}
       <button type="submit" disabled={enviando} className={boton}>
         {enviando ? 'Creating your account…' : 'Create my account'}
+        {!enviando && <span aria-hidden="true">→</span>}
       </button>
       <p className="text-center text-xs text-slate-500">Afterwards you can mark your availability and upload your photo. Administration will activate your account as a teacher.</p>
     </form>
@@ -109,9 +115,12 @@ export default function Login({ onSignIn }) {
   return (
     <PanelMarca>
       <div className="w-full max-w-md">
-        <img src="/landing/logo-morado.png" alt="Universa" width="800" height="172" className="mb-8 h-9 w-auto sm:h-10 lg:mb-10" />
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{registro ? 'Sign up as a teacher' : 'Welcome back'}</h1>
-        <p className="mb-7 mt-2 text-[15px] text-slate-500">
+        <img src="/landing/logo-morado.png" alt="Universa" width="800" height="172" className="mb-7 h-9 w-auto sm:h-10 lg:mb-9" />
+        <h1 className="text-[2rem] font-extrabold leading-tight tracking-tight text-slate-900">
+          {registro ? 'Sign up as a teacher' : 'Welcome back'}
+          <span aria-hidden="true" className="ml-1 inline-block h-2 w-2 rounded-full bg-peach-500 align-baseline" />
+        </h1>
+        <p className="mb-8 mt-2 text-[15px] leading-relaxed text-slate-500">
           {registro ? 'Leave us your details. It is quick and you do not need to confirm anything by email.' : 'Sign in with your email and password.'}
         </p>
 

@@ -9,7 +9,6 @@ import Icon from './components/ui/Icon'
 const MisCursos = lazy(() => import('./pages/portal/MisCursos'))
 const MisSalones = lazy(() => import('./pages/portal/MisSalones'))
 const MiPerfil = lazy(() => import('./pages/portal/MiPerfil'))
-const BancoDocente = lazy(() => import('./pages/portal/BancoDocente'))
 const ZonaDocumentos = lazy(() => import('./pages/portal/ZonaDocumentos'))
 const CentroAyuda = lazy(() => import('./pages/portal/CentroAyuda'))
 
@@ -17,7 +16,7 @@ const cuenta = { id: 'cuenta', label: 'My account', icon: 'key' }
 const ayuda = { id: 'ayuda', label: 'Help', icon: 'info' }
 const items = {
   estudiante: [{ id: 'cursos', label: 'My courses', icon: 'play' }, { id: 'zona', label: 'Student Zone', icon: 'book' }, ayuda, cuenta],
-  docente: [{ id: 'salones', label: 'My classrooms', icon: 'building' }, { id: 'banco', label: 'Exercise bank', icon: 'pen' }, { id: 'perfil', label: 'My profile', icon: 'user' }, { id: 'zona', label: 'Teacher Zone', icon: 'book' }, ayuda, cuenta],
+  docente: [{ id: 'salones', label: 'My classrooms', icon: 'building' }, { id: 'perfil', label: 'My profile', icon: 'user' }, { id: 'zona', label: 'Teacher Zone', icon: 'book' }, ayuda, cuenta],
   postulante: [{ id: 'perfil', label: 'My registration', icon: 'user' }, cuenta],
 }
 
@@ -99,8 +98,6 @@ export default function PortalApp({ vista, email, vistas, onCambiarVista, onSign
         <MiCuenta email={email} />
       ) : pagina === 'zona' ? (
         <ZonaDocumentos zona={vista === 'docente' ? 'docentes' : 'estudiantes'} />
-      ) : pagina === 'banco' ? (
-        <BancoDocente />
       ) : pagina === 'perfil' ? (
         <MiPerfil estado={vista} onRecargar={onRecargar} />
       ) : vista === 'estudiante' ? (

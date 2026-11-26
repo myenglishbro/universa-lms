@@ -247,19 +247,6 @@ export const GUIAS_DOCENTE = [
     ],
   },
   {
-    id: 'banco',
-    ver: [{"t": "menu", "on": "Exercise bank"}],
-    tema: 'ejercicios',
-    icono: 'book',
-    titulo: 'Use the exercise bank',
-    resumen: 'Browse the exercises published by administration.',
-    pasos: [
-      'Open **Exercise bank** in the left menu.',
-      'Browse the exercises published by administration. Only administration creates or removes them.',
-      'Check the preview before using it.',
-    ],
-  },
-  {
     id: 'asignar',
     ver: [{"t": "tabs", "items": ["Overview", "Students", "Calendar", "Classes & attendance", "Assessments", "Exercises", "Course resources", "Student view"], "on": "Exercises"}],
     tema: 'ejercicios',

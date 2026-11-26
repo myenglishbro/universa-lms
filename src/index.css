@@ -93,3 +93,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .tk-in, .tk-pop { animation: none; }
 }
+
+/* Pantalla de acceso: la mascota flota suavemente y las burbujas se desplazan. */
+@keyframes mascota-flota { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-14px) rotate(1deg); } }
+@keyframes burbuja-flota { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.mascota-flota { animation: mascota-flota 6s ease-in-out infinite; }
+.burbuja-flota { animation: burbuja-flota 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mascota-flota, .burbuja-flota { animation: none; }
+}
