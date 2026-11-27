@@ -7,7 +7,7 @@ import Icon from '../components/ui/Icon'
 import Modal from '../components/ui/Modal'
 import PageHeader from '../components/ui/PageHeader'
 import useCarga from '../hooks/useCarga'
-import { aInputLima, deInputLima, etiquetaPeriodo, fmtMinutos, hoyLima, horaLima, moverPeriodo, periodoDe, porDocente, resumenCsv, totales } from '../lib/horasDocentes'
+import { aInputLima, deInputLima, etiquetaPeriodo, fmtMinutos, fmtSoles, hoyLima, horaLima, moverPeriodo, periodoDe, porDocente, resumenCsv, totales } from '../lib/horasDocentes'
 import { formatFecha } from '../lib/salones'
 import * as servicioReal from '../services/horas'
 
@@ -124,6 +124,62 @@ function AjustarMarca({ fila, onClose, onGuardado, servicio }) {
   )
 }
 
+// Servicio de pago de un salón (define la tarifa) y marca de docente nativo. Solo administración cambia; RR. HH. ve el resultado.
+function SelectorServicio({ salon, servicios, puedeEditar, servicio, onCambio }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [falla, setFalla] = useState('')
+  if (!puedeEditar) return <span>{salon.servicio ?? '—'}</span>
+  const cambiar = async (valor) => {
+    setOcupado(true)
+    setFalla('')
+    try {
+      await servicio.asignarServicioSalon(salon.salon_id, valor)
+      await onCambio()
+    } catch (e) {
+      setFalla(e.message)
+    } finally {
+      setOcupado(false)
+    }
+  }
+  return (
+    <span className="inline-flex flex-col">
+      <select value={salon.servicio_codigo} onChange={(e) => cambiar(e.target.value)} disabled={ocupado} className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-ink" aria-label={`Service of ${salon.salon}`}>
+        {servicios.map(([codigo, nombre]) => (
+          <option key={codigo} value={codigo}>
+            {nombre}
+          </option>
+        ))}
+      </select>
+      {falla && <span className="text-xs text-rose-700">{falla}</span>}
+    </span>
+  )
+}
+
+function MarcaNativo({ docente, puedeEditar, servicio, onCambio }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [falla, setFalla] = useState('')
+  if (!puedeEditar) return docente.nativo ? <Badge color="brand">Native</Badge> : null
+  const cambiar = async (valor) => {
+    setOcupado(true)
+    setFalla('')
+    try {
+      await servicio.marcarNativo(docente.docente_id, valor)
+      await onCambio()
+    } catch (e) {
+      setFalla(e.message)
+    } finally {
+      setOcupado(false)
+    }
+  }
+  return (
+    <label className="inline-flex items-center gap-2 text-xs font-normal text-slate-600" onClick={(e) => e.stopPropagation()}>
+      <input type="checkbox" checked={docente.nativo} onChange={(e) => cambiar(e.target.checked)} disabled={ocupado} />
+      Native speaker (Flex Signature Premium pays S/ 30 instead of S/ 18)
+      {falla && <span className="text-rose-700">{falla}</span>}
+    </label>
+  )
+}
+
 // Clase por clase de un docente en el periodo.
 function DetalleDocente({ periodo, docente, puedeEditar, servicio, onCambio }) {
   const cargar = useCallback(() => servicio.detalleHoras(periodo.desde, periodo.hasta, docente.docente_id), [servicio, periodo, docente.docente_id])
@@ -149,7 +205,7 @@ function DetalleDocente({ periodo, docente, puedeEditar, servicio, onCambio }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {detalle.datos.map((f) => {
-            const dictada = !!f.entrada
+            const dictada = f.dictada ?? !!f.entrada
             const pasada = f.fecha < hoy
             return (
               <tr key={f.sesion_id}>
@@ -164,7 +220,7 @@ function DetalleDocente({ periodo, docente, puedeEditar, servicio, onCambio }) {
                 <td className="px-2 py-2 text-slate-700">{dictada ? horaLima(f.salida) || <span className="text-xs text-peach-700">not marked</span> : '—'}</td>
                 <td className="px-2 py-2">{f.minutos_tarde > 0 ? <span className="text-peach-700">{f.minutos_tarde} min</span> : dictada ? <span className="text-emerald-700">On time</span> : '—'}</td>
                 <td className="px-2 py-2">
-                  {dictada ? <Badge color="brand">Held{f.ajustada ? ' · corrected' : ''}</Badge> : pasada ? <Badge color="peach">No entry mark</Badge> : <Badge color="slate">Upcoming</Badge>}
+                  {dictada ? <Badge color="brand">Held{f.ajustada ? ' · corrected' : !f.entrada ? ' · by attendance' : ''}</Badge> : pasada ? <Badge color="peach">No entry mark</Badge> : <Badge color="slate">Upcoming</Badge>}
                 </td>
                 {puedeEditar && (
                   <td className="px-2 py-2 text-right">
@@ -189,6 +245,9 @@ export default function HorasDocentes({ puedeEditar = false, servicio = servicio
   const [abierto, setAbierto] = useState(null) // docente_id con el detalle abierto
   const cargar = useCallback(() => servicio.resumenHoras(periodo.desde, periodo.hasta), [servicio, periodo])
   const resumen = useCarga(cargar, [])
+  const cargarTarifas = useCallback(() => servicio.tarifasPago(), [servicio])
+  const tarifas = useCarga(cargarTarifas, [])
+  const servicios = [...new Map(tarifas.datos.map((r) => [r.servicio, r.servicio_nombre])).entries()]
   const [salonFiltro, setSalonFiltro] = useState('')
   useEffect(() => setAbierto(null), [periodo])
 
@@ -196,6 +255,7 @@ export default function HorasDocentes({ puedeEditar = false, servicio = servicio
   const docentes = porDocente(filas)
   const t = totales(filas)
   const salones = [...new Map(resumen.datos.map((f) => [f.salon_id, f.salon])).entries()].sort((a, b) => a[1].localeCompare(b[1]))
+  const sinTarifa = filas.filter((f) => f.precio_hora == null).length
   const esActual = periodo.desde === periodoDe(hoyLima()).desde
 
   const exportar = () => {
@@ -244,8 +304,9 @@ export default function HorasDocentes({ puedeEditar = false, servicio = servicio
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">Could not load the report: {resumen.error}</p>
       ) : (
         <>
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Dato titulo="Hours to pay" valor={fmtMinutos(t.minutos_pagables)} detalle={`${t.dictadas} classes held`} destacado />
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <Dato titulo="Amount to pay" valor={fmtSoles(t.monto)} detalle={sinTarifa > 0 ? `${sinTarifa} classroom(s) without a rate` : 'Hours to pay × rate per hour'} destacado />
+            <Dato titulo="Hours to pay" valor={fmtMinutos(t.minutos_pagables)} detalle={`${t.dictadas} classes held`} />
             <Dato titulo="Scheduled hours" valor={fmtMinutos(t.minutos_programados)} detalle={`${t.programadas} classes in the period`} />
             <Dato titulo="No entry mark" valor={t.sin_marca} detalle="Past classes without an entry" />
             <Dato titulo="Late minutes" valor={t.minutos_tarde} detalle="Sum of entries after the start time" />
@@ -267,7 +328,8 @@ export default function HorasDocentes({ puedeEditar = false, servicio = servicio
                       <th className="px-2 py-2 text-center">No mark</th>
                       <th className="px-2 py-2 text-right">Scheduled</th>
                       <th className="px-2 py-2 text-right">To pay</th>
-                      <th className="px-4 py-2 text-right">Late</th>
+                      <th className="px-2 py-2 text-right">Late</th>
+                      <th className="px-4 py-2 text-right">Amount</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -285,23 +347,38 @@ export default function HorasDocentes({ puedeEditar = false, servicio = servicio
                           <td className={`px-2 py-2.5 text-center ${d.sin_marca > 0 ? 'font-semibold text-peach-700' : ''}`}>{d.sin_marca}</td>
                           <td className="px-2 py-2.5 text-right text-slate-600">{fmtMinutos(d.minutos_programados)}</td>
                           <td className="px-2 py-2.5 text-right font-semibold text-brand-700">{fmtMinutos(d.minutos_pagables)}</td>
-                          <td className="px-4 py-2.5 text-right text-slate-600">{d.minutos_tarde} min</td>
+                          <td className="px-2 py-2.5 text-right text-slate-600">{d.minutos_tarde} min</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{fmtSoles(d.monto)}</td>
                         </tr>
                         {abierto === d.docente_id && (
                           <>
+                            <tr className="bg-slate-50/40">
+                              <td colSpan={8} className="py-1.5 pl-11 pr-4">
+                                <MarcaNativo docente={d} puedeEditar={puedeEditar} servicio={servicio} onCambio={resumen.recargar} />
+                              </td>
+                            </tr>
                             {d.salones.map((s) => (
                               <tr key={s.salon_id} className="bg-slate-50/40 text-slate-600">
-                                <td className="py-1.5 pl-11 pr-2">{s.salon}</td>
+                                <td className="py-1.5 pl-11 pr-2">
+                                  {s.salon}
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                                    <SelectorServicio salon={s} servicios={servicios} puedeEditar={puedeEditar} servicio={servicio} onCambio={resumen.recargar} />
+                                    <span>
+                                      {s.alumnos} student{s.alumnos === 1 ? '' : 's'} · {s.precio_hora == null ? 'no rate' : `${fmtSoles(s.precio_hora)} / h`}
+                                    </span>
+                                  </div>
+                                </td>
                                 <td className="px-2 py-1.5 text-center">{s.programadas}</td>
                                 <td className="px-2 py-1.5 text-center">{s.dictadas}</td>
                                 <td className="px-2 py-1.5 text-center">{s.sin_marca}</td>
                                 <td className="px-2 py-1.5 text-right">{fmtMinutos(s.minutos_programados)}</td>
                                 <td className="px-2 py-1.5 text-right">{fmtMinutos(s.minutos_pagables)}</td>
-                                <td className="px-4 py-1.5 text-right">{s.minutos_tarde} min</td>
+                                <td className="px-2 py-1.5 text-right">{s.minutos_tarde} min</td>
+                                <td className="px-4 py-1.5 text-right">{fmtSoles(s.monto)}</td>
                               </tr>
                             ))}
                             <tr>
-                              <td colSpan={7} className="p-0">
+                              <td colSpan={8} className="p-0">
                                 <DetalleDocente periodo={periodo} docente={d} puedeEditar={puedeEditar} servicio={servicio} onCambio={resumen.recargar} />
                               </td>
                             </tr>

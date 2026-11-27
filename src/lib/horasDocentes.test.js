@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { aInputLima, deInputLima, fmtMinutos, horasDecimal, moverPeriodo, periodoDe, porDocente, totales } from './horasDocentes.js'
+import { aInputLima, deInputLima, fmtMinutos, fmtSoles, horasDecimal, moverPeriodo, periodoDe, porDocente, totales } from './horasDocentes.js'
 
 test('el 28 de noviembre abre el periodo que cierra el 27 de diciembre', () => {
   assert.deepEqual(periodoDe('2026-11-28'), { desde: '2026-11-28', hasta: '2026-12-27' })
@@ -46,8 +46,8 @@ test('hora de Lima ida y vuelta', () => {
 })
 
   const filas = [
-  { docente_id: 'a', docente: 'Ana', salon: 'S1', programadas: 4, dictadas: 3, sin_marca: 1, minutos_programados: 240, minutos_pagables: 180, minutos_tarde: 5 },
-  { docente_id: 'a', docente: 'Ana', salon: 'S2', programadas: 2, dictadas: 2, sin_marca: 0, minutos_programados: 120, minutos_pagables: 120, minutos_tarde: 0 },
+  { docente_id: 'a', docente: 'Ana', salon: 'S1', programadas: 4, dictadas: 3, sin_marca: 1, minutos_programados: 240, minutos_pagables: 180, minutos_tarde: 5, monto: 40.5, nativo: true },
+  { docente_id: 'a', docente: 'Ana', salon: 'S2', programadas: 2, dictadas: 2, sin_marca: 0, minutos_programados: 120, minutos_pagables: 120, minutos_tarde: 0, monto: 28 },
   { docente_id: 'b', docente: 'Beto', salon: 'S3', programadas: 1, dictadas: 0, sin_marca: 1, minutos_programados: 60, minutos_pagables: 0, minutos_tarde: 0 },
   ]
 test('suma todo y agrupa por docente', () => {
@@ -56,4 +56,11 @@ test('suma todo y agrupa por docente', () => {
   assert.equal(d.length, 2)
   assert.partialDeepStrictEqual(d[0], { docente: 'Ana', programadas: 6, dictadas: 5, minutos_pagables: 300 })
   assert.equal(d[0].salones.length, 2)
+  assert.equal(totales(filas).monto, 68.5)
+  assert.equal(d[0].monto, 68.5)
+  assert.equal(d[0].nativo, true)
+})
+test('soles', () => {
+  assert.equal(fmtSoles(1234.5), 'S/ 1,234.50')
+  assert.equal(fmtSoles(null), '—')
 })

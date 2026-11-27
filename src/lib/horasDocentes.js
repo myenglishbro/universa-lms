@@ -36,6 +36,8 @@ export function fmtMinutos(min) {
   const r = m % 60
   return h && r ? `${h} h ${r} min` : h ? `${h} h` : `${r} min`
 }
+// Soles: 1234.5 → «S/ 1,234.50». Vacío (null) → «—».
+export const fmtSoles = (v) => (v == null ? '—' : `S/ ${Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
 // Horas con decimales para exportar: 150 → «2.50».
 export const horasDecimal = (min) => (Math.round(((Number(min) || 0) / 60) * 100) / 100).toFixed(2)
 
@@ -47,8 +49,9 @@ export const deInputLima = (valor) => (valor ? `${valor}:00-05:00` : null)
 
 // Suma de las filas del resumen (por docente, por salón o todo).
 export function totales(filas) {
-  const t = { programadas: 0, dictadas: 0, sin_marca: 0, minutos_programados: 0, minutos_pagables: 0, minutos_tarde: 0 }
+  const t = { programadas: 0, dictadas: 0, sin_marca: 0, minutos_programados: 0, minutos_pagables: 0, minutos_tarde: 0, monto: 0 }
   for (const f of filas) for (const k of Object.keys(t)) t[k] += Number(f[k]) || 0
+  t.monto = Math.round(t.monto * 100) / 100
   return t
 }
 
@@ -56,7 +59,7 @@ export function totales(filas) {
 export function porDocente(filas) {
   const mapa = new Map()
   for (const f of filas) {
-    if (!mapa.has(f.docente_id)) mapa.set(f.docente_id, { docente_id: f.docente_id, docente: f.docente, salones: [] })
+    if (!mapa.has(f.docente_id)) mapa.set(f.docente_id, { docente_id: f.docente_id, docente: f.docente, nativo: !!f.nativo, salones: [] })
     mapa.get(f.docente_id).salones.push(f)
   }
   return [...mapa.values()].map((d) => ({ ...d, ...totales(d.salones) }))
@@ -65,7 +68,7 @@ export function porDocente(filas) {
 const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 // CSV del resumen (una fila por docente y salón) listo para abrir en Excel.
 export function resumenCsv(filas, periodo) {
-  const cab = ['Teacher', 'Classroom', 'Period', 'Scheduled classes', 'Classes held', 'No entry mark', 'Scheduled hours', 'Hours to pay', 'Late minutes']
-  const lineas = filas.map((f) => [f.docente, f.salon, `${periodo.desde} to ${periodo.hasta}`, f.programadas, f.dictadas, f.sin_marca, horasDecimal(f.minutos_programados), horasDecimal(f.minutos_pagables), f.minutos_tarde])
+  const cab = ['Teacher', 'Classroom', 'Period', 'Scheduled classes', 'Classes held', 'No entry mark', 'Scheduled hours', 'Hours to pay', 'Late minutes', 'Native', 'Service', 'Students', 'Rate per hour (S/)', 'Amount (S/)']
+  const lineas = filas.map((f) => [f.docente, f.salon, `${periodo.desde} to ${periodo.hasta}`, f.programadas, f.dictadas, f.sin_marca, horasDecimal(f.minutos_programados), horasDecimal(f.minutos_pagables), f.minutos_tarde, f.nativo ? 'Yes' : 'No', f.servicio, f.alumnos, f.precio_hora ?? '', f.monto ?? ''])
   return `﻿${[cab, ...lineas].map((l) => l.map(celda).join(',')).join('\r\n')}`
 }

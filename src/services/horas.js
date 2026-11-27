@@ -10,3 +10,7 @@ export const detalleHoras = (desde, hasta, docenteId) => rpc('horas_detalle', { 
 export const zoomClase = () => rpc('zoom_clase')
 export const guardarZoom = (url) => rpc('guardar_zoom', { p_url: url })
 export const ajustarMarca = (sesionId, entrada, salida, nota) => rpc('ajustar_marca', { p_sesion: sesionId, p_entrada: entrada, p_salida: salida, p_nota: nota || null })
+// Pago: tarifas por servicio, servicio de cada salón y marca de docente nativo (solo administración cambia).
+export const tarifasPago = () => rpc('tarifas_pago')
+export const asignarServicioSalon = (salonId, servicio) => rpc('asignar_servicio_salon', { p_salon: salonId, p_servicio: servicio })
+export const marcarNativo = (docenteId, nativo) => rpc('marcar_docente_nativo', { p_docente: docenteId, p_nativo: nativo })
