@@ -8,14 +8,15 @@ import Icon from '../components/ui/Icon'
 import Modal from '../components/ui/Modal'
 import PageHeader from '../components/ui/PageHeader'
 import useCarga from '../hooks/useCarga'
-import { claseDeEnlace, validarEnlace } from '../lib/recursos'
+import { claseDeEnlace, esVideoZona, validarEnlace } from '../lib/recursos'
+import { esNombreDeModulo, separarZona } from '../lib/zonaCurso'
 import * as servicioReal from '../services/zonas'
 
 const ZONAS = [
   { id: 'docentes', label: 'Teacher Zone', para: 'teachers' },
   { id: 'estudiantes', label: 'Student Zone', para: 'students' },
 ]
-const CATEGORIAS = ['Reglamentos', 'Lineamientos', 'Formatos', 'Guías', 'Comunicados']
+const CATEGORIAS = ['1. Getting started', '2. Classrooms and students', '3. Exercises and grades', 'Reglamentos', 'Lineamientos', 'Formatos', 'Guías', 'Comunicados']
 
 function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
   const [v, setV] = useState({ titulo: doc?.titulo ?? '', categoria: doc?.categoria ?? '', url: doc?.url ?? '', descripcion: doc?.descripcion ?? '', oculto: doc?.oculto ?? false })
@@ -57,13 +58,19 @@ function DocumentoForm({ zona, doc, categorias, onSave, onClose }) {
           inputMode="url"
           value={v.url}
           onChange={cambiar}
-          placeholder="Paste the link: a PDF on Drive or any website"
-          hint="In Drive: right-click the PDF → Share → “Anyone with the link” → Copy link."
+          placeholder="Paste the link: a video (YouTube, Vimeo, Drive), a PDF on Drive or any website"
+          hint="Videos: upload them to YouTube (Unlisted) or Vimeo and paste the link. In Drive: right-click → Share → “Anyone with the link” → Copy link."
           required
         />
         {claseDeEnlace(v.url) && (
           <p className={`rounded-lg px-3 py-2 text-xs ${claseDeEnlace(v.url).dentro ? 'bg-brand-50 text-brand-700' : 'bg-peach-50 text-peach-700'}`}>
-            {claseDeEnlace(v.url).dentro ? `✓ ${claseDeEnlace(v.url).etiqueta}: it will be read inside the platform.` : 'This is a link: it will open in a new tab when someone clicks it.'}
+            {esVideoZona({ url: v.url.trim(), categoria: v.categoria }) || esNombreDeModulo(v.categoria)
+              ? `✓ ${esVideoZona({ url: v.url.trim(), categoria: v.categoria }) ? 'Video' : 'Document'} lesson: it will be part of the course, inside the module “${v.categoria.trim() || 'General'}”.`
+              : claseDeEnlace(v.url).tipo === 'documento' && /drive\.google\.com/.test(v.url)
+                ? '✓ Resource: it will be listed under Resources. To make it a lesson, start the category with a number, like “1. Getting started”. For a video on Drive, use a category with “Video” or “Tutorial”.'
+                : claseDeEnlace(v.url).dentro
+                  ? `✓ ${claseDeEnlace(v.url).etiqueta}: it will be listed under Resources.`
+                  : 'This is a link: it will open in a new tab when someone clicks it.'}
           </p>
         )}
         <Field label="Description (optional)" name="descripcion" as="textarea" rows="2" value={v.descripcion} onChange={cambiar} />
@@ -112,6 +119,7 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
   const info = ZONAS.find((z) => z.id === zona)
   const categorias = [...new Set(datos.map((d) => d.categoria))]
   const ocultos = datos.filter((d) => d.oculto).length
+  const idsLeccion = new Set(separarZona(datos).lecciones.map((l) => l.id))
 
   const cambiarZona = (id) => {
     setZona(id)
@@ -153,6 +161,9 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
       <Ayuda id="zonas" titulo="How does it work?">
         <p>
           Upload your PDFs to <strong>Google Drive</strong>, share them with “Anyone with the link” and paste the link here. Each person reads them inside the platform, sorted by category.
+        </p>
+        <p className="text-slate-600">
+          <strong>Course:</strong> a category that starts with a number (“1. Getting started”, “2. Classrooms”) becomes a <strong>module</strong>, and everything inside it, videos and documents, becomes a lesson that people follow in order with a progress bar. Videos: upload them to YouTube as <em>Unlisted</em> or to Vimeo and paste the link. Lessons go by publication date, so publish them in the order you want. Categories without a number (Regulations, Forms…) go to the <strong>Resources</strong> block of the same viewer: they open in the viewer too, but have no progress.
         </p>
         <p className="text-slate-600">
           <strong>Teacher Zone</strong> is seen only by teachers; <strong>Student Zone</strong>, only by students. If you do not want a document to be visible yet, mark it as hidden.
@@ -248,12 +259,13 @@ export default function ZonasAdmin({ servicio = servicioReal }) {
                     {docs.map((d) => (
                       <li key={d.id} className={`flex flex-wrap items-center gap-3 px-4 py-3 transition hover:bg-brand-50/40 ${d.oculto ? 'bg-slate-50/70' : ''}`}>
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${d.oculto ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600'}`}>
-                          <Icon name={claseDeEnlace(d.url)?.icono ?? 'link'} className="h-5 w-5" />
+                          <Icon name={esVideoZona(d) ? 'play' : claseDeEnlace(d.url)?.icono ?? 'link'} className="h-5 w-5" />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className={`flex flex-wrap items-center gap-2 font-medium ${d.oculto ? 'text-slate-500' : 'text-slate-900'}`}>
                             {d.titulo}
-                            <Badge color="slate">{claseDeEnlace(d.url)?.etiqueta ?? 'Link'}</Badge>
+                            <Badge color="slate">{esVideoZona(d) ? 'Video' : claseDeEnlace(d.url)?.etiqueta ?? 'Link'}</Badge>
+                            <Badge color={idsLeccion.has(d.id) ? 'brand' : 'peach'}>{idsLeccion.has(d.id) ? 'Lesson' : 'Resource'}</Badge>
                             {d.oculto && <Badge color="peach">Hidden</Badge>}
                           </p>
                           {d.descripcion && <p className="truncate text-sm text-slate-500">{d.descripcion}</p>}

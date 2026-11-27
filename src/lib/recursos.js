@@ -39,6 +39,25 @@ function idYoutube(u) {
   return m ? m[1] : null
 }
 
+// Miniatura de un video (solo YouTube la ofrece sin pedir nada); null en los demás.
+export function miniaturaDe(url) {
+  try {
+    const u = new URL(url)
+    if (!HOSTS_YOUTUBE.includes(u.hostname.toLowerCase())) return null
+    const id = idYoutube(u)
+    return id && /^[\w-]{6,20}$/.test(id) ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null
+  } catch {
+    return null
+  }
+}
+
+// ¿Un documento de las zonas es un video? YouTube y Vimeo siempre; un enlace de Drive cuando su categoría es de videos (Onboarding, Videos, Tutorials…).
+export const CATEGORIA_VIDEO = /onboarding|video|tutorial/i
+export const esVideoZona = (d) => {
+  const prov = proveedorDe(d.url)
+  return prov === 'youtube' || prov === 'vimeo' || (prov === 'drive' && /drive\.google\.com/.test(d.url) && CATEGORIA_VIDEO.test(d.categoria ?? ''))
+}
+
 // Dirección para incrustar el recurso en un <iframe>, o null si solo se puede abrir en otra pestaña.
 export function incrustarDe({ url, proveedor }) {
   let u
