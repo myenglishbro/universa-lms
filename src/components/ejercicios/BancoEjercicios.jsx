@@ -110,9 +110,9 @@ function TarjetaEjercicio({ e, esMio, puedeEditar, onVer, onEditar, onBase, onQu
   )
 }
 
-// Banco de ejercicios. Solo administración crea, edita y quita ejercicios. El docente los ve y los asigna a sus salones.
+// Banco de ejercicios. Administración crea los del banco (los ven todos los docentes); cada docente crea los suyos (solo él los ve y los asigna).
 // Con `onElegir` funciona como selector (para asignar a un salón).
-export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, onElegir = null, servicio = servicioReal }) {
+export default function BancoEjercicios({ esAdmin = false, puedeCrear = esAdmin, userId: userIdProp, onElegir = null, servicio = servicioReal }) {
   const [userIdAuth, setUserIdAuth] = useState(null)
   useEffect(() => {
     if (!userIdProp) supabase.auth.getUser().then(({ data }) => setUserIdAuth(data?.user?.id ?? null))
@@ -146,6 +146,27 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
   )
   const conteo = (t) => lista.filter((e) => e.tipo === t).length
 
+  // Agrupa por ciclo y, dentro, por unidad (de menor a mayor; lo sin clasificar al final).
+  const grupos = useMemo(() => {
+    const porCiclo = new Map()
+    for (const e of visibles) {
+      const c = e.ciclo ?? null
+      const u = e.unidad ?? null
+      if (!porCiclo.has(c)) porCiclo.set(c, new Map())
+      const unidades = porCiclo.get(c)
+      if (!unidades.has(u)) unidades.set(u, [])
+      unidades.get(u).push(e)
+    }
+    const orden = (a, b) => (a === null) - (b === null) || a - b
+    return [...porCiclo.entries()]
+      .sort(([a], [b]) => orden(a, b))
+      .map(([ciclo, unidades]) => ({
+        ciclo,
+        total: [...unidades.values()].reduce((n, l) => n + l.length, 0),
+        unidades: [...unidades.entries()].sort(([a], [b]) => orden(a, b)).map(([unidad, items]) => ({ unidad, items })),
+      }))
+  }, [visibles])
+
   const guardar = async (id, e) => {
     await servicio.guardarEjercicio(id, e)
     setForm(null)
@@ -170,7 +191,16 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
           <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Search by title, topic or level" className={`${inputClass} pl-9`} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!onElegir && esAdmin && (
+          {!esAdmin && (
+            <div className="inline-flex rounded-full border border-slate-200 bg-white p-0.5 text-sm" role="group" aria-label="Show">
+              {[['todos', 'All'], ['banco', 'Bank'], ['mios', 'Mine']].map(([id, label]) => (
+                <button key={id} type="button" aria-pressed={alcance === id} onClick={() => setAlcance(id)} className={`rounded-full px-3 py-1 transition ${alcance === id ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-brand-700'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!onElegir && puedeCrear && (
             <Button type="button" onClick={() => setForm({ ejercicio: null })}>
               <Icon name="plus" className="h-4 w-4" /> New exercise
             </Button>
@@ -247,8 +277,8 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
             <Icon name="sparkle" className="h-7 w-7" />
           </span>
           <p className="mt-4 text-base font-semibold text-slate-900">{esAdmin ? 'The bank is empty' : 'There are no exercises yet'}</p>
-          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Create the first exercise: all teachers will be able to use it.' : 'Administration has not published exercises in the bank yet.'}</p>
-          {!onElegir && esAdmin && (
+          <p className="mt-1 text-sm text-slate-500">{esAdmin ? 'Create the first exercise: all teachers will be able to use it.' : puedeCrear ? 'Create your first exercise: only you will see it and be able to assign it.' : 'Administration has not published exercises in the bank yet.'}</p>
+          {!onElegir && puedeCrear && (
             <Button className="mt-5" onClick={() => setForm({ ejercicio: null })}>
               <Icon name="plus" className="h-4 w-4" /> Create exercise
             </Button>
@@ -257,19 +287,42 @@ export default function BancoEjercicios({ esAdmin = false, userId: userIdProp, o
       ) : visibles.length === 0 ? (
         <p className="py-10 text-center text-sm text-slate-500">No exercise matches your search.</p>
       ) : (
-        <div className={`grid gap-3 sm:grid-cols-2 ${onElegir ? '' : 'gap-4 xl:grid-cols-3'}`}>
-          {visibles.map((e) => (
-            <TarjetaEjercicio
-              key={e.id}
-              e={e}
-              esMio={esMio(e)}
-              puedeEditar={esAdmin}
-              onVer={setVer}
-              onEditar={(x) => setForm({ ejercicio: x })}
-              onBase={(x) => setForm({ ejercicio: { ...x, id: null } })}
-              onQuitar={quitar}
-              onElegir={onElegir}
-            />
+        <div className="space-y-4">
+          {grupos.map((g) => (
+            <details key={g.ciclo ?? 'sin'} open className="group/ciclo rounded-2xl border border-slate-200 bg-white/60">
+              <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <Icon name="down" className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-[:not([open])]/ciclo:-rotate-90" />
+                <span className="text-base font-semibold text-slate-900">{g.ciclo === null ? 'Not classified' : `Cycle ${g.ciclo}`}</span>
+                <Badge color="brand">{g.total}</Badge>
+              </summary>
+              <div className="space-y-5 px-4 pb-4">
+                {g.unidades.map((u) => (
+                  <section key={u.unidad ?? 'sin'}>
+                    <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-700">
+                      {u.unidad !== null ? `Unit ${u.unidad}` : g.ciclo !== null ? 'Assessments (whole cycle)' : 'No unit'}
+                      <span className="text-xs font-normal text-slate-400">
+                        {u.items.length} {u.items.length === 1 ? 'exercise' : 'exercises'}
+                      </span>
+                    </h3>
+                    <div className={`grid gap-3 sm:grid-cols-2 ${onElegir ? '' : 'gap-4 xl:grid-cols-3'}`}>
+                      {u.items.map((e) => (
+                        <TarjetaEjercicio
+                          key={e.id}
+                          e={e}
+                          esMio={esMio(e)}
+                          puedeEditar={puedeCrear}
+                          onVer={setVer}
+                          onEditar={(x) => setForm({ ejercicio: x })}
+                          onBase={(x) => setForm({ ejercicio: { ...x, id: null } })}
+                          onQuitar={quitar}
+                          onElegir={onElegir}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </details>
           ))}
         </div>
       )}

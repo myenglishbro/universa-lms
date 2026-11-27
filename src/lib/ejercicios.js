@@ -39,9 +39,11 @@ export const usoLabel = (id) => USOS.find((u) => u.id === id)?.label ?? ''
 // «Cycle 3 · Module 1 · Unit 5 · Formative» (solo lo que esté definido; el ciclo 0 es válido).
 const hay = (v) => v !== null && v !== undefined && v !== ''
 export const clasificacionTexto = (e) => [hay(e.ciclo) ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', e.unidad ? `Unit ${e.unidad}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
-// Para guardar: nivel, unidad y uso son obligatorios (de ahí salen ciclo, módulo y MCER). Devuelve el mensaje de lo que falta ('' si está completo).
+// Para guardar: Formative pide nivel + unidad (de ahí salen ciclo, módulo y MCER); Assessment solo nivel + ciclo (sin módulo ni unidad).
+// Devuelve el mensaje de lo que falta ('' si está completo).
 export function faltaClasificacion(m) {
-  const faltan = [['programa', 'level'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)']].filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
+  const campos = m.uso === 'assessment' ? [['programa', 'level'], ['ciclo', 'cycle'], ['uso', 'use (Formative or Assessment)']] : [['programa', 'level'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)']]
+  const faltan = campos.filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
   return faltan.length ? `Choose the ${faltan.join(', ')} before saving` : ''
 }
 
@@ -377,6 +379,71 @@ const formasLectura = (p) => {
   return f.length === 1 ? `Use ONLY the form ${FORMA_PROMPT[f[0]]}; set "forma" to "${f[0]}" in every item.` : `Use ONLY these forms, in similar amounts: ${f.map((x) => FORMA_PROMPT[x]).join(', ')}. Set "forma" in each item.`
 }
 
+// Plantillas por tipo de ejercicio: el docente elige el formato y la IA lo rellena con el tema (o con la captura del libro).
+// `estructura` va al prompt; `palabras` (solo Writing) es el mínimo sugerido.
+export const PLANTILLAS = {
+  writing: [
+    { id: 'email', label: 'Email / letter', desc: 'Informal or formal message to someone', palabras: 80, estructura: 'The student writes an email or letter: greeting, opening line saying why they write, 2 or 3 points to cover (one per paragraph), closing line and sign-off.' },
+    { id: 'message', label: 'Short message', desc: 'Text, note, invitation or post', palabras: 40, estructura: 'The student writes a short message (text, note, invitation or social media post) of 3 to 5 lines with a clear purpose and 2 or 3 things to mention.' },
+    { id: 'paragraph', label: 'Paragraph', desc: 'One organised paragraph on a topic', palabras: 70, estructura: 'The student writes a single organised paragraph: topic sentence, 2 or 3 supporting details with examples, and a closing sentence.' },
+    { id: 'opinion', label: 'Opinion essay', desc: 'Give an opinion with reasons', palabras: 120, estructura: 'The student writes an opinion text: introduction stating the opinion, 2 reasons with examples (one paragraph each), and a conclusion.' },
+    { id: 'description', label: 'Description', desc: 'Describe a person, place or object', palabras: 80, estructura: 'The student describes a person, place or object: general presentation, 3 or 4 details (appearance, features, feelings) and a personal comment.' },
+    { id: 'story', label: 'Story / narrative', desc: 'Tell what happened', palabras: 100, estructura: 'The student writes a narrative: setting (when, where, who), the events in order with linking words, and how it ended.' },
+    { id: 'compare', label: 'Compare and contrast', desc: 'Similarities and differences', palabras: 100, estructura: 'The student compares two things: introduce both, 2 or 3 similarities and differences, and a conclusion saying which they prefer and why.' },
+    { id: 'review', label: 'Review', desc: 'Recommend a film, place, book…', palabras: 100, estructura: 'The student writes a review: what it is, what they liked, what they did not like, and a recommendation with a rating.' },
+    { id: 'profile', label: 'About me / profile', desc: 'Introduce yourself or someone', palabras: 60, estructura: 'The student writes a short profile: name and where from, family or work/studies, routines and free time, and plans or dreams.' },
+  ],
+  speaking: [
+    { id: 'about', label: 'Talk about yourself', desc: 'Routines, family, likes', estructura: 'The student talks about themselves or their life on a given topic, mentioning 3 or 4 points.' },
+    { id: 'describe', label: 'Describe a person or place', desc: 'Say what it is like', estructura: 'The student describes a person, place or object in detail: what it looks like, where it is, and what they think about it.' },
+    { id: 'roleplay', label: 'Role-play', desc: 'A real-life situation', estructura: 'The student plays a role in a real-life situation (shop, restaurant, hotel, phone call…) and says what they would say, including questions and polite expressions.' },
+    { id: 'opinion', label: 'Give an opinion', desc: 'Say what you think and why', estructura: 'The student gives and justifies an opinion: states it, gives 2 reasons with examples, and finishes with a conclusion.' },
+    { id: 'story', label: 'Tell a story', desc: 'Something that happened', estructura: 'The student tells something that happened to them: when and where, the events in order, and how they felt.' },
+  ],
+  reading: [
+    { id: 'article', label: 'Magazine article', desc: 'Informative text with a title', estructura: 'The text is an informative magazine article with a catchy title and 3 or 4 short paragraphs.' },
+    { id: 'email', label: 'Email or message', desc: 'Personal or work message', estructura: 'The text is an email or message from one person to another, with greeting, news or request, and sign-off.' },
+    { id: 'story', label: 'Short story', desc: 'Narrative with characters', estructura: 'The text is a short story with characters, a place, a problem and an ending, mostly in the past.' },
+    { id: 'notice', label: 'Notice / ad / schedule', desc: 'Everyday practical text', estructura: 'The text is an everyday practical document (advertisement, notice, event programme or timetable) with specific data such as times, prices and places.' },
+    { id: 'interview', label: 'Interview / dialogue', desc: 'Questions and answers', estructura: 'The text is an interview or dialogue between two people, written as questions and answers.' },
+  ],
+  listening: [
+    { id: 'conversation', label: 'Conversation', desc: 'Two people talking', estructura: 'The audio is a conversation between two people about an everyday situation.' },
+    { id: 'announcement', label: 'Announcement', desc: 'Airport, shop, radio…', estructura: 'The audio is a short public announcement or radio message with specific data (times, places, numbers).' },
+    { id: 'interview', label: 'Interview', desc: 'Someone answers questions', estructura: 'The audio is an interview where a person answers questions about their life, work or opinions.' },
+    { id: 'voicemail', label: 'Voicemail / message', desc: 'Someone leaves a message', estructura: 'The audio is a voicemail or phone message with who it is from, what they want, and details to remember.' },
+  ],
+  multiple_choice: [
+    { id: 'grammar', label: 'Grammar in context', desc: 'Choose the right form', estructura: 'Each question is a sentence with one gap where the student chooses the correct grammatical form (tense, article, pronoun, auxiliary…). Distractors are common mistakes.' },
+    { id: 'vocabulary', label: 'Vocabulary', desc: 'Word that fits the meaning', estructura: 'Each question tests vocabulary: a sentence with a gap or a definition, and the student chooses the word that fits.' },
+    { id: 'dialogue', label: 'Dialogue responses', desc: 'What would you say?', estructura: 'Each question gives a line of a short dialogue and the student chooses the most natural reply.' },
+    { id: 'error', label: 'Find the correct sentence', desc: 'Spot the mistake', estructura: 'Each question offers 4 versions of a sentence and the student chooses the one that has no mistake.' },
+  ],
+  fill_gap: [
+    { id: 'verbs', label: 'Verb in brackets', desc: 'Write the correct tense', estructura: 'Each sentence has the base verb in brackets after the gap, e.g. "She [[goes]] (go) to school every day." The student writes the correct form.' },
+    { id: 'prepositions', label: 'Prepositions / articles', desc: 'Small words', estructura: 'Each sentence has a gap for a preposition, article or small grammar word.' },
+    { id: 'wordbank', label: 'Word bank', desc: 'Choose from a box of words', estructura: 'Put a box of the words to be used in the "instrucciones" (e.g. "Use: …"), and make each sentence fit exactly one of those words.' },
+    { id: 'dialogue', label: 'Complete the dialogue', desc: 'Gaps in a conversation', estructura: 'The sentences form a short dialogue (use "A:" and "B:") and the gaps are key words in it.' },
+  ],
+  matching: [
+    { id: 'definitions', label: 'Word ↔ definition', desc: 'Vocabulary', estructura: 'Left: a word. Right: its short definition or meaning.' },
+    { id: 'qa', label: 'Question ↔ answer', desc: 'Short exchanges', estructura: 'Left: a question. Right: the answer that fits it.' },
+    { id: 'halves', label: 'Sentence halves', desc: 'Join the two parts', estructura: 'Left: the first half of a sentence. Right: the second half that completes it.' },
+    { id: 'synonyms', label: 'Synonyms / opposites', desc: 'Related words', estructura: 'Left: a word. Right: its synonym or opposite (keep the same relation in all pairs).' },
+    { id: 'functions', label: 'Situation ↔ expression', desc: 'Useful language', estructura: 'Left: a situation (e.g. asking for help). Right: the expression you would use.' },
+  ],
+  order_sentences: [
+    { id: 'statements', label: 'Statements', desc: 'Affirmative sentences', estructura: 'All sentences are affirmative statements with a clear subject–verb–complement order.' },
+    { id: 'questions', label: 'Questions', desc: 'Word order in questions', estructura: 'All sentences are questions (wh- questions and yes/no questions) so the student practises auxiliary and word order.' },
+    { id: 'negatives', label: 'Negatives / past', desc: 'Auxiliaries and tenses', estructura: "Sentences are negatives or past tense so the student practises auxiliaries (don't, didn't, wasn't…)." },
+    { id: 'time', label: 'Time and frequency', desc: 'Adverbs and place of words', estructura: 'Each sentence includes a time or frequency expression (always, every day, last week…) in its natural position.' },
+  ],
+}
+export const plantillasDe = (tipo) => PLANTILLAS[tipo] ?? []
+export const plantillaDe = (tipo, id) => plantillasDe(tipo).find((x) => x.id === id) ?? null
+
+const FORMATO_CONSIGNA = `- Format the "consigna" with line breaks (use \n inside the JSON string), never as one block: a short opening line (end it with a colon if a list follows), then the tasks as a numbered list ("1. …", one per line) or bullets ("- …", one per line), then, if useful, a line starting with "Example: " and a line such as "Useful expressions:" followed by bullets. Put every list item on its own line.`
+
 const REGLAS = {
   multiple_choice: (p) => `- Create ${cuantas(p, 'multiple-choice questions')} with 4 options each and ONLY ONE correct answer.\n- "correcta" is the index of the correct option starting at 0 (0 = first option).\n- Vary the position of the correct answer and avoid "all of the above".`,
   listening: (p) =>
@@ -386,7 +453,10 @@ const REGLAS = {
   order_sentences: (p) => `- Create ${cuantas(p, 'complete, correct sentences')} (6 to 12 words each unless the screenshot shows otherwise). The student will receive the words shuffled and must put them in order.\n- Each sentence must have only one natural word order.`,
   reading: (p) =>
     `- ${p.texto ? `Use this text as the reading (do not modify it):\n"""\n${p.texto}\n"""` : p.imagen ? 'Use the reading text that appears in the screenshot.' : 'Write an original reading text of 120 to 200 words.'}\n- Format the text as a short title on its own line followed by 3 to 5 paragraphs separated by a blank line (use \n\n inside the JSON string).\n- Create ${cuantas(p, 'items')} about the text. ${formasLectura(p)} Gap answers must be words that appear in the text. No item may depend on outside knowledge.`,
-  writing: () => `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" appropriate for the level.\n- Format the "consigna" with line breaks (use \n inside the JSON string), never as one block: a short opening line (end it with a colon if a list follows), then the tasks as a numbered list ("1. …", one per line) or bullets ("- …", one per line), then, if useful, a line starting with "Example: " and a line such as "Useful expressions:" followed by bullets. Put every list item on its own line.`,
+  writing: (p) => {
+    const pl = plantillaDe('writing', p.plantilla)
+    return `- Write a clear writing prompt (what to write, for whom and with which elements). Set a "min_palabras" ${pl ? `of about ${pl.palabras}` : 'appropriate for the level'}.\n${FORMATO_CONSIGNA}`
+  },
   speaking: () => `- Write a clear prompt for the student to speak by recording their voice (topic, what to mention). "segundos_max" between 30 and 120 depending on the level.\n- Format the "consigna" with line breaks (use \n inside the JSON string), never as one block: a short opening line (end it with a colon if a list follows), then the tasks as a numbered list ("1. …", one per line) or bullets ("- …", one per line), then, if useful, a line starting with "Example: " and a line such as "Useful expressions:" followed by bullets. Put every list item on its own line.`,
 }
 
@@ -417,6 +487,12 @@ export function construirPrompt(tipo, p) {
   } else {
     lineas.push(`Create an exercise of type "${t.label}" with these characteristics:`, `- Student level (CEFR): ${p.nivel || 'A2'}`, `- Topic: ${p.tema?.trim() || 'your choice, appropriate for the level'}`)
     if (contexto(p)) lineas.push(contexto(p))
+  }
+  const pl = plantillaDe(tipo, p.plantilla)
+  if (pl) {
+    lineas.push(
+      `- Use this TEMPLATE ("${pl.label}"): ${pl.estructura} ${p.imagen ? 'Take the topic, vocabulary and situation from the screenshot and fit them into this template (if the screenshot shows a different format, the template wins).' : 'Fit the topic into this template.'}`,
+    )
   }
   lineas.push('- All the exercise content (instructions, texts, questions, options) must be in English.', REGLAS[tipo](p))
   if (p.extra?.trim()) lineas.push(`- Additional instructions: ${p.extra.trim()}`)
