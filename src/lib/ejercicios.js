@@ -39,10 +39,10 @@ export const usoLabel = (id) => USOS.find((u) => u.id === id)?.label ?? ''
 // «Cycle 3 · Module 1 · Unit 5 · Formative» (solo lo que esté definido; el ciclo 0 es válido).
 const hay = (v) => v !== null && v !== undefined && v !== ''
 export const clasificacionTexto = (e) => [hay(e.ciclo) ? `Cycle ${e.ciclo}` : '', e.modulo ? `Module ${e.modulo}` : '', e.unidad ? `Unit ${e.unidad}` : '', usoLabel(e.uso)].filter(Boolean).join(' · ')
-// Para guardar: Formative pide nivel + unidad (de ahí salen ciclo, módulo y MCER); Assessment solo nivel + ciclo (sin módulo ni unidad).
+// Para guardar: Formative pide nivel + unidad (de ahí salen ciclo, módulo y MCER); Assessment nivel + ciclo + módulo (sin unidad).
 // Devuelve el mensaje de lo que falta ('' si está completo).
 export function faltaClasificacion(m) {
-  const campos = m.uso === 'assessment' ? [['programa', 'level'], ['ciclo', 'cycle'], ['uso', 'use (Formative or Assessment)']] : [['programa', 'level'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)']]
+  const campos = m.uso === 'assessment' ? [['programa', 'level'], ['ciclo', 'cycle'], ['modulo', 'module'], ['uso', 'use (Formative or Assessment)']] : [['programa', 'level'], ['unidad', 'unit'], ['uso', 'use (Formative or Assessment)']]
   const faltan = campos.filter(([k]) => !String(m[k] ?? '').trim()).map(([, t]) => t)
   return faltan.length ? `Choose the ${faltan.join(', ')} before saving` : ''
 }

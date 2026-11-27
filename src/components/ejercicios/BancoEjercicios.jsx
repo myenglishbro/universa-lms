@@ -151,7 +151,8 @@ export default function BancoEjercicios({ esAdmin = false, puedeCrear = esAdmin,
     const porCiclo = new Map()
     for (const e of visibles) {
       const c = e.ciclo ?? null
-      const u = e.unidad ?? null
+      // Assessment (sin unidad) se agrupa por módulo: clave 100 + módulo, después de las unidades.
+      const u = e.unidad ?? (e.modulo ? 100 + e.modulo : null)
       if (!porCiclo.has(c)) porCiclo.set(c, new Map())
       const unidades = porCiclo.get(c)
       if (!unidades.has(u)) unidades.set(u, [])
@@ -299,7 +300,7 @@ export default function BancoEjercicios({ esAdmin = false, puedeCrear = esAdmin,
                 {g.unidades.map((u) => (
                   <section key={u.unidad ?? 'sin'}>
                     <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-700">
-                      {u.unidad !== null ? `Unit ${u.unidad}` : g.ciclo !== null ? 'Assessments (whole cycle)' : 'No unit'}
+                      {u.unidad === null ? 'No unit' : u.unidad >= 100 ? `Module ${u.unidad - 100} · Assessments` : `Unit ${u.unidad}`}
                       <span className="text-xs font-normal text-slate-400">
                         {u.items.length} {u.items.length === 1 ? 'exercise' : 'exercises'}
                       </span>

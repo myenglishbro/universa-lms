@@ -6,15 +6,15 @@ import Modal from '../ui/Modal'
 import EditorEjercicio from './EditorEjercicio'
 import EjercicioJugador from './EjercicioJugador'
 import { FORMAS_LECTURA, TIPOS, USOS, TONOS, compilar, construirPrompt, datosVacios, faltaClasificacion, leerRespuestaIA, plantillasDe, tipoDe, validar } from '../../lib/ejercicios'
-import { MODULOS_POR_NIVEL, PROGRAMA, cicloTexto, nivelDeCiclo, nivelPrograma, ubicar, unidadesDeModulo } from '../../lib/curriculo'
+import { MODULOS_POR_NIVEL, PROGRAMA, modulosPermitidos, cicloTexto, nivelDeCiclo, nivelPrograma, ubicar, unidadesDeModulo } from '../../lib/curriculo'
 
-// Formative: nivel + unidad → ciclo, módulo y MCER. Assessment: nivel + ciclo (sin módulo ni unidad).
+// Formative: nivel + unidad → ciclo, módulo y MCER. Assessment: nivel + ciclo + módulo (sin unidad).
 function ubicacion(meta) {
   if (meta.uso !== 'assessment') return ubicar(meta.programa, meta.unidad)
   const nivel = nivelPrograma(meta.programa)
   const i = nivel ? nivel.ciclos.indexOf(Number(meta.ciclo)) : -1
-  if (i < 0 || meta.ciclo === '') return null
-  return { ciclo: nivel.ciclos[i], modulo: null, unidad: null, mcer: nivel.mcer[Math.min(i, nivel.mcer.length - 1)], libro: nivel.libro, nivel }
+  if (i < 0 || meta.ciclo === '' || !modulosPermitidos(nivel.ciclos[i]).includes(Number(meta.modulo))) return null
+  return { ciclo: nivel.ciclos[i], modulo: Number(meta.modulo), unidad: null, mcer: nivel.mcer[Math.min(i, nivel.mcer.length - 1)], libro: nivel.libro, nivel }
 }
 
 // Nivel + unidad + uso: obligatorios, se eligen al empezar (con IA o a mano) y se pueden cambiar al final.
@@ -31,7 +31,7 @@ function Clasificacion({ meta, setMeta }) {
           label="Level"
           options={[{ value: '', label: 'Choose the level…' }, ...PROGRAMA.map((n) => ({ value: n.id, label: `${n.nombre} · ${cicloTexto(n)}` }))]}
           value={meta.programa ?? ''}
-          onChange={(e) => setMeta((m) => ({ ...m, programa: e.target.value, ciclo: '' }))}
+          onChange={(e) => setMeta((m) => ({ ...m, programa: e.target.value, ciclo: '', modulo: '' }))}
          
         />
         <div>
@@ -54,7 +54,7 @@ function Clasificacion({ meta, setMeta }) {
               {nivel.ciclos.map((c) => {
                 const on = String(meta.ciclo) === String(c)
                 return (
-                  <button key={c} type="button" aria-pressed={on} onClick={() => setMeta((x) => ({ ...x, ciclo: String(c) }))} className={`h-10 rounded-xl px-5 text-sm font-medium transition ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}>
+                  <button key={c} type="button" aria-pressed={on} onClick={() => setMeta((x) => ({ ...x, ciclo: String(c), modulo: modulosPermitidos(c).includes(Number(x.modulo)) ? x.modulo : '' }))} className={`h-10 rounded-xl px-5 text-sm font-medium transition ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}>
                     Cycle {c}
                   </button>
                 )
@@ -63,7 +63,22 @@ function Clasificacion({ meta, setMeta }) {
           ) : (
             <p className="text-xs text-slate-500">Choose the level first.</p>
           )}
-          <p className="mt-1 text-xs text-slate-500">Assessments belong to the whole cycle: no module or unit needed.</p>
+          {meta.ciclo !== '' && (
+            <div className="mt-3">
+              <span className="mb-1.5 block text-sm font-medium text-slate-700">Module</span>
+              <div className="flex flex-wrap gap-2">
+                {modulosPermitidos(meta.ciclo).map((m) => {
+                  const on = String(meta.modulo) === String(m)
+                  return (
+                    <button key={m} type="button" aria-pressed={on} onClick={() => setMeta((x) => ({ ...x, modulo: String(m) }))} className={`h-10 rounded-xl px-5 text-sm font-medium transition ${on ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-brand-300'}`}>
+                      Module {m}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-slate-500">Assessments are set by cycle and module: no unit needed.</p>
         </div>
       ) : (
         <div>
@@ -92,12 +107,12 @@ function Clasificacion({ meta, setMeta }) {
         <p className="rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-800">
           <strong>
             {ubic.nivel.nombre} · Cycle {ubic.ciclo}
-            {ubic.unidad ? ` · Module ${ubic.modulo} · Unit ${ubic.unidad}` : ''}
+            {ubic.modulo ? ` · Module ${ubic.modulo}` : ''}{ubic.unidad ? ` · Unit ${ubic.unidad}` : ''}
           </strong>
           <span className="text-brand-700"> · CEFR {ubic.mcer}</span>
         </p>
       ) : (
-        <p className="text-xs text-slate-500">{esAssessment ? 'Choose a level and a cycle: the CEFR level is filled in automatically.' : 'Choose a level and a unit: the cycle, module and CEFR level are filled in automatically.'}</p>
+        <p className="text-xs text-slate-500">{esAssessment ? 'Choose a level, a cycle and a module: the CEFR level is filled in automatically.' : 'Choose a level and a unit: the cycle, module and CEFR level are filled in automatically.'}</p>
       )}
 
       {/* El libro del nivel y la ubicación dentro de él: juntos dicen de dónde sale el ejercicio. */}
@@ -144,7 +159,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
   const [errorIA, setErrorIA] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [datos, setDatos] = useState(ejercicio?.datos ?? null)
-  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', tema: ejercicio?.tema ?? '', programa: nivelDeCiclo(ejercicio?.ciclo)?.id ?? '', ciclo: ejercicio?.ciclo ?? '', unidad: ejercicio?.unidad ?? '', uso: ejercicio?.uso ?? '', fuente: ejercicio?.fuente ?? '' })
+  const [meta, setMeta] = useState({ titulo: ejercicio?.titulo ?? '', tema: ejercicio?.tema ?? '', programa: nivelDeCiclo(ejercicio?.ciclo)?.id ?? '', ciclo: ejercicio?.ciclo ?? '', modulo: ejercicio?.modulo ?? '', unidad: ejercicio?.unidad ?? '', uso: ejercicio?.uso ?? '', fuente: ejercicio?.fuente ?? '' })
   const [vista, setVista] = useState('editar')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -155,7 +170,7 @@ export default function CrearEjercicio({ ejercicio = null, onGuardar, onClose })
     if (!tipo) return ''
     const u = ubicacion(meta)
     return construirPrompt(tipo, { ...params, nivel: u?.mcer ?? 'A2', nivelNombre: u?.nivel.nombre, ciclo: u?.ciclo, modulo: u?.modulo, unidad: u?.unidad, libro: u?.libro, cantidad: Number(params.cantidad) || (params.imagen ? null : 5) })
-  }, [tipo, params, meta.programa, meta.unidad, meta.ciclo, meta.uso])
+  }, [tipo, params, meta.programa, meta.unidad, meta.ciclo, meta.modulo, meta.uso])
   const setP = (k) => (e) => setParams((p) => ({ ...p, [k]: e.target.value }))
   const faltaClas = faltaClasificacion(meta)
   const errorValidacion = datos ? validar(tipo, datos) : ''

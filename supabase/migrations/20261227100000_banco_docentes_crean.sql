@@ -1,7 +1,7 @@
 -- UNIVERSA · Banco de ejercicios: los docentes vuelven a poder crear ejercicios.
 -- Administración sigue creando los del banco (públicos, los ven todos los docentes).
 -- Cada docente crea los suyos (privados: solo él los ve y los asigna) y puede editar y quitar solo esos.
--- Clasificación como en 20261223110000_banco_unidad.sql, salvo que Assessment solo pide ciclo (sin módulo ni unidad).
+-- Clasificación como en 20261223110000_banco_unidad.sql, salvo que Assessment pide ciclo y módulo (sin unidad).
 -- Repetible (idempotente). Aplicar con `supabase db query --remote --yes --file` (nunca db push).
 
 create or replace function public.guardar_ejercicio(p_id uuid, p_datos jsonb) returns uuid
@@ -36,9 +36,10 @@ begin
   if v_ciclo is null or v_nivel is null then raise exception 'Indica el nivel, el ciclo y el uso del ejercicio'; end if;
   if v_ciclo not between 0 and 12 then raise exception 'El ciclo debe estar entre 0 y 12'; end if;
   if v_uso = 'assessment' then
-    -- Los Assessment pertenecen al ciclo completo: sin módulo ni unidad.
-    v_modulo := null;
+    -- Los Assessment se piden por ciclo y módulo: sin unidad.
     v_unidad := null;
+    if v_modulo is null or v_modulo not between 1 and 4 then raise exception 'Indica el módulo del Assessment'; end if;
+    if v_ciclo > 0 and (v_ciclo % 2 = 1) <> (v_modulo <= 2) then raise exception 'El ciclo % no corresponde al módulo %', v_ciclo, v_modulo; end if;
   else
     if v_modulo is null or v_unidad is null then raise exception 'Indica el nivel, la unidad y el uso del ejercicio'; end if;
     if v_unidad not between 1 and 12 then raise exception 'La unidad debe estar entre 1 y 12'; end if;
