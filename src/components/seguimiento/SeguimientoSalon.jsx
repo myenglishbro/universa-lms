@@ -7,6 +7,7 @@ import { REGISTRO } from '../../lib/asistencia'
 import { formatFecha } from '../../lib/salones'
 import * as asistenciaReal from '../../services/asistencia'
 import * as portalReal from '../../services/portal'
+import MarcaDocente from './MarcaDocente'
 import ProgresoSalon from './ProgresoSalon'
 import RegistroClase from './RegistroClase'
 
@@ -23,13 +24,17 @@ const FILTROS = [
 
 // Clases del calendario con su estado de registro, avance por sesiones y resumen por estudiante.
 // Lo usan el docente asignado (portal) y la administración (detalle del salón): mismas funciones, mismas reglas.
-export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, portal = portalReal, onCambio }) {
+export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, portal = portalReal, onCambio, puedeMarcar = false }) {
   const cargarClases = useCallback(() => servicio.clasesDelSalon(salonId), [servicio, salonId])
   const cargarProgreso = useCallback(() => servicio.progresoDelSalon(salonId), [servicio, salonId])
   const cargarResumen = useCallback(() => servicio.resumenDelSalon(salonId), [servicio, salonId])
   // La grabación es un extra: si no se puede consultar, simplemente no se marca.
   const cargarGrabaciones = useCallback(() => (servicio.clasesConGrabacion ? servicio.clasesConGrabacion(salonId).catch(() => null) : Promise.resolve(null)), [servicio, salonId])
   const grabaciones = useCarga(cargarGrabaciones, null)
+  // Entrada y salida del docente: si no se pueden consultar, simplemente no se muestran.
+  const cargarMarcas = useCallback(() => (servicio.marcasDelSalon ? servicio.marcasDelSalon(salonId).catch(() => null) : Promise.resolve(null)), [servicio, salonId])
+  const marcas = useCarga(cargarMarcas, null)
+  const marcaPorSesion = new Map((marcas.datos ?? []).map((m) => [m.sesion_id, m]))
   const conGrabacion = new Set(grabaciones.datos ?? [])
   const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
   const sinGrabacion = (c) => grabaciones.datos != null && c.fecha < hoy && !conGrabacion.has(c.sesion_id)
@@ -40,7 +45,7 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
   const [filtro, setFiltro] = useState(null) // null = elegir solo: «To do» si hay algo por hacer; si no, «Upcoming»
   const [mostrar, setMostrar] = useState(POR_PAGINA)
 
-  const recargarTodo = () => Promise.all([clases.recargar(), progreso.recargar(), resumen.recargar(), grabaciones.recargar(), onCambio?.()])
+  const recargarTodo = () => Promise.all([clases.recargar(), progreso.recargar(), resumen.recargar(), grabaciones.recargar(), marcas.recargar(), onCambio?.()])
   const pendientes = clases.datos.filter((c) => c.estado_registro === 'pendiente').length
 
   const grupos = useMemo(
@@ -74,6 +79,12 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
           <p className="text-sm text-slate-400">Loading…</p>
         )}
       </Card>
+
+      {puedeMarcar && !marcas.cargando && marcas.datos === null && (
+        <p role="alert" className="rounded-xl bg-peach-50 px-4 py-3 text-sm text-peach-800">
+          Entry and exit marking is not available right now. Please tell administration.
+        </p>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
@@ -145,6 +156,9 @@ export default function SeguimientoSalon({ salonId, servicio = asistenciaReal, p
                       </p>
                     ) : (
                       urgente && <p className="mt-1 text-xs text-slate-500">Already held: record attendance and the topic.</p>
+                    )}
+                    {marcas.datos !== null && (
+                      <MarcaDocente clase={c} marca={marcaPorSesion.get(c.sesion_id) ?? null} hoy={hoy} puedeMarcar={puedeMarcar} servicio={servicio} onCambio={marcas.recargar} />
                     )}
                   </div>
                   {c.estado_registro !== 'proxima' && (

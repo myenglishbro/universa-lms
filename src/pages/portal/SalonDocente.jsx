@@ -56,7 +56,7 @@ export default function SalonDocente({ salon, onVolver, servicio = servicioReal,
       </div>
 
       {pestana === 'clases' ? (
-        <SeguimientoSalon salonId={salon.salon_id} servicio={asistencia} portal={servicio} />
+        <SeguimientoSalon salonId={salon.salon_id} servicio={asistencia} portal={servicio} puedeMarcar />
       ) : pestana === 'ejercicios' ? (
         <EjerciciosSalon salonId={salon.salon_id} />
       ) : pestana === 'evaluaciones' ? (

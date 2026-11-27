@@ -24,3 +24,9 @@ export const progresoDelSalon = (salonId) => rpc('progreso_salon', { p_salon: sa
 export const miAsistencia = (salonId) => rpc('portal_mi_asistencia', { p_salon: salonId })
 // Ficha del estudiante (personal)
 export const resumenDelAlumno = (alumnoId) => rpc('asistencia_resumen_alumno', { p_alumno: alumnoId })
+
+// Entrada y salida del docente en cada clase (la hora la pone el servidor). marcarEntrada devuelve { entrada, salida, zoom }.
+export const marcasDelSalon = (salonId) => rpc('marcas_salon', { p_salon: salonId })
+export const marcarEntrada = (sesionId) => rpc('marcar_entrada', { p_sesion: sesionId })
+export const marcarSalida = (sesionId) => rpc('marcar_salida', { p_sesion: sesionId })
+export const zoomClase = () => rpc('zoom_clase')

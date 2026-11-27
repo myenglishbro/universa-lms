@@ -19,6 +19,7 @@ const Estudiantes = lazy(() => import('./pages/Estudiantes'))
 const Ejercicios = lazy(() => import('./pages/Ejercicios'))
 const ArchivoCiclos = lazy(() => import('./pages/ArchivoCiclos'))
 const Evaluaciones = lazy(() => import('./pages/Evaluaciones'))
+const HorasDocentes = lazy(() => import('./pages/HorasDocentes'))
 const Feriados = lazy(() => import('./pages/Feriados'))
 const EncuestasClase = lazy(() => import('./pages/EncuestasClase'))
 const Registros = lazy(() => import('./pages/Registros'))
@@ -157,6 +158,7 @@ function Panel({ auth, vistas, onCambiarVista, onSignOut }) {
           onCambio={data.recargar}
         />
       )}
+      {ve('horas') && <HorasDocentes puedeEditar={admin} />}
       {ve('frecuencias') && admin && <Frecuencias catalogo={data.catalogo} salones={data.salones} onCambio={data.recargarCatalogo} />}
       {ve('evaluaciones') && admin && <Evaluaciones niveles={data.niveles} onVerSalon={verSalon} />}
       {ve('ejercicios') && admin && <Ejercicios />}
